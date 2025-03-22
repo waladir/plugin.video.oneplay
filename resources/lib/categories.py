@@ -100,16 +100,20 @@ def list_category(id, carouselId, criteria, label):
     xbmcplugin.endOfDirectory(_handle, cacheToDisc = False)              
 
 def list_season(carouselId, id, page, label):
-    page = int(page)    
     xbmcplugin.setPluginCategory(_handle, label)
     xbmcplugin.setContent(_handle, 'episodes')
     addon = xbmcaddon.Addon()
-    icons_dir = os.path.join(addon.getAddonInfo('path'), 'resources','images')
     session = Session()
     api = API()
+    list_season_internal(addon, api, session, carouselId, id, page, label)
+
+def list_season_internal(addon, api, session, carouselId, id, page, label):
+    page = int(page)
+    icons_dir = os.path.join(addon.getAddonInfo('path'), 'resources','images')
+    episodes_paging = addon.getSetting('episodes_paging') == 'true'
     post = {"payload":{"carouselId":carouselId,"paging":{"count":12,"position":12*(page-1)+1},"criteria":{"filterCriterias":id,"sortOption":"DESC"}}}
     data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/carousel.display', data = post, session = session)
-    if page > 1:
+    if page > 1 and episodes_paging:
         list_item = xbmcgui.ListItem(label='Přechozí strana')
         url = get_url(action = 'list_season', carouselId = carouselId, id = id, page = page-1, label = label)       
         list_item.setArt({ 'thumb' : os.path.join(icons_dir , 'previous_arrow.png'), 'icon' : os.path.join(icons_dir , 'previous_arrow.png') })
@@ -127,10 +131,13 @@ def list_season(carouselId, id, page, label):
             url = get_url(action = 'play_archive', id = item['action']['params']['payload']['criteria']['contentId'])
             xbmcplugin.addDirectoryItem(_handle, url, list_item, False)
     if data['carousel']['paging']['next'] == True:
-        list_item = xbmcgui.ListItem(label='Následující strana')
-        url = get_url(action = 'list_season', carouselId = carouselId, id = id, page = page+1, label = label)       
-        list_item.setArt({ 'thumb' : os.path.join(icons_dir , 'next_arrow.png'), 'icon' : os.path.join(icons_dir , 'next_arrow.png') })
-        xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
+        if episodes_paging:
+            list_item = xbmcgui.ListItem(label='Následující strana')
+            url = get_url(action = 'list_season', carouselId = carouselId, id = id, page = page+1, label = label)       
+            list_item.setArt({ 'thumb' : os.path.join(icons_dir , 'next_arrow.png'), 'icon' : os.path.join(icons_dir , 'next_arrow.png') })
+            xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
+        else:
+            list_season_internal(addon, api, session, carouselId, id, page+1, label)
     xbmcplugin.endOfDirectory(_handle, cacheToDisc = False)  
 
 def list_show(id, label):
