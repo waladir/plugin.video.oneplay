@@ -87,14 +87,12 @@ def list_favourites(label):
                     if type == 'show':
                         item_detail = get_item_detail(id)
                         list_item.setArt({'poster': item['image']})    
-                        list_item.setInfo('video', {'mediatype':'movie', 'title': item['title']}) 
                         list_item = epg_listitem(list_item, item_detail, None)
                         url = get_url(action = 'list_show', id = id, label = label + ' / ' + item['title'] )
                         xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
                     elif type == 'item':
                         item_detail = get_item_detail(id)
                         list_item.setArt({'poster': item['image']})    
-                        list_item.setInfo('video', {'mediatype':'movie', 'title': item['title']}) 
                         list_item = epg_listitem(list_item, item_detail, None)
                         list_item.setContentLookup(False)          
                         list_item.setProperty('IsPlayable', 'true')

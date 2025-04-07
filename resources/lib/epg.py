@@ -150,7 +150,7 @@ def get_item_detail_from_api(id):
                 item_detail = {'description' : description, 'original' : original, 'year' : year, 'genres' : genres, 'cast' : cast, 'directors' : directors, 'country' : country}
     return item_detail
 
-def get_item_detail(id):
+def get_item_detail(id, download_details = True):
     global db
     item_detail = {}
     addon = xbmcaddon.Addon()
@@ -166,15 +166,16 @@ def get_item_detail(id):
             country = row[5]
             genres = json.loads(row[6])
         if not row:
-            item_detail = get_item_detail_from_api(id)
-            if len(item_detail) > 0:
-                db.execute('INSERT INTO items VALUES(?, ?, ?, ?, ?, ?, ?, ?)', (id, item_detail['description'], item_detail['original'], json.dumps(item_detail['cast']), json.dumps(item_detail['directors']), item_detail['year'], item_detail['country'], json.dumps(item_detail['genres'])))      
-                db.commit()            
+            if download_details == True:
+                item_detail = get_item_detail_from_api(id)
+                if len(item_detail) > 0:
+                    db.execute('INSERT INTO items VALUES(?, ?, ?, ?, ?, ?, ?, ?)', (id, item_detail['description'], item_detail['original'], json.dumps(item_detail['cast']), json.dumps(item_detail['directors']), item_detail['year'], item_detail['country'], json.dumps(item_detail['genres'])))      
+                    db.commit()            
+            else:
+                return {}
         else:
             item_detail = {'description' : description, 'original' : original, 'year' : year, 'genres' : genres, 'cast' : cast, 'directors' : directors, 'country' : country}
         close_db()            
-    else:
-        item_detail = get_item_detail_from_api(id)
     return item_detail    
 
 def epg_listitem(list_item, epg, icon):

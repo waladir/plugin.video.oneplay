@@ -58,7 +58,7 @@ def program_search(query, label):
                         for carousel in block['carousels']:
                             for item in carousel['tiles']:
                                 if item['action']['params']['schema'] == 'PageContentDisplayApiAction':
-                                    item_detail = get_item_detail(item['action']['params']['payload']['contentId'])
+                                    item_detail = get_item_detail(item['action']['params']['payload']['contentId'], False)
                                     list_item = xbmcgui.ListItem(label = item['title'])
                                     image = item['image'].replace('{WIDTH}', '320').replace('{HEIGHT}', '480')
                                     list_item.setArt({'poster': image})    
