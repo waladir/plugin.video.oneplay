@@ -27,7 +27,7 @@ def play_catchup(id, start_ts, end_ts):
     else:
         play_stream(id, 'start')
 
-def play_stream(id, mode):
+def play_stream(id, mode, nextid = None):
     addon = xbmcaddon.Addon()
     session = Session()
     api = API()

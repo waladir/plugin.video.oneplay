@@ -31,6 +31,23 @@ def get_episodes(carouselId, id, season_title, limit = 1000):
                     if 'subTitle' in item:
                         item['title'] = item['title'] + ' ' + item['subTitle']
                     title = item['title']
+                    subtitle = ''
+                    if 'additionalFragments' in item and len(item['additionalFragments']) > 0 and 'labels' in item['additionalFragments'][0]:
+                        for label in item['labels']:
+                            if 'Vyprší' not in label['name']:
+                                subtitle = label['name']
+                        for label in item['additionalFragments'][0]['labels']:
+                            if ':' in label['name']:
+                                if len(subtitle) > 0:
+                                    subtitle += ' | ' + label['name']
+                                else:
+                                    subtitle = label['name']
+                            if 'Díl' in label['name']:
+                                if len(subtitle) > 0:
+                                    subtitle += ' | ' + label['name']
+                                else:
+                                    subtitle = label['name']
+
                     image = item['image'].replace('{WIDTH}', '480').replace('{HEIGHT}', '320')
                     if 'contentId' in item['action']['params']['payload']:
                         id = item['action']['params']['payload']['contentId']
@@ -38,8 +55,7 @@ def get_episodes(carouselId, id, season_title, limit = 1000):
                         id = item['action']['params']['payload']['criteria']['contentId']
                     episodeId = int(id.split('.')[1])
                     if id not in episodes:
-                        print({episodeId : {'id' : id, 'season_title' : season_title, 'title' : title, 'image' : image}})
-                        episodes.update({episodeId : {'id' : id, 'season_title' : season_title, 'title' : title, 'image' : image}})
+                        episodes.update({episodeId : {'id' : id, 'season_title' : season_title, 'title' : title, 'subtitle' : subtitle, 'image' : image}})
                     if cnt >= limit:
                         get_page = False
                         break
@@ -253,6 +269,44 @@ def list_show(id, label):
             list_item.setProperty('IsPlayable', 'true')
             url = get_url(action = 'play_archive', id = show['id'])
         xbmcplugin.addDirectoryItem(_handle, url, list_item, False)                            
+    xbmcplugin.endOfDirectory(_handle, cacheToDisc = False)  
+
+def list_tv_episodes(id, label):
+    xbmcplugin.setPluginCategory(_handle, label)
+    xbmcplugin.setContent(_handle, 'episodes')
+    session = Session()
+    api = API()
+    post = {"payload":{"contentId":id}}
+    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/page.content.display', data = post, session = session)
+    for block in data['layout']['blocks']:
+        if block['schema'] == 'CarouselBlock' and 'header' in block and block['header']['title'] == 'Vysílané v TV':
+            carouselId = block['carousels'][0]['id']
+            kodi_version = get_kodi_version()
+            episodes = get_episodes(carouselId, id, '')
+            for episodeId in episodes:
+                item = episodes[episodeId]
+                if len(item['subtitle']) > 0:
+                    list_item = xbmcgui.ListItem(label = item['title'] + '\n[COLOR=gray]' + item['subtitle'] + '[/COLOR]')
+                else:
+                    list_item = xbmcgui.ListItem(label = item['title'])
+                list_item.setArt({'poster': item['image']})    
+                if kodi_version >= 20:
+                    infotag = list_item.getVideoInfoTag()
+                    infotag.setMediaType('episode')
+                else:
+                    list_item.setInfo('video', {'mediatype' : 'episode'})
+                if kodi_version >= 20:
+                    infotag.setTitle(item['title'])
+                else:
+                    list_item.setInfo('video', {'title' : item['title']})
+                if kodi_version >= 20:
+                    infotag.setTvShowTitle(item['subtitle'])
+                else:
+                    list_item.setInfo('video', {'tvshowtitle' : item['season_title']})   
+                list_item.setContentLookup(False)          
+                list_item.setProperty('IsPlayable', 'true')
+                url = get_url(action = 'play_archive', id = item['id'])
+                xbmcplugin.addDirectoryItem(_handle, url, list_item, False)
     xbmcplugin.endOfDirectory(_handle, cacheToDisc = False)  
 
 def list_carousel(id, criteria, page, label):

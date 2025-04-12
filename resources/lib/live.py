@@ -34,7 +34,10 @@ def list_live(label):
             epg_item = epg[channels_list[num]['id']]
             list_item = xbmcgui.ListItem(label = channel_number + channels_list[num]['name'] + '[COLOR ' + get_color(addon.getSetting('label_color_live')) + '] | ' + epg_item['title'] + ' | ' + datetime.fromtimestamp(epg_item['startts']).strftime('%H:%M') + ' - ' + datetime.fromtimestamp(epg_item['endts']).strftime('%H:%M') + '[/COLOR]')
             list_item = epg_listitem(list_item = list_item, epg = epg_item, icon = channels_list[num]['logo'])
-            menus = [('Přidat nahrávku', 'RunPlugin(plugin://' + plugin_id + '?action=add_recording&id=' + str(epg_item['id']) + ')')]
+            menus = []
+            menus.append(('Přidat nahrávku', 'RunPlugin(plugin://' + plugin_id + '?action=add_recording&id=' + str(epg_item['id']) + ')'))
+            if epg_item['type'] == 'show':
+                menus.append(('Zobrazit epizody', 'Container.Update(plugin://' + plugin_id + '?action=list_tv_episodes&id=' + str(epg_item['referenceid']) + '&label=' + epg_item['title'] + ')'))
             list_item.addContextMenuItems(menus)       
         else:
             epg_item = {}

@@ -63,12 +63,18 @@ class Session:
                 data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/user.device.remove', data = post, session = self)
         self.save_session()
         profileId = get_profile_id()
-        post = {"payload":{"profileId":profileId}}
+        if len(str(addon.getSetting('profle_pin'))) > 0:
+            post = {"payload":{"profileId":profileId},"authorization":[{"schema":"PinRequestAuthorization","pin":str(addon.getSetting('profle_pin')),"type":"profile"}]}
+        else:
+            post = {"payload":{"profileId":profileId}}
         data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/user.profile.select', data = post, session = self)
         if 'err' in data or 'bearerToken' not in data:
             reset_profiles()
             profileId = get_profile_id()
-            post = {"payload":{"profileId":profileId}}
+            if len(str(addon.getSetting('profle_pin'))) > 0:
+                post = {"payload":{"profileId":profileId},"authorization":[{"schema":"PinRequestAuthorization","pin":str(addon.getSetting('profle_pin')),"type":"profile"}]}
+            else:
+                post = {"payload":{"profileId":profileId}}
             data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/user.profile.select', data = post, session = self)            
             if 'err' in data or 'bearerToken' not in data:
                 xbmcgui.Dialog().notification('Oneplay','Problém při přihlášení', xbmcgui.NOTIFICATION_ERROR, 5000)

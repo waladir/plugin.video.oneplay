@@ -102,7 +102,7 @@ def get_epg_data(post, channel_id):
                             key = channel['channelId'] + str(startts)
                         else:
                             key = startts
-                        epg_item = {'id' : id, 'title' : item['title'], 'channel_id' : channel['channelId'], 'description' : item['description'], 'startts' : startts, 'endts' : endts, 'cover' : item['image'].replace('{WIDTH}', '480').replace('{HEIGHT}', '320'), 'poster' : item['image'].replace('{WIDTH}', '480').replace('{HEIGHT}', '320')}
+                        epg_item = {'id' : id, 'type' : item['actions'][0]['params']['contentType'], 'referenceid' : item['referenceId'], 'title' : item['title'], 'channel_id' : channel['channelId'], 'description' : item['description'], 'startts' : startts, 'endts' : endts, 'cover' : item['image'].replace('{WIDTH}', '480').replace('{HEIGHT}', '320'), 'poster' : item['image'].replace('{WIDTH}', '480').replace('{HEIGHT}', '320')}
                         epg.update({key : epg_item})
     return epg
 

@@ -17,7 +17,7 @@ from resources.lib.stream import play_stream, play_catchup
 from resources.lib.channels import Channels, manage_channels, list_channels_list_backups, list_channels_edit, edit_channel, delete_channel, change_channels_numbers
 from resources.lib.channels import list_channels_groups, add_channel_group, edit_channel_group, edit_channel_group_list_channels, edit_channel_group_add_channel, edit_channel_group_add_all_channels, edit_channel_group_delete_channel, select_channel_group, delete_channel_group
 from resources.lib.recordings import list_recordings, delete_recording, list_planning_recordings, list_rec_days, future_program, add_recording
-from resources.lib.categories import list_categories, list_category, list_filters, list_carousel, list_show, list_season
+from resources.lib.categories import list_categories, list_category, list_filters, list_carousel, list_show, list_season, list_tv_episodes
 from resources.lib.search import list_search, delete_search, program_search
 from resources.lib.profiles import list_profiles, set_active_profile, reset_profiles
 from resources.lib.profiles import list_accounts, set_active_account, reset_accounts
@@ -107,6 +107,8 @@ def router(paramstring):
             list_show(params['id'], params['label'])
         elif params['action'] == 'list_season':
             list_season(params['carouselId'], params['id'], params['label'])
+        elif params['action'] == 'list_tv_episodes':
+            list_tv_episodes(params['id'], params['label'])
 
         elif params['action'] == 'list_recordings':
             list_recordings(params['label'])
@@ -131,7 +133,10 @@ def router(paramstring):
         elif params['action'] == 'play_live':
             play_stream(params['id'], params['mode'])
         elif params['action'] == 'play_archive':
-            play_stream(params['id'], 'archive')
+            if 'nextid' in params:
+                play_stream(params['id'], 'archive', params['nextid'])
+            else:
+                play_stream(params['id'], 'archive')
 
         elif params['action'] == 'list_settings':
             list_settings(params['label'])

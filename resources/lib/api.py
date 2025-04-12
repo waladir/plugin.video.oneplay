@@ -55,7 +55,7 @@ class API:
                     if requestId != data['response']['context']['requestId']:
                         response = ws.recv()
             if addon.getSetting('log_response') == 'true':
-                if nolog == False or len(str(response)) < 2000:
+                if nolog == False or len(str(response)) < 200000:
                     xbmc.log('Oneplay > ' + str(response))
                 else:
                     xbmc.log('Oneplay > odpověď obdržena (' + str(len(str(response))) + ')')

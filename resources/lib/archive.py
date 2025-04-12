@@ -70,7 +70,6 @@ def list_program(id, day_min, label):
     else:
         from_ts = today_start_ts - int(day_min)*60*60*24
         to_ts = today_end_ts - int(day_min)*60*60*24
-    epg = {}
     epg = get_channel_epg(id, from_ts, to_ts)
 
     if int(day_min) < 7:
@@ -84,15 +83,24 @@ def list_program(id, day_min, label):
     for key in sorted(epg.keys(), reverse = False):
         if int(epg[key]['endts']) > int(time.mktime(datetime.now().timetuple()))-60*60*24*7:
             list_item = xbmcgui.ListItem(label = day_translation_short[datetime.fromtimestamp(epg[key]['startts']).strftime('%w')] + ' ' + datetime.fromtimestamp(epg[key]['startts']).strftime('%d.%m. %H:%M') + ' - ' + datetime.fromtimestamp(epg[key]['endts']).strftime('%H:%M') + ' | ' + epg[key]['title'])
-            list_item = epg_listitem(list_item = list_item, epg = epg[key], icon = '')
-            menus = [('Přidat nahrávku', 'RunPlugin(plugin://' + plugin_id + '?action=add_recording&id=' + str(epg[key]['id']) + ')')]
+            menus = []
+            menus.append(('Přidat nahrávku', 'RunPlugin(plugin://' + plugin_id + '?action=add_recording&id=' + str(epg[key]['id']) + ')'))
+            if epg[key]['type'] == 'show':
+                menus.append(('Zobrazit epizody', 'Container.Update(plugin://' + plugin_id + '?action=list_tv_episodes&id=' + str(epg[key]['referenceid']) + '&label=' + epg[key]['title'] + ')'))
             list_item.addContextMenuItems(menus)       
             list_item.setContentLookup(False)          
             list_item.setProperty('IsPlayable', 'true')
+            nextkey = None
+            idx = sorted(epg.keys()).index(key)
+            if len(sorted(epg.keys()))-1>idx:
+                nextkey = sorted(epg.keys())[idx+1]
             if epg[key]['endts'] > int(time.mktime(datetime.now().timetuple()))-10:
                  url = get_url(action = 'play_live', id = id, mode = 'start')
             else:
-                url = get_url(action='play_archive', id = epg[key]['id'])
+                if nextkey is not None:
+                    url = get_url(action='play_archive', id = epg[key]['id'], nextid = epg[nextkey]['id'])
+                else:
+                    url = get_url(action='play_archive', id = epg[key]['id'])
             xbmcplugin.addDirectoryItem(_handle, url, list_item, False)
 
     if int(day_min) > 0:
