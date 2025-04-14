@@ -66,7 +66,7 @@ def get_stream_url(post, mode, next = False):
 def play_catchup(id, start_ts, end_ts):
     start_ts = int(start_ts)
     end_ts = int(end_ts)    
-    epg = get_channel_epg(channel_id = id, from_ts = start_ts, to_ts = end_ts + 60*60*12)
+    epg = get_channel_epg(channel_id = id, from_ts = start_ts - 7200, to_ts = end_ts + 60*60*12)
     if start_ts in epg:
         if epg[start_ts]['endts'] > int(time.mktime(datetime.now().timetuple()))-10:
             play_stream(id, 'start')

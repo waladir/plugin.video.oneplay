@@ -164,7 +164,7 @@ def iptv_sc_rec(channelName, startdatetime):
     channels = Channels()
     channels_list = channels.get_channels_list('name', visible_filter = False)
     from_ts = int(time.mktime(time.strptime(startdatetime, '%d.%m.%Y %H:%M')))
-    epg = get_channel_epg(channel_id = channels_list[channelName]['id'], from_ts = from_ts, to_ts = from_ts + 60*60*12)
+    epg = get_channel_epg(channel_id = channels_list[channelName]['id'], from_ts = from_ts  - 7200, to_ts = from_ts + 60*60*12)
     if len(epg) > 0 and from_ts in epg:
         add_recording(epg[from_ts]['id'])
     else:
