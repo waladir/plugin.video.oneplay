@@ -1,4 +1,4 @@
-﻿<addon id="plugin.video.oneplay" name="Oneplay" provider-name="waladir" version="1.3.4">
+﻿<addon id="plugin.video.oneplay" name="Oneplay" provider-name="waladir" version="1.3.5">
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
     <import addon="inputstream.adaptive" version="19.0.0"/>
@@ -38,6 +38,9 @@ Další informace a podporu najdete na fóru www.xbmc-kodi.cz (https://www.xbmc-
     <platform>all</platform>
     <source>https://github.com/waladir/plugin.video.oneplay</source>
     <news>
+1.3.5 (15.4.2025)
+- uprava živého vysílání
+
 1.3.4 (15.4.2025)
 - doplnění přehrávání následujícího pořadu u pořadů z TV i mimo archiv
 
@@ -50,10 +53,6 @@ Další informace a podporu najdete na fóru www.xbmc-kodi.cz (https://www.xbmc-
 1.3.1 (12.4.2025)
 - přidání možnosti nastavení profilového PINu
 - u živého vysílání i archivu lze v kontextovém menu zobrazit seznam dostupných epizod v archivu
-
-1.3.0 (7.4.2025)
-- ošetření Ping requestu, pokud přijde místo odpovědi
-- u výsledků vyhledávání se nebudou dotahovat detailní data o pořadech
     </news>
     <assets>
         <icon>icon.jpg</icon>

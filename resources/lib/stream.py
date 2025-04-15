@@ -85,6 +85,7 @@ def play_stream(id, mode):
     addon = xbmcaddon.Addon()
     api = API()
     session = Session()
+    next = False
     if mode in ['live', 'start']:
         channels = Channels()
         channels_list = channels.get_channels_list('id')
