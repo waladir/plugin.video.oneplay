@@ -90,17 +90,10 @@ def list_program(id, day_min, label):
             list_item.addContextMenuItems(menus)       
             list_item.setContentLookup(False)          
             list_item.setProperty('IsPlayable', 'true')
-            nextkey = None
-            idx = sorted(epg.keys()).index(key)
-            if len(sorted(epg.keys()))-1>idx:
-                nextkey = sorted(epg.keys())[idx+1]
             if epg[key]['endts'] > int(time.mktime(datetime.now().timetuple()))-10:
                  url = get_url(action = 'play_live', id = id, mode = 'start')
             else:
-                if nextkey is not None:
-                    url = get_url(action='play_archive', id = epg[key]['id'], nextid = epg[nextkey]['id'])
-                else:
-                    url = get_url(action='play_archive', id = epg[key]['id'])
+                url = get_url(action='play_archive', id = epg[key]['id'])
             xbmcplugin.addDirectoryItem(_handle, url, list_item, False)
 
     if int(day_min) > 0:

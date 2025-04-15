@@ -23,8 +23,14 @@ def get_stream_url(post, mode, next = False):
     url_dash_drm = None
     url_hls = None
     drm = None
-    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/content.play', data = post, session = session)
-    if 'err' in data or 'media' not in data:
+    if next == False:
+        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/content.play', data = post, session = session)
+    else:
+        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/content.playnext', data = post, session = session)
+        if 'err' in data or 'offer' not in data or 'channelUpdate' not in data['offer']:
+            return None, None, None, None
+        data = data['offer']['channelUpdate']
+    if 'err' in data: # or 'media' not in data:
         if len(data['err']) > 0:
             xbmcgui.Dialog().notification('Oneplay', data['err'], xbmcgui.NOTIFICATION_ERROR, 5000)
         else:
@@ -75,7 +81,7 @@ def play_catchup(id, start_ts, end_ts):
     else:
         play_stream(id, 'start')
 
-def play_stream(id, mode, nextid = None):
+def play_stream(id, mode):
     addon = xbmcaddon.Addon()
     api = API()
     session = Session()
@@ -102,8 +108,10 @@ def play_stream(id, mode, nextid = None):
                 if block['schema'] == 'ContentHeaderBlock':
                     if 'mainAction' in block and 'action' in block['mainAction'] and 'criteria' in block['mainAction']['action']['params']['payload'] and 'contentId' in block['mainAction']['action']['params']['payload']['criteria']:
                         id = block['mainAction']['action']['params']['payload']['criteria']['contentId']
-        if nextid is not None:
-            post = {"payload":{"criteria":{"schema":"ContentCriteria","contentId":nextid}},"playbackCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","subtitle":{"formats":["vtt"],"locations":["InstreamTrackLocation","ExternalTrackLocation"]},"liveSpecificCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","multipleAudio":False}}}
+        if 'epgitem' in id:
+            next = True
+            # post = {"payload":{"criteria":{"schema":"ContentCriteria","contentId":id}},"playbackCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","subtitle":{"formats":["vtt"],"locations":["InstreamTrackLocation","ExternalTrackLocation"]},"liveSpecificCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","multipleAudio":False}}}
+            post = {"payload":{"criteria":{"schema":"ContentCriteria","contentId":id},"startMode":"start","timelineMode":"epg"},"playbackCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","subtitle":{"formats":["vtt"],"locations":["InstreamTrackLocation","ExternalTrackLocation"]},"liveSpecificCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","multipleAudio":False}}}
             next_url_hls, next_url_dash, next_url_dash_drm, next_drm = get_stream_url(post, mode, True)
         post = {"payload":{"criteria":{"schema":"ContentCriteria","contentId":id}},"playbackCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","subtitle":{"formats":["vtt"],"locations":["InstreamTrackLocation","ExternalTrackLocation"]},"liveSpecificCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","multipleAudio":False}}}
 
@@ -113,7 +121,7 @@ def play_stream(id, mode, nextid = None):
         list_item.setProperty('inputstream', 'inputstream.adaptive')
         list_item.setProperty('inputstream.adaptive.manifest_type', 'hls')
         list_item.setContentLookup(False)     
-        if nextid is not None:
+        if next == True and next_url_hls is not None:
             next_list_item = xbmcgui.ListItem(path = next_url_hls)
             next_list_item.setProperty('inputstream', 'inputstream.adaptive')
             next_list_item.setProperty('inputstream.adaptive.manifest_type', 'hls')
@@ -127,7 +135,7 @@ def play_stream(id, mode, nextid = None):
         list_item.setProperty('inputstream.adaptive.manifest_type', 'mpd')
         list_item.setMimeType('application/dash+xml')
         list_item.setContentLookup(False)       
-        if nextid is not None:
+        if next == True and next_url_dash is not None:
             next_list_item = xbmcgui.ListItem(path = next_url_dash)
             next_list_item.setProperty('inputstream', 'inputstream.adaptive')
             next_list_item.setProperty('inputstream.adaptive.manifest_type', 'mpd')
@@ -149,7 +157,7 @@ def play_stream(id, mode, nextid = None):
             list_item.setProperty('inputstream.adaptive.license_key', drm['licenceUrl'] + '|' + urlencode({'x-axdrm-message' : drm['token']}) + '|R{SSM}|')                
         list_item.setMimeType('application/dash+xml')
         list_item.setContentLookup(False)       
-        if nextid is not None:
+        if next == True and next_url_dash_drm is not None:
             next_list_item = xbmcgui.ListItem(path = next_url_dash_drm)
             next_list_item.setProperty('inputstream', 'inputstream.adaptive')
             next_list_item.setProperty('inputstream.adaptive.manifest_type', 'mpd')
@@ -174,7 +182,7 @@ def play_stream(id, mode, nextid = None):
             list_item.setProperty('inputstream', 'inputstream.adaptive')
             list_item.setProperty('inputstream.adaptive.manifest_type', 'hls')
             list_item.setContentLookup(False)       
-            if nextid is not None:
+            if next == True and next_url_hls is not None:
                 next_list_item = xbmcgui.ListItem(path = next_url_hls)
                 next_list_item.setProperty('inputstream', 'inputstream.adaptive')
                 next_list_item.setProperty('inputstream.adaptive.manifest_type', 'hls')

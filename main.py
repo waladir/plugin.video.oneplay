@@ -133,10 +133,7 @@ def router(paramstring):
         elif params['action'] == 'play_live':
             play_stream(params['id'], params['mode'])
         elif params['action'] == 'play_archive':
-            if 'nextid' in params:
-                play_stream(params['id'], 'archive', params['nextid'])
-            else:
-                play_stream(params['id'], 'archive')
+            play_stream(params['id'], 'archive')
 
         elif params['action'] == 'list_settings':
             list_settings(params['label'])
