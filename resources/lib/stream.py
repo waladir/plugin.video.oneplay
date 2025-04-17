@@ -111,7 +111,6 @@ def play_stream(id, mode):
                         id = block['mainAction']['action']['params']['payload']['criteria']['contentId']
         if 'epgitem' in id:
             next = True
-            # post = {"payload":{"criteria":{"schema":"ContentCriteria","contentId":id}},"playbackCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","subtitle":{"formats":["vtt"],"locations":["InstreamTrackLocation","ExternalTrackLocation"]},"liveSpecificCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","multipleAudio":False}}}
             post = {"payload":{"criteria":{"schema":"ContentCriteria","contentId":id},"startMode":"start","timelineMode":"epg"},"playbackCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","subtitle":{"formats":["vtt"],"locations":["InstreamTrackLocation","ExternalTrackLocation"]},"liveSpecificCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","multipleAudio":False}}}
             next_url_hls, next_url_dash, next_url_dash_drm, next_drm = get_stream_url(post, mode, True)
         post = {"payload":{"criteria":{"schema":"ContentCriteria","contentId":id}},"playbackCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","subtitle":{"formats":["vtt"],"locations":["InstreamTrackLocation","ExternalTrackLocation"]},"liveSpecificCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","multipleAudio":False}}}
@@ -176,8 +175,7 @@ def play_stream(id, mode):
         xbmcplugin.setResolvedUrl(_handle, True, list_item)
     elif url_hls is not None:
         if mode == 'start':
-            if 'playerControl' in data and 'liveControl' in data['playerControl'] and 'channelId' in data['playerControl']['liveControl']:
-                play_stream(data['playerControl']['liveControl']['channelId'].replace('channel.',''), 'live')
+            play_stream(id, 'live')
         else:
             list_item = xbmcgui.ListItem(path = url_hls)
             list_item.setProperty('inputstream', 'inputstream.adaptive')
