@@ -7,6 +7,9 @@ import xbmcaddon
 
 from datetime import datetime
 import time
+import ssl
+from xml.dom import minidom
+from urllib.request import urlopen, Request
 
 from resources.lib.session import Session
 from resources.lib.api import API
@@ -144,6 +147,22 @@ def play_stream(id, mode):
             playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
             playlist.add(next_url_dash, next_list_item)
         xbmcplugin.setResolvedUrl(_handle, True, list_item)
+        context=ssl.create_default_context()
+        context.set_ciphers('DEFAULT')
+        request = Request(url = url_dash)
+        response = urlopen(request)
+        mpd = response.geturl()        
+        mpd = mpd.replace('?bkm-query', '/keepalive')
+        time.sleep(3)
+        while(xbmc.Player().isPlaying()):
+            request = Request(url = mpd , data = None)
+            if addon.getSetting('log_request_url') == 'true':
+                xbmc.log('Oneplay > ' + str(mpd))
+            print('aaaaaaaaaaaaaaaaaaaaaaaa')
+            response = urlopen(request)
+            if addon.getSetting('log_response') == 'true':
+                xbmc.log('Oneplay > ' + str(response.status))
+            time.sleep(10)        
     elif url_dash_drm is not None:
         list_item = xbmcgui.ListItem(path = url_dash_drm)
         list_item.setProperty('inputstream', 'inputstream.adaptive')
@@ -192,3 +211,19 @@ def play_stream(id, mode):
     else:
         xbmcgui.Dialog().notification('Oneplay','Problém při přehrání', xbmcgui.NOTIFICATION_ERROR, 5000)
 
+def get_keepalive_url(mpd, response):
+    keepalive = None
+    dom = minidom.parseString(response.read())
+    adaptationSets = dom.getElementsByTagName('AdaptationSet')
+    for adaptationSet in adaptationSets:
+        if adaptationSet.getAttribute('contentType') == 'video':
+            maxBandwidth = adaptationSet.getAttribute('maxBandwidth')
+            segmentTemplates = adaptationSet.getElementsByTagName('SegmentTemplate')
+            for segmentTemplate in segmentTemplates:
+                timelines = segmentTemplate.getElementsByTagName('S')
+                for timeline in timelines:
+                    if len(timeline.getAttribute('t')) > 0:
+                        ts = timeline.getAttribute('t')
+                uri = 'dash/' + segmentTemplate.getAttribute('media').replace('&amp;', '&').replace('$RepresentationID$', 'video=' + maxBandwidth).replace('$Time$', ts)
+                keepalive = mpd.replace('manifest.mpd?bkm-query', uri)
+    return keepalive

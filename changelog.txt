@@ -1,3 +1,6 @@
+1.3.7 (21.4.2025)
+- oprava profilového PINu
+
 1.3.6 (15.4.2025)
 - oprava live streamu u kanálu bez catchupu
 
@@ -9,6 +12,3 @@
 
 1.3.3 (14.4.2025)
 - rozšíření časového intervalu pro vyhledávání v EPG
-
-1.3.2 (13.4.2025)
-- u archivu přidání přehrávaní následujícího pořadu

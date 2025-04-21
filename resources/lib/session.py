@@ -63,16 +63,16 @@ class Session:
                 data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/user.device.remove', data = post, session = self)
         self.save_session()
         profileId = get_profile_id()
-        if len(str(addon.getSetting('profle_pin'))) > 0:
-            post = {"payload":{"profileId":profileId},"authorization":[{"schema":"PinRequestAuthorization","pin":str(addon.getSetting('profle_pin')),"type":"profile"}]}
+        if len(str(addon.getSetting('profile_pin'))) > 0:
+            post = {"payload":{"profileId":profileId},"authorization":[{"schema":"PinRequestAuthorization","pin":str(addon.getSetting('profile_pin')),"type":"profile"}]}
         else:
             post = {"payload":{"profileId":profileId}}
         data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/user.profile.select', data = post, session = self)
         if 'err' in data or 'bearerToken' not in data:
             reset_profiles()
             profileId = get_profile_id()
-            if len(str(addon.getSetting('profle_pin'))) > 0:
-                post = {"payload":{"profileId":profileId},"authorization":[{"schema":"PinRequestAuthorization","pin":str(addon.getSetting('profle_pin')),"type":"profile"}]}
+            if len(str(addon.getSetting('profile_pin'))) > 0:
+                post = {"payload":{"profileId":profileId},"authorization":[{"schema":"PinRequestAuthorization","pin":str(addon.getSetting('profile_pin')),"type":"profile"}]}
             else:
                 post = {"payload":{"profileId":profileId}}
             data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/user.profile.select', data = post, session = self)            
