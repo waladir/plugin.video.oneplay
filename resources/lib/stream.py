@@ -89,6 +89,7 @@ def play_stream(id, mode):
     api = API()
     session = Session()
     next = False
+
     if mode in ['live', 'start']:
         channels = Channels()
         channels_list = channels.get_channels_list('id')
@@ -133,7 +134,8 @@ def play_stream(id, mode):
             playlist.add(next_url_hls, next_list_item)
         xbmcplugin.setResolvedUrl(_handle, True, list_item)
     elif url_dash is not None:
-        list_item = xbmcgui.ListItem(path = url_dash)
+        mpd, keepalive = get_mpd_redirect(url_dash)
+        list_item = xbmcgui.ListItem(path = mpd)
         list_item.setProperty('inputstream', 'inputstream.adaptive')
         list_item.setProperty('inputstream.adaptive.manifest_type', 'mpd')
         list_item.setMimeType('application/dash+xml')
@@ -147,24 +149,19 @@ def play_stream(id, mode):
             playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
             playlist.add(next_url_dash, next_list_item)
         xbmcplugin.setResolvedUrl(_handle, True, list_item)
-        context=ssl.create_default_context()
-        context.set_ciphers('DEFAULT')
-        request = Request(url = url_dash)
-        response = urlopen(request)
-        mpd = response.geturl()        
-        mpd = mpd.replace('?bkm-query', '/keepalive')
-        time.sleep(3)
-        while(xbmc.Player().isPlaying()):
-            request = Request(url = mpd , data = None)
-            if addon.getSetting('log_request_url') == 'true':
-                xbmc.log('Oneplay > ' + str(mpd))
-            print('aaaaaaaaaaaaaaaaaaaaaaaa')
-            response = urlopen(request)
-            if addon.getSetting('log_response') == 'true':
-                xbmc.log('Oneplay > ' + str(response.status))
-            time.sleep(10)        
+        if keepalive is not None:
+            time.sleep(3)
+            while(xbmc.Player().isPlaying()):
+                request = Request(url = keepalive , data = None)
+                if addon.getSetting('log_request_url') == 'true':
+                    xbmc.log('Oneplay > ' + str(keepalive))
+                response = urlopen(request)
+                if addon.getSetting('log_response') == 'true':
+                    xbmc.log('Oneplay > ' + str(response.status))
+                time.sleep(5)        
     elif url_dash_drm is not None:
-        list_item = xbmcgui.ListItem(path = url_dash_drm)
+        mpd, keepalive = get_mpd_redirect(url_dash_drm)
+        list_item = xbmcgui.ListItem(path = mpd)
         list_item.setProperty('inputstream', 'inputstream.adaptive')
         list_item.setProperty('inputstream.adaptive.manifest_type', 'mpd')
         if drm is not None:
@@ -192,6 +189,16 @@ def play_stream(id, mode):
             playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
             playlist.add(next_url_dash, next_list_item)
         xbmcplugin.setResolvedUrl(_handle, True, list_item)
+        if keepalive is not None:
+            time.sleep(3)
+            while(xbmc.Player().isPlaying()):
+                request = Request(url = keepalive , data = None)
+                if addon.getSetting('log_request_url') == 'true':
+                    xbmc.log('Oneplay > ' + str(keepalive))
+                response = urlopen(request)
+                if addon.getSetting('log_response') == 'true':
+                    xbmc.log('Oneplay > ' + str(response.status))
+                time.sleep(5)        
     elif url_hls is not None:
         if mode == 'start':
             play_stream(id, 'live')
@@ -210,6 +217,15 @@ def play_stream(id, mode):
             xbmcplugin.setResolvedUrl(_handle, True, list_item)
     else:
         xbmcgui.Dialog().notification('Oneplay','Problém při přehrání', xbmcgui.NOTIFICATION_ERROR, 5000)
+
+def get_mpd_redirect(url):
+    context=ssl.create_default_context()
+    context.set_ciphers('DEFAULT')
+    request = Request(url = url , data = None)
+    response = urlopen(request)
+    mpd = response.geturl()
+    keepalive = get_keepalive_url(mpd, response)
+    return mpd, keepalive
 
 def get_keepalive_url(mpd, response):
     keepalive = None

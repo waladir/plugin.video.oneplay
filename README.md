@@ -6,6 +6,9 @@ VOD, živé vysílání, archiv, nahrávky, vytváření playlistu a EPG pro IPT
 <a href="https://www.xbmc-kodi.cz/prispevek-oneplay">Vlákno na fóru XBMC-Kodi.cz</a><br><br>
 </p>
 <p>
+1.3.8 (23.4.2025)<br>
+- ošetření pauzy při přihrávání (u DASH)<br><br>
+
 1.3.7 (21.4.2025)<br>
 - oprava profilového PINu<br><br>
 
@@ -17,7 +20,4 @@ VOD, živé vysílání, archiv, nahrávky, vytváření playlistu a EPG pro IPT
 
 1.3.4 (15.4.2025)<br>
 - doplnění přehrávání následujícího pořadu u pořadů z TV i mimo archiv<br><br>
-
-1.3.3 (14.4.2025)<br>
-- rozšíření časového intervalu pro vyhledávání v EPG<br><br>
 </p>
