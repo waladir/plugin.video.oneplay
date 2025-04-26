@@ -5,6 +5,9 @@ import xbmcplugin
 import xbmcgui
 import xbmcaddon
 
+import time 
+from datetime import datetime
+
 from resources.lib.session import Session
 from resources.lib.api import API
 from resources.lib.epg import get_item_detail, epg_listitem
@@ -165,6 +168,10 @@ def list_category(id, carouselId, criteria, label):
                             for item in carousel['tiles']:
                                 if item['action']['params']['schema'] == 'PageContentDisplayApiAction':
                                     item_detail = get_item_detail(item['action']['params']['payload']['contentId'])
+                                    if id == '8' and 'additionalFragments' in item:
+                                        year = datetime.now().year
+                                        expiration = int(time.mktime(time.strptime(item['additionalFragments'][0]['labels'][0]['name'] + str(year) + ' ' + item['additionalFragments'][0]['labels'][1]['name'], '%d.%m.%Y %H:%M'))) + 30*24*60*60
+                                        item['title'] = item['title'] + '\n[COLOR=gray]' + item['labels'][0]['name'] + ' | ' + item['additionalFragments'][0]['labels'][0]['name'] + ' ' + item['additionalFragments'][0]['labels'][1]['name'] + ' (do ' + datetime.fromtimestamp(expiration).strftime('%d.%m').lstrip("0").replace(" 0", " ") +')[/COLOR]'
                                     list_item = xbmcgui.ListItem(label = item['title'])
                                     image = item['image'].replace('{WIDTH}', '320').replace('{HEIGHT}', '480')
                                     list_item.setArt({'poster': image})    

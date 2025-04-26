@@ -19,6 +19,85 @@ from resources.lib.epg import get_channel_epg
 if len(sys.argv) > 1:
     _handle = int(sys.argv[1])
 
+def play_catchup(id, start_ts, end_ts):
+    start_ts = int(start_ts)
+    end_ts = int(end_ts)    
+    epg = get_channel_epg(channel_id = id, from_ts = start_ts - 7200, to_ts = end_ts + 60*60*12)
+    if start_ts in epg:
+        if epg[start_ts]['endts'] > int(time.mktime(datetime.now().timetuple()))-10:
+            play_stream(id, 'start')
+        else:
+            play_stream(epg[start_ts]['id'], 'archive')
+    else:
+        play_stream(id, 'start')
+
+def get_manifest_redirect(url):
+    try:
+        context=ssl.create_default_context()
+        context.set_ciphers('DEFAULT')
+        request = Request(url = url , data = None)
+        response = urlopen(request)
+        manifest = response.geturl()
+        keepalive = get_keepalive_url(manifest, response)
+        return manifest, keepalive
+    except:
+        return url, None
+
+def get_keepalive_url(manifest, response):
+    keepalive = None
+    if 'manifest.mpd' in manifest:
+        dom = minidom.parseString(response.read())
+        adaptationSets = dom.getElementsByTagName('AdaptationSet')
+        for adaptationSet in adaptationSets:
+            if adaptationSet.getAttribute('contentType') == 'video':
+                minBandwidth = adaptationSet.getAttribute('minBandwidth')
+                segmentTemplates = adaptationSet.getElementsByTagName('SegmentTemplate')
+                for segmentTemplate in segmentTemplates:
+                    timelines = segmentTemplate.getElementsByTagName('S')
+                    for timeline in timelines:
+                        if len(timeline.getAttribute('t')) > 0:
+                            ts = timeline.getAttribute('t')
+                    uri = 'dash/' + segmentTemplate.getAttribute('media').replace('&amp;', '&').replace('$RepresentationID$', 'video=' + minBandwidth).replace('$Time$', ts)
+                    keepalive = manifest.replace('manifest.mpd?bkm-query', uri)
+    elif 'index.m3u8' in manifest:
+        streams = str(response.read()).split('#EXT-X-STREAM-INF:BANDWIDTH=')
+        if len(streams) > 0:
+            uri = streams[1].split('\\n')[1]
+            keepalive = manifest.replace('index.m3u8?bkm-query', uri)
+    return keepalive
+
+def get_list_item(type, url, drm, next_url, next_drm):
+    list_item = xbmcgui.ListItem(path = url)
+    list_item.setProperty('inputstream', 'inputstream.adaptive')
+    list_item.setProperty('inputstream.adaptive.manifest_type', type)
+    if drm is not None:
+        # from inputstreamhelper import Helper # type: ignore
+        # is_helper = Helper('mpd', drm = 'com.widevine.alpha')
+        # if is_helper.check_inputstream():            
+        list_item.setProperty('inputstream.adaptive.license_type', 'com.widevine.alpha')
+        from urllib.parse import urlencode
+        list_item.setProperty('inputstream.adaptive.license_key', drm['licenceUrl'] + '|' + urlencode({'x-axdrm-message' : drm['token']}) + '|R{SSM}|')                
+    if type == 'mpd':
+        list_item.setMimeType('application/dash+xml')
+    list_item.setContentLookup(False)       
+    if next_url is not None:
+        next_list_item = xbmcgui.ListItem(path = next_url)
+        next_list_item.setProperty('inputstream', 'inputstream.adaptive')
+        next_list_item.setProperty('inputstream.adaptive.manifest_type', type)
+        if next_drm is not None:
+            # from inputstreamhelper import Helper # type: ignore
+            # is_helper = Helper('mpd', drm = 'com.widevine.alpha')
+            # if is_helper.check_inputstream():            
+            list_item.setProperty('inputstream.adaptive.license_type', 'com.widevine.alpha')
+            from urllib.parse import urlencode
+            list_item.setProperty('inputstream.adaptive.license_key', drm['licenceUrl'] + '|' + urlencode({'x-axdrm-message' : drm['token']}) + '|R{SSM}|')                
+        if type == 'mpd':
+            next_list_item.setMimeType('application/dash+xml')
+        next_list_item.setContentLookup(False)       
+        playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
+        playlist.add(next_url, next_list_item)
+    xbmcplugin.setResolvedUrl(_handle, True, list_item)
+
 def get_stream_url(post, mode, next = False):
     api = API()
     session = Session()
@@ -33,12 +112,19 @@ def get_stream_url(post, mode, next = False):
         if 'err' in data or 'offer' not in data or 'channelUpdate' not in data['offer']:
             return None, None, None, None
         data = data['offer']['channelUpdate']
-    if 'err' in data: # or 'media' not in data:
+    if 'err' in data:
         if len(data['err']) > 0:
             xbmcgui.Dialog().notification('Oneplay', data['err'], xbmcgui.NOTIFICATION_ERROR, 5000)
         else:
             xbmcgui.Dialog().notification('Oneplay', 'Problém při přehrání', xbmcgui.NOTIFICATION_ERROR, 5000)                    
     else:
+        if mode == 'start' and 'liveControl' in data['playerControl'] and 'timeShift' in data['playerControl']['liveControl']['timeline'] and data['playerControl']['liveControl']['timeline']['timeShift']['available'] == False:
+            post.update({'payload' : {'criteria' : post['payload']['criteria'], 'startMode' : 'live'}})
+            if next == False:
+                data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/content.play', data = post, session = session)
+            else:
+                data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/content.playnext', data = post, session = session)
+
         if 'liveControl' in data['playerControl'] and 'mosaic' in data['playerControl']['liveControl'] and next == False:
             md_titles = []
             md_ids = []
@@ -72,25 +158,17 @@ def get_stream_url(post, mode, next = False):
                     url_hls = asset['src']
     return url_hls, url_dash, url_dash_drm, drm
 
-def play_catchup(id, start_ts, end_ts):
-    start_ts = int(start_ts)
-    end_ts = int(end_ts)    
-    epg = get_channel_epg(channel_id = id, from_ts = start_ts - 7200, to_ts = end_ts + 60*60*12)
-    if start_ts in epg:
-        if epg[start_ts]['endts'] > int(time.mktime(datetime.now().timetuple()))-10:
-            play_stream(id, 'start')
-        else:
-            play_stream(epg[start_ts]['id'], 'archive')
-    else:
-        play_stream(id, 'start')
-
 def play_stream(id, mode):
     addon = xbmcaddon.Addon()
     api = API()
     session = Session()
-    next = False
+    keepalive = None
+    next_url_dash = None
+    next_url_dash_drm = None
+    next_url_hls = None
+    next_drm = None
 
-    if mode in ['live', 'start']:
+    if mode == 'start':
         channels = Channels()
         channels_list = channels.get_channels_list('id')
         channel = channels_list[id]
@@ -114,132 +192,33 @@ def play_stream(id, mode):
                     if 'mainAction' in block and 'action' in block['mainAction'] and 'criteria' in block['mainAction']['action']['params']['payload'] and 'contentId' in block['mainAction']['action']['params']['payload']['criteria']:
                         id = block['mainAction']['action']['params']['payload']['criteria']['contentId']
         if 'epgitem' in id:
-            next = True
             post = {"payload":{"criteria":{"schema":"ContentCriteria","contentId":id},"startMode":"start","timelineMode":"epg"},"playbackCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","subtitle":{"formats":["vtt"],"locations":["InstreamTrackLocation","ExternalTrackLocation"]},"liveSpecificCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","multipleAudio":False}}}
             next_url_hls, next_url_dash, next_url_dash_drm, next_drm = get_stream_url(post, mode, True)
         post = {"payload":{"criteria":{"schema":"ContentCriteria","contentId":id}},"playbackCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","subtitle":{"formats":["vtt"],"locations":["InstreamTrackLocation","ExternalTrackLocation"]},"liveSpecificCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","multipleAudio":False}}}
 
     url_hls, url_dash, url_dash_drm, drm = get_stream_url(post, mode)
+
     if addon.getSetting('prefer_hls') == 'true' and url_hls is not None:
-        list_item = xbmcgui.ListItem(path = url_hls)
-        list_item.setProperty('inputstream', 'inputstream.adaptive')
-        list_item.setProperty('inputstream.adaptive.manifest_type', 'hls')
-        list_item.setContentLookup(False)     
-        if next == True and next_url_hls is not None:
-            next_list_item = xbmcgui.ListItem(path = next_url_hls)
-            next_list_item.setProperty('inputstream', 'inputstream.adaptive')
-            next_list_item.setProperty('inputstream.adaptive.manifest_type', 'hls')
-            next_list_item.setContentLookup(False)       
-            playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
-            playlist.add(next_url_hls, next_list_item)
-        xbmcplugin.setResolvedUrl(_handle, True, list_item)
+        url, keepalive = get_manifest_redirect(url_hls)
+        get_list_item('hls', url, None, next_url_hls, None)
     elif url_dash is not None:
-        mpd, keepalive = get_mpd_redirect(url_dash)
-        list_item = xbmcgui.ListItem(path = mpd)
-        list_item.setProperty('inputstream', 'inputstream.adaptive')
-        list_item.setProperty('inputstream.adaptive.manifest_type', 'mpd')
-        list_item.setMimeType('application/dash+xml')
-        list_item.setContentLookup(False)       
-        if next == True and next_url_dash is not None:
-            next_list_item = xbmcgui.ListItem(path = next_url_dash)
-            next_list_item.setProperty('inputstream', 'inputstream.adaptive')
-            next_list_item.setProperty('inputstream.adaptive.manifest_type', 'mpd')
-            next_list_item.setMimeType('application/dash+xml')
-            next_list_item.setContentLookup(False)       
-            playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
-            playlist.add(next_url_dash, next_list_item)
-        xbmcplugin.setResolvedUrl(_handle, True, list_item)
-        if keepalive is not None:
-            time.sleep(3)
-            while(xbmc.Player().isPlaying()):
-                request = Request(url = keepalive , data = None)
-                if addon.getSetting('log_request_url') == 'true':
-                    xbmc.log('Oneplay > ' + str(keepalive))
-                response = urlopen(request)
-                if addon.getSetting('log_response') == 'true':
-                    xbmc.log('Oneplay > ' + str(response.status))
-                time.sleep(5)        
+        url, keepalive = get_manifest_redirect(url_dash)
+        get_list_item('mpd', url, None, next_url_dash, None)
     elif url_dash_drm is not None:
-        mpd, keepalive = get_mpd_redirect(url_dash_drm)
-        list_item = xbmcgui.ListItem(path = mpd)
-        list_item.setProperty('inputstream', 'inputstream.adaptive')
-        list_item.setProperty('inputstream.adaptive.manifest_type', 'mpd')
-        if drm is not None:
-            # from inputstreamhelper import Helper # type: ignore
-            # is_helper = Helper('mpd', drm = 'com.widevine.alpha')
-            # if is_helper.check_inputstream():            
-            list_item.setProperty('inputstream.adaptive.license_type', 'com.widevine.alpha')
-            from urllib.parse import urlencode
-            list_item.setProperty('inputstream.adaptive.license_key', drm['licenceUrl'] + '|' + urlencode({'x-axdrm-message' : drm['token']}) + '|R{SSM}|')                
-        list_item.setMimeType('application/dash+xml')
-        list_item.setContentLookup(False)       
-        if next == True and next_url_dash_drm is not None:
-            next_list_item = xbmcgui.ListItem(path = next_url_dash_drm)
-            next_list_item.setProperty('inputstream', 'inputstream.adaptive')
-            next_list_item.setProperty('inputstream.adaptive.manifest_type', 'mpd')
-            if next_drm is not None:
-                # from inputstreamhelper import Helper # type: ignore
-                # is_helper = Helper('mpd', drm = 'com.widevine.alpha')
-                # if is_helper.check_inputstream():            
-                list_item.setProperty('inputstream.adaptive.license_type', 'com.widevine.alpha')
-                from urllib.parse import urlencode
-                list_item.setProperty('inputstream.adaptive.license_key', drm['licenceUrl'] + '|' + urlencode({'x-axdrm-message' : drm['token']}) + '|R{SSM}|')                
-            next_list_item.setMimeType('application/dash+xml')
-            next_list_item.setContentLookup(False)       
-            playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
-            playlist.add(next_url_dash, next_list_item)
-        xbmcplugin.setResolvedUrl(_handle, True, list_item)
-        if keepalive is not None:
-            time.sleep(3)
-            while(xbmc.Player().isPlaying()):
-                request = Request(url = keepalive , data = None)
-                if addon.getSetting('log_request_url') == 'true':
-                    xbmc.log('Oneplay > ' + str(keepalive))
-                response = urlopen(request)
-                if addon.getSetting('log_response') == 'true':
-                    xbmc.log('Oneplay > ' + str(response.status))
-                time.sleep(5)        
+        url, keepalive = get_manifest_redirect(url_dash_drm)
+        get_list_item('mpd', url, drm, next_url_dash_drm, next_drm)
     elif url_hls is not None:
-        if mode == 'start':
-            play_stream(id, 'live')
-        else:
-            list_item = xbmcgui.ListItem(path = url_hls)
-            list_item.setProperty('inputstream', 'inputstream.adaptive')
-            list_item.setProperty('inputstream.adaptive.manifest_type', 'hls')
-            list_item.setContentLookup(False)       
-            if next == True and next_url_hls is not None:
-                next_list_item = xbmcgui.ListItem(path = next_url_hls)
-                next_list_item.setProperty('inputstream', 'inputstream.adaptive')
-                next_list_item.setProperty('inputstream.adaptive.manifest_type', 'hls')
-                next_list_item.setContentLookup(False)       
-                playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
-                playlist.add(next_url_hls, next_list_item)
-            xbmcplugin.setResolvedUrl(_handle, True, list_item)
+        url, keepalive = get_manifest_redirect(url_hls)
+        get_list_item('hls', url, None, next_url_hls, None)
     else:
         xbmcgui.Dialog().notification('Oneplay','Problém při přehrání', xbmcgui.NOTIFICATION_ERROR, 5000)
-
-def get_mpd_redirect(url):
-    context=ssl.create_default_context()
-    context.set_ciphers('DEFAULT')
-    request = Request(url = url , data = None)
-    response = urlopen(request)
-    mpd = response.geturl()
-    keepalive = get_keepalive_url(mpd, response)
-    return mpd, keepalive
-
-def get_keepalive_url(mpd, response):
-    keepalive = None
-    dom = minidom.parseString(response.read())
-    adaptationSets = dom.getElementsByTagName('AdaptationSet')
-    for adaptationSet in adaptationSets:
-        if adaptationSet.getAttribute('contentType') == 'video':
-            maxBandwidth = adaptationSet.getAttribute('maxBandwidth')
-            segmentTemplates = adaptationSet.getElementsByTagName('SegmentTemplate')
-            for segmentTemplate in segmentTemplates:
-                timelines = segmentTemplate.getElementsByTagName('S')
-                for timeline in timelines:
-                    if len(timeline.getAttribute('t')) > 0:
-                        ts = timeline.getAttribute('t')
-                uri = 'dash/' + segmentTemplate.getAttribute('media').replace('&amp;', '&').replace('$RepresentationID$', 'video=' + maxBandwidth).replace('$Time$', ts)
-                keepalive = mpd.replace('manifest.mpd?bkm-query', uri)
-    return keepalive
+    if keepalive is not None:
+        time.sleep(3)
+        while(xbmc.Player().isPlaying()):
+            request = Request(url = keepalive , data = None)
+            if addon.getSetting('log_request_url') == 'true':
+                xbmc.log('Oneplay > ' + str(keepalive))
+            response = urlopen(request)
+            if addon.getSetting('log_response') == 'true':
+                xbmc.log('Oneplay > ' + str(response.status))
+            time.sleep(20)        
