@@ -113,10 +113,28 @@ def get_stream_url(post, mode, next = False):
             return None, None, None, None
         data = data['offer']['channelUpdate']
     if 'err' in data:
-        if len(data['err']) > 0:
-            xbmcgui.Dialog().notification('Oneplay', data['err'], xbmcgui.NOTIFICATION_ERROR, 5000)
-        else:
-            xbmcgui.Dialog().notification('Oneplay', 'Problém při přehrání', xbmcgui.NOTIFICATION_ERROR, 5000)                    
+        if data['err'] == 'Zadejte kód rodičovského zámku' and next == False:
+            addon = xbmcaddon.Addon()
+            if str(addon.getSetting('pin')) == '1621' or len(str(addon.getSetting('pin'))) == 0:
+                pin = xbmcgui.Dialog().numeric(type = 0, heading = 'Zadejte PIN', bHiddenInput = True)
+                if len(str(pin)) != 4:
+                    xbmcgui.Dialog().notification('Oneplay','Nezadaný-nesprávný PIN', xbmcgui.NOTIFICATION_ERROR, 5000)
+                    pin = '1621'
+            else:
+                pin = str(addon.getSetting('pin'))
+            post['authorization'] = [{"schema":"PinRequestAuthorization","pin":pin,"type":"parental"}]
+            data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/content.play', data = post, session = session)
+            if 'err' in data:
+                if len(data['err']) > 0:
+                    xbmcgui.Dialog().notification('Oneplay', data['err'], xbmcgui.NOTIFICATION_ERROR, 5000)
+                else:
+                    xbmcgui.Dialog().notification('Oneplay', 'Problém při přehrání', xbmcgui.NOTIFICATION_ERROR, 5000)                    
+
+        else:            
+            if len(data['err']) > 0:
+                xbmcgui.Dialog().notification('Oneplay', data['err'], xbmcgui.NOTIFICATION_ERROR, 5000)
+            else:
+                xbmcgui.Dialog().notification('Oneplay', 'Problém při přehrání', xbmcgui.NOTIFICATION_ERROR, 5000)                    
     else:
         if mode == 'start' and 'liveControl' in data['playerControl'] and 'timeShift' in data['playerControl']['liveControl']['timeline'] and data['playerControl']['liveControl']['timeline']['timeShift']['available'] == False:
             post.update({'payload' : {'criteria' : post['payload']['criteria'], 'startMode' : 'live'}})

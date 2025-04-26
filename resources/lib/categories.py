@@ -275,7 +275,7 @@ def list_show(id, label):
             list_item.setContentLookup(False)          
             list_item.setProperty('IsPlayable', 'true')
             url = get_url(action = 'play_archive', id = show['id'])
-        xbmcplugin.addDirectoryItem(_handle, url, list_item, False)                            
+            xbmcplugin.addDirectoryItem(_handle, url, list_item, False)                            
     xbmcplugin.endOfDirectory(_handle, cacheToDisc = False)  
 
 def list_tv_episodes(id, label):
