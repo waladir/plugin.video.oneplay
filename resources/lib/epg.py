@@ -62,14 +62,20 @@ def remove_db():
 def get_live_epg():
     epg_data = {}
     epg = {}
+    epg_next = {}
+    current = False
     post = {"payload":{"criteria":{"channelSetId":"channel_list.1","viewport":{"channelRange":{"from":0,"to":200},"timeRange":{"from":datetime.fromtimestamp(datetime.now().timestamp()-7200).strftime('%Y-%m-%dT%H:%M:%S') + '.000Z',"to":datetime.fromtimestamp(datetime.now().timestamp()).strftime('%Y-%m-%dT%H:%M:%S') + '.000Z'},"schema":"EpgViewportAbsolute"}},"requestedOutput":{"channelList":"none","datePicker":False,"channelSets":False}}}
     epg_data = get_epg_data(post, None)
     for key in epg_data:
         item = epg_data[key]
+        if current == True:
+            epg_next.update({item['channel_id'] : item})
+            current = False
         currentts = datetime.now().timestamp()
         if item['startts'] < currentts and item['endts'] > currentts:
             epg.update({item['channel_id'] : item})
-    return epg
+            current = True
+    return epg, epg_next
 
 def get_channel_epg(channel_id, from_ts, to_ts):
     channels = Channels()
