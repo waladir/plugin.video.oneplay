@@ -1,3 +1,6 @@
+1.4.3 (1.5.2025)
+- rozšíření informací u některých pořadů v kategoriích/vyhledávání
+
 1.4.2 (26.4.2025)
 - doplnění následujícího pořadu u živého vysílání
 
@@ -12,6 +15,3 @@
 
 1.3.8 (23.4.2025)
 - ošetření pauzy při přihrávání (u DASH)
-
-1.3.7 (21.4.2025)
-- oprava profilového PINu

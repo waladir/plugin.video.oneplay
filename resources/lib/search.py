@@ -62,7 +62,6 @@ def program_search(query, label):
                                     list_item = xbmcgui.ListItem(label = item['title'])
                                     image = item['image'].replace('{WIDTH}', '320').replace('{HEIGHT}', '480')
                                     list_item.setArt({'poster': image})    
-                                    list_item.setInfo('video', {'mediatype':'movie', 'title': item['title']}) 
                                     list_item = epg_listitem(list_item, item_detail, None)
                                     if item['action']['params']['contentType'] == 'show':
                                         menus = [('Přidat do oblíbených Oneplay', 'RunPlugin(plugin://' + plugin_id + '?action=add_favourite&type=show&id=' + item['action']['params']['payload']['contentId'] + '&image=' + image + '&title=' + item['title'] + ')')]
@@ -76,7 +75,7 @@ def program_search(query, label):
                                         list_item.addContextMenuItems(menus)       
                                         url = get_url(action = 'play_archive', id = item['action']['params']['payload']['contentId'])
                                         xbmcplugin.addDirectoryItem(_handle, url, list_item, False)
-                                    else:
+                                    elif item['action']['params']['contentType'] not in ['competition']:
                                         xbmcgui.Dialog().notification('Oneplay','Neznámý typ: ' + item['action']['params']['contentType'], xbmcgui.NOTIFICATION_INFO, 2000)                                    
         else:
             xbmcgui.Dialog().notification('Oneplay','Nic nenalezeno', xbmcgui.NOTIFICATION_INFO, 3000)

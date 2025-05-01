@@ -108,8 +108,27 @@ def get_shows(id, last_season = False):
                         if 'params' in item['action'] and 'contentId' in item['action']['params']['payload']['criteria']:
                             if 'subTitle' in item:
                                 item['title'] = item['title'] + ' ' + item['subTitle']
+                            title = item['title']
+                            subtitle = ''
+                            if 'additionalFragments' in item and len(item['additionalFragments']) > 0 and 'labels' in item['additionalFragments'][0]:
+                                for label in item['labels']:
+                                    if 'Vyprší' not in label['name']:
+                                        subtitle = label['name']
+                                for label in item['additionalFragments'][0]['labels']:
+                                    if ':' in label['name']:
+                                        if len(subtitle) > 0:
+                                            subtitle += ' | ' + label['name']
+                                        else:
+                                            subtitle = label['name']
+                                    if 'Díl' in label['name']:
+                                        if len(subtitle) > 0:
+                                            subtitle += ' | ' + label['name']
+                                        else:
+                                            subtitle = label['name']
+                            if len(subtitle) > 1:
+                                item['title'] = item['title'] + ' | [COLOR=gray]' + subtitle + '[/COLOR]'
                             image = item['image'].replace('{WIDTH}', '480').replace('{HEIGHT}', '320')
-                            show_item = {'title' : item['title'], 'id' : item['action']['params']['payload']['criteria']['contentId'], 'image' : image}
+                            show_item = {'title' : item['title'], 'id' : item['action']['params']['payload']['criteria']['contentId'], 'image' : image, 'description' : item['description']}
                             shows.append(show_item)
     return {'seasons' : seasons, 'shows' : shows}
 
@@ -177,14 +196,14 @@ def list_category(id, carouselId, criteria, label):
                                     list_item.setArt({'poster': image})    
                                     list_item.setInfo('video', {'mediatype':'movie', 'title': item['title']}) 
                                     list_item = epg_listitem(list_item, item_detail, None)
-                                    if item['action']['params']['contentType'] == 'show':
+                                    if item['action']['params']['contentType'] in ['show','highlight']:
                                         url = get_url(action = 'list_show', id = item['action']['params']['payload']['contentId'], label = label + ' / ' + item['title'] )
                                         menus = [('Přidat do oblíbených Oneplay', 'RunPlugin(plugin://' + plugin_id + '?action=add_favourite&type=show&id=' + item['action']['params']['payload']['contentId'] + '&image=' + image + '&title=' + item['title'] + ')')]
                                         if id == '8':
                                             menus.append(('Smazat nahrávku', 'RunPlugin(plugin://' + plugin_id + '?action=delete_recording&id=' + item['action']['params']['payload']['contentId'] + ')'))
                                         list_item.addContextMenuItems(menus)       
                                         xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
-                                    elif item['action']['params']['contentType']  in ['movie','epgitem','match']:
+                                    elif item['action']['params']['contentType']  in ['movie','epgitem','match','highlight']:
                                         list_item.setContentLookup(False)          
                                         list_item.setProperty('IsPlayable', 'true')
                                         if 'startMode' in item['action']['params']['payload']:
@@ -196,7 +215,7 @@ def list_category(id, carouselId, criteria, label):
                                             menus.append(('Smazat nahrávku', 'RunPlugin(plugin://' + plugin_id + '?action=delete_recording&id=' + item['action']['params']['payload']['contentId'] + ')'))
                                         list_item.addContextMenuItems(menus)       
                                         xbmcplugin.addDirectoryItem(_handle, url, list_item, False)
-                                    else:
+                                    elif item['action']['params']['contentType'] not in ['competition']:
                                         xbmcgui.Dialog().notification('Oneplay','Neznámý typ: ' + item['action']['params']['contentType'], xbmcgui.NOTIFICATION_INFO, 2000)                                    
                                 elif item['action']['params']['schema'] == 'PageCategoryDisplayApiAction':
                                     list_item = xbmcgui.ListItem(label = item['title'])
@@ -268,10 +287,16 @@ def list_show(id, label):
             list_item.addContextMenuItems(menus)       
             xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
     else:
+        kodi_version = get_kodi_version()
         for show in data['shows']:
             list_item = xbmcgui.ListItem(label = show['title'])
             list_item.setArt({'poster': show['image']})    
             list_item.setInfo('video', {'mediatype':'movie', 'title': show['title']}) 
+            if kodi_version >= 20:
+                infotag = list_item.getVideoInfoTag()
+                infotag.setPlot(show['description'])
+            else:
+                list_item.setInfo('video', {'plot': show['description']})
             list_item.setContentLookup(False)          
             list_item.setProperty('IsPlayable', 'true')
             url = get_url(action = 'play_archive', id = show['id'])
