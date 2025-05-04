@@ -156,7 +156,7 @@ def get_item_detail_from_api(id):
                 item_detail = {'description' : description, 'original' : original, 'year' : year, 'genres' : genres, 'cast' : cast, 'directors' : directors, 'country' : country}
     return item_detail
 
-def get_item_detail(id, download_details = True):
+def get_item_detail(id, download_details = True, item_data = None):
     global db
     item_detail = {}
     addon = xbmcaddon.Addon()
@@ -181,7 +181,9 @@ def get_item_detail(id, download_details = True):
                 return {}
         else:
             item_detail = {'description' : description, 'original' : original, 'year' : year, 'genres' : genres, 'cast' : cast, 'directors' : directors, 'country' : country}
-        close_db()            
+        close_db()
+    if item_data is not None:
+        item_detail = {**item_data, **item_detail}
     return item_detail    
 
 def epg_listitem(list_item, epg, icon):

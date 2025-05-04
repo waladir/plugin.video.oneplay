@@ -71,12 +71,12 @@ def get_list_item(type, url, drm, next_url, next_drm):
     list_item.setProperty('inputstream', 'inputstream.adaptive')
     list_item.setProperty('inputstream.adaptive.manifest_type', type)
     if drm is not None:
-        # from inputstreamhelper import Helper # type: ignore
-        # is_helper = Helper('mpd', drm = 'com.widevine.alpha')
-        # if is_helper.check_inputstream():            
-        list_item.setProperty('inputstream.adaptive.license_type', 'com.widevine.alpha')
-        from urllib.parse import urlencode
-        list_item.setProperty('inputstream.adaptive.license_key', drm['licenceUrl'] + '|' + urlencode({'x-axdrm-message' : drm['token']}) + '|R{SSM}|')                
+        from inputstreamhelper import Helper # type: ignore
+        is_helper = Helper('mpd', drm = 'com.widevine.alpha')
+        if is_helper.check_inputstream():            
+            list_item.setProperty('inputstream.adaptive.license_type', 'com.widevine.alpha')
+            from urllib.parse import urlencode
+            list_item.setProperty('inputstream.adaptive.license_key', drm['licenceUrl'] + '|' + urlencode({'x-axdrm-message' : drm['token']}) + '|R{SSM}|')                
     if type == 'mpd':
         list_item.setMimeType('application/dash+xml')
     list_item.setContentLookup(False)       
@@ -85,12 +85,12 @@ def get_list_item(type, url, drm, next_url, next_drm):
         next_list_item.setProperty('inputstream', 'inputstream.adaptive')
         next_list_item.setProperty('inputstream.adaptive.manifest_type', type)
         if next_drm is not None:
-            # from inputstreamhelper import Helper # type: ignore
-            # is_helper = Helper('mpd', drm = 'com.widevine.alpha')
-            # if is_helper.check_inputstream():            
-            list_item.setProperty('inputstream.adaptive.license_type', 'com.widevine.alpha')
-            from urllib.parse import urlencode
-            list_item.setProperty('inputstream.adaptive.license_key', drm['licenceUrl'] + '|' + urlencode({'x-axdrm-message' : drm['token']}) + '|R{SSM}|')                
+            from inputstreamhelper import Helper # type: ignore
+            is_helper = Helper('mpd', drm = 'com.widevine.alpha')
+            if is_helper.check_inputstream():            
+                list_item.setProperty('inputstream.adaptive.license_type', 'com.widevine.alpha')
+                from urllib.parse import urlencode
+                list_item.setProperty('inputstream.adaptive.license_key', drm['licenceUrl'] + '|' + urlencode({'x-axdrm-message' : drm['token']}) + '|R{SSM}|')                
         if type == 'mpd':
             next_list_item.setMimeType('application/dash+xml')
         next_list_item.setContentLookup(False)       
