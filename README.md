@@ -7,7 +7,7 @@ VOD, živé vysílání, archiv, nahrávky, vytváření playlistu a EPG pro IPT
 </p>
 <p>
 1.4.4 (4.5.2025)<br>
-- přidané volání InputStream Helperu při přehárání kanálu s DRM<br><br>
+- přidané volání InputStream Helperu při přehárání streamů s DRM<br><br>
 
 1.4.3 (1.5.2025)<br>
 - rozšíření informací u některých pořadů v kategoriích/vyhledávání<br><br>
