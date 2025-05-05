@@ -8,7 +8,7 @@ from datetime import datetime
 
 from resources.lib.channels import Channels 
 from resources.lib.epg import get_live_epg, epg_listitem
-from resources.lib.utils import get_url, get_color, plugin_id
+from resources.lib.utils import get_url, get_color, plugin_id, get_kodi_version
 
 if len(sys.argv) > 1:
     _handle = int(sys.argv[1])
@@ -21,6 +21,7 @@ def list_live(label):
     channels = Channels()
     channels_list = channels.get_channels_list('channel_number')
     epg, epg_next = get_live_epg()
+    kodi_version = get_kodi_version()
     cnt = 0
     for num in sorted(channels_list.keys()):
         cnt += 1
@@ -32,12 +33,16 @@ def list_live(label):
             channel_number = ''
         if channels_list[num]['id'] in epg:
             epg_item = epg[channels_list[num]['id']]
+            list_item = xbmcgui.ListItem(label = channel_number + channels_list[num]['name'] + '[COLOR ' + get_color(addon.getSetting('label_color_live')) + '] | ' + epg_item['title'] + ' | ' + datetime.fromtimestamp(epg_item['startts']).strftime('%H:%M') + ' - ' + datetime.fromtimestamp(epg_item['endts']).strftime('%H:%M') + '[/COLOR]')
+            list_item = epg_listitem(list_item = list_item, epg = epg_item, icon = channels_list[num]['logo'])
             if channels_list[num]['id'] in epg_next:
                 epg_next_item = epg_next[channels_list[num]['id']]
-                list_item = xbmcgui.ListItem(label = channel_number + channels_list[num]['name'] + '[COLOR ' + get_color(addon.getSetting('label_color_live')) + '] | ' + epg_item['title'] + ' | ' + datetime.fromtimestamp(epg_item['startts']).strftime('%H:%M') + ' - ' + datetime.fromtimestamp(epg_item['endts']).strftime('%H:%M') + '[/COLOR]\n[COLOR=darkgray]Následuje: ' + epg_next_item['title'] + ' | ' + datetime.fromtimestamp(epg_next_item['startts']).strftime('%H:%M') + ' - ' + datetime.fromtimestamp(epg_next_item['endts']).strftime('%H:%M') +  '[/COLOR]')
-            else:
-                list_item = xbmcgui.ListItem(label = channel_number + channels_list[num]['name'] + '[COLOR ' + get_color(addon.getSetting('label_color_live')) + '] | ' + epg_item['title'] + ' | ' + datetime.fromtimestamp(epg_item['startts']).strftime('%H:%M') + ' - ' + datetime.fromtimestamp(epg_item['endts']).strftime('%H:%M') + '[/COLOR]')
-            list_item = epg_listitem(list_item = list_item, epg = epg_item, icon = channels_list[num]['logo'])
+                description = epg_item['description'] + '\n\n[COLOR=darkgray]Následuje:\n' + epg_next_item['title'] + ' | ' + datetime.fromtimestamp(epg_next_item['startts']).strftime('%H:%M') + ' - ' + datetime.fromtimestamp(epg_next_item['endts']).strftime('%H:%M') +  '[/COLOR]'
+                if kodi_version >= 20:
+                    infotag = list_item.getVideoInfoTag()
+                    infotag.setPlot(description)
+                else:
+                    list_item.setInfo('video', {'plot': description})
             menus = []
             menus.append(('Přidat nahrávku', 'RunPlugin(plugin://' + plugin_id + '?action=add_recording&id=' + str(epg_item['id']) + ')'))
             if epg_item['type'] == 'show':

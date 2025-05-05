@@ -6,8 +6,11 @@ VOD, živé vysílání, archiv, nahrávky, vytváření playlistu a EPG pro IPT
 <a href="https://www.xbmc-kodi.cz/prispevek-oneplay">Vlákno na fóru XBMC-Kodi.cz</a><br><br>
 </p>
 <p>
+1.4.5 (5.5.2025)<br>
+- přesun zobrazení následující pořadu na konec popisu<br><br>
+
 1.4.4 (4.5.2025)<br>
-- přidané volání InputStream Helperu při přehárání streamů s DRM<br><br>
+- přidané volání InputStream Helperu při přehrání streamů s DRM<br><br>
 
 1.4.3 (1.5.2025)<br>
 - rozšíření informací u některých pořadů v kategoriích/vyhledávání<br><br>
@@ -18,9 +21,4 @@ VOD, živé vysílání, archiv, nahrávky, vytváření playlistu a EPG pro IPT
 1.4.1 (26.4.2025)<br>
 - oprava zobrazení epizod u sérií bez sezón<br>
 - implementace zadání PINu u rodičovského zámku u pořadů<br><br>
-
-1.4.0 (26.4.2025)<br>
-- ošetření pauzy při přihrávání i u HLS<br>
-- optimalizace keepalive požadavků<br>
-- doplnění dat k nahrávkám<br><br>
 </p>

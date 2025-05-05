@@ -1,4 +1,4 @@
-﻿<addon id="plugin.video.oneplay" name="Oneplay" provider-name="waladir" version="1.4.4">
+﻿<addon id="plugin.video.oneplay" name="Oneplay" provider-name="waladir" version="1.4.5">
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
     <import addon="inputstream.adaptive" version="19.0.0"/>
@@ -38,8 +38,11 @@ Další informace a podporu najdete na fóru www.xbmc-kodi.cz (https://www.xbmc-
     <platform>all</platform>
     <source>https://github.com/waladir/plugin.video.oneplay</source>
     <news>
+1.4.5 (5.5.2025)
+- přesun zobrazení následující pořadu na konec popisu
+
 1.4.4 (4.5.2025)
-- přidané volání InputStream Helperu při přehárání streamů s DRM
+- přidané volání InputStream Helperu při přehrání streamů s DRM
 
 1.4.3 (1.5.2025)
 - rozšíření informací u některých pořadů v kategoriích/vyhledávání
@@ -50,11 +53,6 @@ Další informace a podporu najdete na fóru www.xbmc-kodi.cz (https://www.xbmc-
 1.4.1 (26.4.2025)
 - oprava zobrazení epizod u sérií bez sezón
 - implementace zadání PINu u rodičovského zámku u pořadů
-
-1.4.0 (26.4.2025)
-- ošetření pauzy při přihrávání i u HLS
-- optimalizace keepalive požadavků
-- doplnění dat k nahrávkám
     </news>
     <assets>
         <icon>icon.jpg</icon>
