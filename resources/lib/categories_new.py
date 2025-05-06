@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
+import os
 import xbmcplugin
 import xbmcgui
 import xbmc
@@ -27,7 +28,6 @@ class Item:
         self.route = route
         self.tracking = tracking
         self.data = data
-
         func = getattr(self, self.schema)
         func()
 
@@ -39,20 +39,20 @@ class Item:
             item = {}
         item['title'] = self.route['title']
         list_item = xbmcgui.ListItem(label = item['title'])
-        list_item = epg_listitem(list_item, item, None)
         if 'schema' in self.params and (self.params['schema'] == 'ContentPlayApiAction' or (self.params['schema'] == 'PageContentDisplayApiAction' and self.params['contentType'] == 'movie')):
+            list_item = epg_listitem(list_item, item, None)
             url = get_url(action = self.call, params = json.dumps(self.params), label = item['title'])
             list_item.setContentLookup(False)          
             list_item.setProperty('IsPlayable', 'true')
             xbmcplugin.addDirectoryItem(_handle, url, list_item, False)
         else:
+            list_item = epg_listitem(list_item, item, None)
             url = get_url(action = self.call, params = json.dumps(self.params), label = self.label + ' / ' + item['title'])
             xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
 
     def CarouselBlock(self):
         item = {'title' : self.tracking['title']}
         list_item = xbmcgui.ListItem(label = item['title'])
-        # list_item = epg_listitem(list_item, item, None)
         url = get_url(action = 'page_category_display', params = json.dumps(self.params), id = self.tracking['id'], show_filter = False, label = self.label + ' / ' + item['title'])
         # menus = [('Přidat do oblíbených Oneplay', 'RunPlugin(plugin://' + plugin_id + '?action=add_favourite&type=category&id=' + id + '~' + block['id'] + '~' + str(criteria) + '&image=None&title=' + (label + ' / ' + block['header']['title']).replace('Kategorie / ','') + ')')]
         # list_item.addContextMenuItems(menus)       
@@ -61,6 +61,9 @@ class Item:
     def CarouselGenericFilter(self):
         list_item = xbmcgui.ListItem(label = self.data['label'])
         url = get_url(action = self.call, params = json.dumps(self.params), label = self.label)
+        if self.data is not None and 'image' in self.data:
+            list_item.setArt({ 'thumb' : self.data['image'], 'icon' : self.data['image'] })
+
         # menus = [('Přidat do oblíbených Oneplay', 'RunPlugin(plugin://' + plugin_id + '?action=add_favourite&type=category&id=' + id + '~' + block['id'] + '~' + str(criteria) + '&image=None&title=' + (label + ' / ' + block['header']['title']).replace('Kategorie / ','') + ')')]
         # list_item.addContextMenuItems(menus)       
         xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
@@ -99,33 +102,39 @@ def CarouselBlock(label, block, params, id):
                 image = tile['image'].replace('{WIDTH}', '320').replace('{HEIGHT}', '480')
                 Item(label = label, schema = tile['action']['schema'], call = tile['action']['call'], params = tile['action']['params'], route = tile['action']['route'], tracking = None, data = {'title' : title, 'cover' : image})
             if block['carousels'][0]['paging']['next'] == True:
+                addon = xbmcaddon.Addon()
+                icons_dir = os.path.join(addon.getAddonInfo('path'), 'resources','images')
+                pageCount = block['carousels'][0]['paging']['pageCount']
+                count = len(block['carousels'][0]['tiles'])
+                page = 2
                 carouselId = block['carousels'][0]['id']
-                Item(label = 'Následující strana', schema = block['carousels'][0]['criteria'][0]['schema'], call = 'carousel_display', params = {'payload' : {'carouselId' : carouselId, 'criteria' : block['carousels'][0]['paging']['criteria']}}, route = None, tracking = None, data = {'label' : 'Následující strana'})
-                # list_item = xbmcgui.ListItem(label='Následující strana ')
-                # # list_item = xbmcgui.ListItem(label='Následující strana (' + str(page+1) + '/' + str(data['carousel']['paging']['pageCount']) + ')')
-                # url = get_url(action='list_carousel')  
-                # # url = get_url(action='list_carousel', id = id, criteria = filter, page = page+1, label = label)  
-                # # list_item.setArt({ 'thumb' : os.path.join(icons_dir , 'next_arrow.png'), 'icon' : os.path.join(icons_dir , 'next_arrow.png') })
-                # xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
+                image = os.path.join(icons_dir , 'next_arrow.png')
+                Item(label = 'Následující strana', schema = block['carousels'][0]['criteria'][0]['schema'], call = 'carousel_display', params = {'payload' : {'carouselId' : carouselId, 'criteria' : block['carousels'][0]['paging']['criteria'], 'paging' : {'count' : count, 'position' : count * (page - 1) + 1}}}, route = None, tracking = None, data = {'label' : 'Následující strana (' + str(page) + '/' + str(pageCount) + ')', 'image' : image})
 
 def TabBlock(label, block):
-    for select in block['layout']['blocks'][0]['carousels'][0]['criteria']:
-        if select['schema'] == 'CarouselGenericFilter' and select['title'] == 'Vybrat sérii':
-            for item in select['items']:
-                label = item['label'] + ' (' + item['additionalText'] + ')'
-                carouselId = block['layout']['blocks'][0]['carousels'][0]['id']
-                Item(label = label + ' / ' + item['label'], schema = select['schema'], call = 'carousel_display', params = {'payload' : {'carouselId' : carouselId, 'criteria' : {'filterCriterias' : item['criteria'], 'sortOption' : 'DESC'}}}, route = None, tracking = None, data = {'label' : label})
+    for block in block['layout']['blocks']:
+        pass
+
+
+    # for tile in block['layout']['blocks'][0]['carousels'][0]['tiles']:
+    #     title = tile['title']
+    #     image = tile['image'].replace('{WIDTH}', '320').replace('{HEIGHT}', '480')
+    #     Item(label = label, schema = tile['action']['schema'], call = tile['action']['call'], params = tile['action']['params'], route = tile['action']['route'], tracking = None, data = {'title' : title, 'cover' : image})
+    # for select in block['layout']['blocks'][0]['carousels'][0]['criteria']:
+    #     if select['schema'] == 'CarouselGenericFilter' and select['title'] == 'Vybrat sérii':
+    #         for item in select['items']:
+    #             label = item['label'] + ' (' + item['additionalText'] + ')'
+    #             carouselId = block['layout']['blocks'][0]['carousels'][0]['id']
+    #             Item(label = label + ' / ' + item['label'], schema = select['schema'], call = 'carousel_display', params = {'payload' : {'carouselId' : carouselId, 'criteria' : {'filterCriterias' : item['criteria'], 'sortOption' : 'DESC'}}}, route = None, tracking = None, data = {'label' : label})
 
 def BreadcrumbBlock(label, block, params, id, show_filter):
     for item in block['menu']['groups'][0]['items']:
         if item['schema'] == 'SubMenu':
-            if show_filter == False:
+            if show_filter == False or show_filter == 'False':
                 Item(label = label, schema = item['schema'], call = 'page_category_display', params = params, route = None, tracking = None, data = {'label' : item['title'], 'id' : id})
             else:
                 for filter in item['groups'][0]['items']:
-                    print(filter)
-                    print(filter['title'])
-                    Item(label = label + ' / ' + filter['title'], schema = filter['action']['schema'], call = filter['action']['call'], params = filter['action']['params'], route = {'title' : filter['title']}, tracking = None, data = None)
+                    Item(label = label, schema = filter['action']['schema'], call = filter['action']['call'], params = filter['action']['params'], route = {'title' : filter['title']}, tracking = None, data = None)
 
         
 def page_category_display(label, params, id, show_filter):
@@ -140,7 +149,9 @@ def page_category_display(label, params, id, show_filter):
         for block in data['layout']['blocks']:
             if block['schema'] == 'BreadcrumbBlock':
                 BreadcrumbBlock(label, block, params, id, show_filter)
-            if block['schema'] == 'CarouselBlock':
+            if block['schema'] == 'TabBlock':                
+                TabBlock(label, block)
+            if block['schema'] == 'CarouselBlock' and (show_filter == False or show_filter == 'False'):
                 CarouselBlock(label, block, params, id)
     xbmcplugin.endOfDirectory(_handle, cacheToDisc = False)    
 
@@ -184,12 +195,29 @@ def carousel_display(label, params):
     while get_page == True:
         data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/carousel.display', data = post, session = session)
         if 'err' not in data:
+            if data['carousel']['paging']['next'] == True:
+                pageCount = data['carousel']['paging']['pageCount']
+                count = len(data['carousel']['tiles'])
+                if 'paging' in post['payload']:
+                    position = post['payload']['paging']['position']
+                    page = int((position - 1) / count + 1 - 1)
+                else:
+                    page = 0
+                if 'criteria' in data['carousel']['paging'] and page > 0:
+                    carouselId = data['carousel']['id']
+                    Item(label = 'Předchozí strana', schema = 'CarouselGenericFilter', call = 'carousel_display', params = {'payload' : {'carouselId' : carouselId, 'criteria' : data['carousel']['paging']['criteria'], 'paging' : {'count' : count, 'position' : count * (page - 1) + 1}}}, route = None, tracking = None, data = {'label' : 'Předchozí strana (' + str(page) + '/' + str(pageCount) + ')'})                    
+
             for item in data['carousel']['tiles']:
                 Item(label = label, schema = item['action']['schema'], call = item['action']['call'], params = item['action']['params'], route = item['action']['route'], tracking = None, data = None)
             if data['carousel']['paging']['next'] == True:
-                if 'criteria' in data['carousel']['paging']:
+                if 'paging' in post['payload']:
+                    position = post['payload']['paging']['position']
+                    page = int((position - 1) / count + 1 + 1)
+                else:
+                    page = 2
+                if 'criteria' in data['carousel']['paging'] and page < pageCount:
                     carouselId = data['carousel']['id']
-                    Item(label = 'Následující strana', schema = 'CarouselGenericFilter', call = 'carousel_display', params = {'payload' : {'carouselId' : carouselId, 'criteria' : data['carousel']['paging']['criteria']}}, route = None, tracking = None, data = {'label' : 'Následující strana'})                    
+                    Item(label = 'Následující strana', schema = 'CarouselGenericFilter', call = 'carousel_display', params = {'payload' : {'carouselId' : carouselId, 'criteria' : data['carousel']['paging']['criteria'], 'paging' : {'count' : count, 'position' : count * (page - 1) + 1}}}, route = None, tracking = None, data = {'label' : 'Následující strana (' + str(page) + '/' + str(pageCount) + ')'})                    
                     get_page = False
                 else:
                     count = len(data['carousel']['tiles'])

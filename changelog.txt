@@ -1,3 +1,6 @@
+1.4.6 (6.5.2025)
+- přidání detailů k pořadům v archivu
+
 1.4.5 (5.5.2025)
 - přesun zobrazení následující pořadu na konec popisu
 
@@ -9,7 +12,3 @@
 
 1.4.2 (26.4.2025)
 - doplnění následujícího pořadu u živého vysílání
-
-1.4.1 (26.4.2025)
-- oprava zobrazení epizod u sérií bez sezón
-- implementace zadání PINu u rodičovského zámku u pořadů

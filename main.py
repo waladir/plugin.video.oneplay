@@ -80,7 +80,7 @@ def main_menu():
         list_item.setArt({ 'thumb' : os.path.join(icons_dir , 'settings.png'), 'icon' : os.path.join(icons_dir , 'settings.png') })
         xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
 
-    xbmcplugin.endOfDirectory(_handle)
+    xbmcplugin.endOfDirectory(_handle, cacheToDisc = False)
 
 def router(paramstring):
     params = dict(parse_qsl(paramstring))
