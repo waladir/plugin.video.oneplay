@@ -12,9 +12,7 @@ except ImportError:
 from urllib.parse import quote  
 
 from resources.lib.utils import get_url, plugin_id
-from resources.lib.session import Session
-from resources.lib.api import API
-from resources.lib.epg import get_item_detail, epg_listitem
+from resources.lib.categories import page_search_display
 
 _handle = int(sys.argv[1])
 
@@ -45,41 +43,7 @@ def program_search(query, label):
             return   
         else:
             save_search_history(query)
-    session = Session()
-    api = API()
-
-    post = {"payload":{"query":query}}
-    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/page.search.display', data = post, session = session)    
-    if 'err' not in data:
-        if 'blocks' in data['layout']:
-            for block in data['layout']['blocks']:
-                if block['schema'] == 'CarouselBlock':
-                    if block['template'] == 'searchPortrait':
-                        for carousel in block['carousels']:
-                            for item in carousel['tiles']:
-                                if item['action']['params']['schema'] == 'PageContentDisplayApiAction':
-                                    item_detail = get_item_detail(item['action']['params']['payload']['contentId'], False)
-                                    list_item = xbmcgui.ListItem(label = item['title'])
-                                    image = item['image'].replace('{WIDTH}', '320').replace('{HEIGHT}', '480')
-                                    list_item.setArt({'poster': image})    
-                                    list_item = epg_listitem(list_item, item_detail, None)
-                                    if item['action']['params']['contentType'] == 'show':
-                                        menus = [('Přidat do oblíbených Oneplay', 'RunPlugin(plugin://' + plugin_id + '?action=add_favourite&type=show&id=' + item['action']['params']['payload']['contentId'] + '&image=' + image + '&title=' + item['title'] + ')')]
-                                        list_item.addContextMenuItems(menus)       
-                                        url = get_url(action = 'list_show', id = item['action']['params']['payload']['contentId'], label = label + ' / ' + item['title'] )
-                                        xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
-                                    elif item['action']['params']['contentType'] == 'movie':
-                                        list_item.setContentLookup(False)          
-                                        list_item.setProperty('IsPlayable', 'true')
-                                        menus = [('Přidat do oblíbených Oneplay', 'RunPlugin(plugin://' + plugin_id + '?action=add_favourite&type=item&id=' + item['action']['params']['payload']['contentId'] + '&image=' + image + '&title=' + item['title'] + ')')]
-                                        list_item.addContextMenuItems(menus)       
-                                        url = get_url(action = 'play_archive', id = item['action']['params']['payload']['contentId'])
-                                        xbmcplugin.addDirectoryItem(_handle, url, list_item, False)
-                                    elif item['action']['params']['contentType'] not in ['competition']:
-                                        xbmcgui.Dialog().notification('Oneplay','Neznámý typ: ' + item['action']['params']['contentType'], xbmcgui.NOTIFICATION_INFO, 2000)                                    
-        else:
-            xbmcgui.Dialog().notification('Oneplay','Nic nenalezeno', xbmcgui.NOTIFICATION_INFO, 3000)
-    xbmcplugin.endOfDirectory(_handle, cacheToDisc = False)              
+    page_search_display(query)
 
 def save_search_history(query):
     addon = xbmcaddon.Addon()

@@ -365,6 +365,19 @@ class Channels:
             from resources.lib.iptvsc import generate_playlist
             generate_playlist()
 
+    def reset_channels_full(self):
+        addon = xbmcaddon.Addon()
+        addon_userdata_dir = translatePath(addon.getAddonInfo('profile')) 
+        filename = os.path.join(addon_userdata_dir, 'channels.txt')
+        if os.path.exists(filename):
+            self.backup_channels()            
+        settings = Settings()
+        settings.reset_json_data({'filename' : 'channels.txt', 'description' : 'kanálů'})
+        self.channels = {}
+        self.valid_to = -1
+        self.load_channels()
+        xbmcgui.Dialog().notification('Oneplay', 'Seznam kanálů byl resetovaný', xbmcgui.NOTIFICATION_INFO, 5000)
+
 
     def get_backups(self):
         import glob

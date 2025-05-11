@@ -14,8 +14,7 @@ except ImportError:
 import codecs
 import json
 
-from resources.lib.categories import get_episodes, get_shows
-from resources.lib.epg import get_item_detail, epg_listitem
+from resources.lib.categories import Item, get_seasons, get_episodes
 from resources.lib.utils import get_url, plugin_id, get_kodi_version
 
 if len(sys.argv) > 1:
@@ -81,36 +80,24 @@ def list_favourites(label):
             if type in favourites.keys():
                 for id in favourites[type]:
                     item = favourites[type][id]
-                    list_item = xbmcgui.ListItem(label = item['title'])
-                    menus = [('Odebrat z oblíbených Oneplay', 'RunPlugin(plugin://' + plugin_id + '?action=remove_favourite&type=' + type + '&id=' + id + ')')]
-                    list_item.addContextMenuItems(menus)       
                     if type == 'show':
-                        item_detail = get_item_detail(id)
-                        list_item.setArt({'poster': item['image']})    
-                        list_item = epg_listitem(list_item, item_detail, None)
-                        url = get_url(action = 'list_show', id = id, label = label + ' / ' + item['title'] )
-                        xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
+                        Item(label = item['title'], title = item['title'], type = type, schema = 'ApiAppAction', call = 'page_content_display', params = {'schema': 'PageContentDisplayApiAction', 'payload': {'contentId': id}, 'contentType': 'show'}, tracking = None, data = {'title' : item['title'], 'cover' : item['image'], 'favourite_type' : type, 'favourite_id' : id})
                     elif type == 'item':
-                        item_detail = get_item_detail(id)
-                        list_item.setArt({'poster': item['image']})    
-                        list_item = epg_listitem(list_item, item_detail, None)
-                        list_item.setContentLookup(False)          
-                        list_item.setProperty('IsPlayable', 'true')
-                        url = get_url(action = 'play_archive', id = id)
-                        xbmcplugin.addDirectoryItem(_handle, url, list_item, False)
+                        Item(label = item['title'], title = item['title'], type = type, schema = 'ApiAppAction', call = 'page_content_display', params = {'schema': 'PageContentDisplayApiAction', 'payload': {'contentId': id}, 'contentType': id.split('.')[0]}, tracking = None, data = {'title' : item['title'], 'cover' : item['image'], 'favourite_type' : type, 'favourite_id' : id})
                     elif type == 'season':
                         split_id = id.split('~')
-                        id = split_id[0]
+                        item_id = split_id[0]
                         caruselId = split_id[1]
-                        url = get_url(action = 'list_season', carouselId = caruselId, id = id, label = item['title'])
-                        xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
+                        Item(label = item['title'], title = item['title'], type = type, schema = 'CarouselGenericFilter', call = 'carousel_display', params = {'payload': {'carouselId': caruselId, 'criteria': {'filterCriterias': item_id, 'sortOption': 'DESC'}}}, tracking = None, data = {'favourite_type' : type, 'favourite_id' : id})
                     elif type == 'category':
                         split_id = id.split('~')
-                        id = split_id[0]
+                        item_id = split_id[0]
                         caruselId = split_id[1]
                         criteria = split_id[2]
-                        url = get_url(action='list_category', id = id, carouselId = caruselId, criteria = criteria, label = item['title'])  
-                        xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
+                        if criteria == 'None':
+                            Item(label = item['title'], title = item['title'], type = 'category_item', schema = 'CarouselBlock', call = 'page_category_display', params = {'schema': 'PageCategoryDisplayApiAction', 'payload': {'categoryId': item_id}}, tracking = {'id': caruselId, 'title': item['title'], 'recommended': False, 'recoGroupId': ''}, data = {'favourite_type' : type, 'favourite_id' : id})                            
+                        else:
+                            Item(label = item['title'], title = item['title'], type = 'category_item', schema = 'ApiAppAction', call = 'page_category_display', params = {'schema': 'PageCategoryDisplayApiAction', 'payload': {'categoryId': item_id, 'criteria': {'filterCriterias': criteria}}}, tracking = {'id': caruselId, 'title': item['title'], 'recommended': False, 'recoGroupId': ''}, data = {'favourite_type' : type, 'favourite_id' : id})
     xbmcplugin.endOfDirectory(_handle)        
 
 def list_favourites_new(label):
@@ -128,7 +115,7 @@ def list_favourites_new(label):
                 for id in favourites[type]:
                     item = favourites[type][id]
                     if type == 'show':
-                        seasons_items = get_shows(id, True)['seasons']
+                        seasons_items = get_seasons(id)
                         for season in seasons_items:
                             seasons.append({'title' : item['title'] + ' / ' + season['title'], 'id': season['id'], 'carouselId': season['carouselId']})
                     if type == 'season':

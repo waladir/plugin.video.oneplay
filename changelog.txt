@@ -1,3 +1,8 @@
+1.5.0 (11.5.2025)
+- přepracování kategorií
+- přidání možnosti změnit řazení epizod v Nastavení
+- úprava logování (možnost vypnout zkracování odpovědí)
+
 1.4.6 (6.5.2025)
 - přidání detailů k pořadům v archivu
 
@@ -9,6 +14,3 @@
 
 1.4.3 (1.5.2025)
 - rozšíření informací u některých pořadů v kategoriích/vyhledávání
-
-1.4.2 (26.4.2025)
-- doplnění následujícího pořadu u živého vysílání

@@ -92,7 +92,7 @@ def get_epg_data(post, channel_id):
     session = Session()
     api = API()
     epg = {}
-    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/epg.display', data = post, session = session, nolog = True)
+    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/epg.display', data = post, session = session)
     if 'err' not in data:
         for channel in data['schedule']:
             if channel_id is None or channel['channelId'] == channel_id:
@@ -190,12 +190,24 @@ def epg_listitem(list_item, epg, icon):
     cast = []
     directors = []
     genres = []
+
     kodi_version = get_kodi_version()
+    if 'type' not in epg or epg['type'] not in ['episode', 'show']:
+        epg['type'] = 'movie'
+    elif epg['type'] == 'show':
+        epg['type'] = 'tvshow'
     if kodi_version >= 20:
         infotag = list_item.getVideoInfoTag()
-        infotag.setMediaType('movie')
+        infotag.setMediaType(epg['type'])
+        infotag.setTitle(epg['title'])
     else:
-        list_item.setInfo('video', {'mediatype' : 'movie'})
+        list_item.setInfo('video', {'mediatype' : epg['type']})
+        list_item.setInfo('video', {'title': epg['title']})
+    if 'showtitle' in epg:
+        if kodi_version >= 20:
+            infotag.setTvShowTitle(epg['showtitle'])
+        else:
+            list_item.setInfo('video', {'tvshowtitle' : epg['showtitle']})   
     if 'cover' in epg and len(epg['cover']) > 0:
         if 'poster' in epg and len(epg['poster']) > 0:
             if icon == '':

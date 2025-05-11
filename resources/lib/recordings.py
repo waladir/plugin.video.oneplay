@@ -8,10 +8,11 @@ import xbmcaddon
 
 from datetime import date, datetime, timedelta
 import time
+import json
 
 from resources.lib.session import Session
 from resources.lib.channels import Channels
-from resources.lib.categories import list_category
+from resources.lib.categories import page_category_display
 from resources.lib.epg import epg_listitem, get_channel_epg
 from resources.lib.api import API
 from resources.lib.utils import get_url, plugin_id, day_translation, day_translation_short
@@ -25,7 +26,7 @@ def list_recordings(label):
     list_item = xbmcgui.ListItem(label='Plánování nahrávek')
     url = get_url(action='list_planning_recordings', label = label + ' / ' + 'Plánování')  
     xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
-    list_category('8', None, None, label)
+    page_category_display(label = 'Nahrávky', params = json.dumps({'schema' : 'PageCategoryDisplayApiAction', 'payload' : {'categoryId' : '8'}}), id = None, show_filter = False)
 
 def delete_recording(id):
     session = Session()

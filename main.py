@@ -17,8 +17,7 @@ from resources.lib.stream import play_stream, play_catchup
 from resources.lib.channels import Channels, manage_channels, list_channels_list_backups, list_channels_edit, edit_channel, delete_channel, change_channels_numbers
 from resources.lib.channels import list_channels_groups, add_channel_group, edit_channel_group, edit_channel_group_list_channels, edit_channel_group_add_channel, edit_channel_group_add_all_channels, edit_channel_group_delete_channel, select_channel_group, delete_channel_group
 from resources.lib.recordings import list_recordings, delete_recording, list_planning_recordings, list_rec_days, future_program, add_recording
-from resources.lib.categories import list_categories, list_category, list_filters, list_carousel, list_show, list_season, list_tv_episodes
-from resources.lib.categories_new import list_categories_new, page_category_display, page_content_display, carousel_display, content_play
+from resources.lib.categories import list_categories, page_category_display, page_content_display, carousel_display, content_play
 from resources.lib.search import list_search, delete_search, program_search
 from resources.lib.profiles import list_profiles, set_active_profile, reset_profiles
 from resources.lib.profiles import list_accounts, set_active_account, reset_accounts
@@ -47,12 +46,6 @@ def main_menu():
     url = get_url(action='list_categories', label = 'Kategorie')  
     list_item.setArt({ 'thumb' : os.path.join(icons_dir , 'categories.png'), 'icon' : os.path.join(icons_dir , 'categories.png') })
     xbmcplugin.addDirectoryItem(_handle, url, list_item, True)    
-
-    if 1 == 0:
-        list_item = xbmcgui.ListItem(label='Kategorie (nové)')
-        url = get_url(action='list_categories_new', label = 'Kategorie')  
-        list_item.setArt({ 'thumb' : os.path.join(icons_dir , 'categories.png'), 'icon' : os.path.join(icons_dir , 'categories.png') })
-        xbmcplugin.addDirectoryItem(_handle, url, list_item, True)    
 
     list_item = xbmcgui.ListItem(label = 'Oblíbené')
     url = get_url(action='list_favourites', label = 'Oblíbené')  
@@ -98,27 +91,6 @@ def router(paramstring):
 
         elif params['action'] == 'list_categories':
             list_categories(params['label'])
-        elif params['action'] == 'list_category':
-            criteria = None
-            carouselId = None
-            if 'criteria' in params and params['criteria'] != 'None':
-                criteria = params['criteria']
-            if 'carouselId' in params and params['carouselId'] != 'None':
-                carouselId = params['carouselId']                
-            list_category(params['id'], carouselId, criteria, params['label'])
-        elif params['action'] == 'list_filters':
-            list_filters(params['id'], params['filters'], params['label'])
-        elif params['action'] == 'list_carousel':
-            list_carousel(params['id'], params['criteria'], params['page'], params['label'])
-        elif params['action'] == 'list_show':
-            list_show(params['id'], params['label'])
-        elif params['action'] == 'list_season':
-            list_season(params['carouselId'], params['id'], params['label'])
-        elif params['action'] == 'list_tv_episodes':
-            list_tv_episodes(params['id'], params['label'])
-########################
-        elif params['action'] == 'list_categories_new':
-            list_categories_new(params['label'])
         elif params['action'] == 'page_category_display':
             if 'id' not in params:
                 params['id'] = None
@@ -131,7 +103,12 @@ def router(paramstring):
             carousel_display(params['label'], params['params'])
         elif params['action'] == 'content_play':
             content_play(params['params'])            
-########################
+        elif params['action'] == 'epg_display':
+            list_live('Živé vysílání')
+        elif params['action'] == 'list_tv_episodes':
+            import json
+            page_content_display(params['label'], params = json.dumps({'schema': 'PageContentDisplayApiAction', 'payload': {'contentId': params['id']}, 'contentType': 'show'}))
+
         elif params['action'] == 'list_recordings':
             list_recordings(params['label'])
         elif params['action'] == 'delete_recording':

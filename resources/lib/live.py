@@ -45,7 +45,7 @@ def list_live(label):
                     list_item.setInfo('video', {'plot': description})
             menus = []
             menus.append(('Přidat nahrávku', 'RunPlugin(plugin://' + plugin_id + '?action=add_recording&id=' + str(epg_item['id']) + ')'))
-            if epg_item['type'] == 'show':
+            if epg_item['type'] == 'tvshow':
                 menus.append(('Zobrazit epizody', 'Container.Update(plugin://' + plugin_id + '?action=list_tv_episodes&id=' + str(epg_item['referenceid']) + '&label=' + epg_item['title'] + ')'))
             list_item.addContextMenuItems(menus)       
         else:

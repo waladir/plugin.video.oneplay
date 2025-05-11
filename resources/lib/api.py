@@ -18,7 +18,7 @@ class API:
     def __init__(self):
         self.headers = {'User-Agent' : 'Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0', 'Accept-Encoding' : 'gzip', 'Accept' : '*/*', 'Content-type' : 'application/json;charset=UTF-8'} 
 
-    def call_api(self, url, data, session = None, nolog = False, sensitive = False):
+    def call_api(self, url, data, session = None, sensitive = False):
         addon = xbmcaddon.Addon()
         if session is not None:
             self.headers['Authorization'] = 'Bearer ' + session.token
@@ -55,11 +55,10 @@ class API:
                     if requestId != data['response']['context']['requestId']:
                         response = ws.recv()
             if addon.getSetting('log_response') == 'true':
-                if nolog == False:
-                    if len(str(response)) < 2000:
-                        xbmc.log('Oneplay > ' + str(response))
-                    else:
-                        xbmc.log('Oneplay > odpověď obdržena (' + str(len(str(response))) + ')')
+                if len(str(response)) > 2000 and addon.getSetting('skip_long') == 'true':
+                    xbmc.log('Oneplay > odpověď obdržena (' + str(len(str(response))) + ')')
+                else:
+                    xbmc.log('Oneplay > ' + str(response))
             if response and len(response) > 0:
                 data = json.loads(response)
                 if 'response' not in data or 'result' not in data['response'] or 'status' not in data['response']['result'] or data['response']['result']['status'] != 'Ok' or data['response']['context']['requestId'] != requestId:

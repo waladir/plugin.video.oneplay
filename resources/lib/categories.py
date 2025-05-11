@@ -5,16 +5,53 @@ import xbmcplugin
 import xbmcgui
 import xbmcaddon
 
-import time 
+import json 
+import time
 from datetime import datetime
 
 from resources.lib.session import Session
 from resources.lib.api import API
 from resources.lib.epg import get_item_detail, epg_listitem
-from resources.lib.utils import get_url, plugin_id, get_kodi_version
+from resources.lib.utils import get_url, plugin_id
+from resources.lib.stream import play_stream
+
 
 if len(sys.argv) > 1:
     _handle = int(sys.argv[1])
+
+def item_data(item):
+    title = item['title']
+    if 'tracking' in item and 'type' in item['tracking']:
+        type = item['tracking']['type']
+    else:
+        type = 'item'
+    subtitle = ''
+    if 'additionalFragments' in item and len(item['additionalFragments']) > 0 and 'labels' in item['additionalFragments'][0]:
+        for label in item['labels']:
+            if 'Vyprší' not in label['name'] and 'Můj seznam' not in label['name']:
+                subtitle = label['name']
+        for label in item['additionalFragments'][0]['labels']:
+            if ':' in label['name']:
+                if len(subtitle) > 0:
+                    subtitle += ' | ' + label['name']
+                else:
+                    subtitle = label['name']
+            if 'Díl' in label['name']:
+                if len(subtitle) > 0:
+                    subtitle += ' | ' + label['name']
+                else:
+                    subtitle = label['name']
+    if len(subtitle) > 1:
+        title = item['title'] + '\n[COLOR=gray]' + subtitle + '[/COLOR]'                
+    image = item['image'].replace('{WIDTH}', '320').replace('{HEIGHT}', '480')
+    if 'description' in item:
+        description = item['description']
+    else:
+        description = ''
+    item_data = {'title' : title, 'type' : type, 'cover' : image, 'poster' : image, 'description' : description}
+    if 'tracking' in item and 'show' in item['tracking']:
+        item_data['showtitle'] = item['tracking']['show']['title'] + ' / ' + item['tracking']['season']
+    return item_data
 
 def get_episodes(carouselId, id, season_title, limit = 1000):
     session = Session()
@@ -31,34 +68,11 @@ def get_episodes(carouselId, id, season_title, limit = 1000):
             for item in data['carousel']['tiles']:
                 if 'params' in item['action'] and ('contentId' in item['action']['params']['payload'] or 'contentId' in item['action']['params']['payload']['criteria']):
                     cnt += 1
-                    if 'subTitle' in item:
-                        item['title'] = item['title'] + ' ' + item['subTitle']
-                    title = item['title']
-                    subtitle = ''
-                    if 'additionalFragments' in item and len(item['additionalFragments']) > 0 and 'labels' in item['additionalFragments'][0]:
-                        for label in item['labels']:
-                            if 'Vyprší' not in label['name']:
-                                subtitle = label['name']
-                        for label in item['additionalFragments'][0]['labels']:
-                            if ':' in label['name']:
-                                if len(subtitle) > 0:
-                                    subtitle += ' | ' + label['name']
-                                else:
-                                    subtitle = label['name']
-                            if 'Díl' in label['name']:
-                                if len(subtitle) > 0:
-                                    subtitle += ' | ' + label['name']
-                                else:
-                                    subtitle = label['name']
-
-                    image = item['image'].replace('{WIDTH}', '480').replace('{HEIGHT}', '320')
-                    if 'contentId' in item['action']['params']['payload']:
-                        id = item['action']['params']['payload']['contentId']
-                    else:
-                        id = item['action']['params']['payload']['criteria']['contentId']
-                    episodeId = int(id.split('.')[1])
+                    contentId = get_contentId(item['action']['params'])
+                    episodeId = int(contentId.split('.')[1])
                     if id not in episodes:
-                        episodes.update({episodeId : {'id' : id, 'season_title' : season_title, 'title' : title, 'subtitle' : subtitle, 'image' : image}})
+                        item = item_data(item)
+                        episodes.update({episodeId : {'id' : contentId, 'season_title' : season_title, 'title' : item['title'], 'image' : item['cover']}})
                     if cnt >= limit:
                         get_page = False
                         break
@@ -70,12 +84,11 @@ def get_episodes(carouselId, id, season_title, limit = 1000):
             get_page = False
     return episodes
 
-def get_shows(id, last_season = False):
+def get_seasons(id):
     session = Session()
     api = API()
-    post = {"payload":{"contentId":id}}
+    post = {'payload' : {'contentId' : id}}
     seasons = []
-    shows = []
     data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/page.content.display', data = post, session = session)
     for block in data['layout']['blocks']:
         if block['schema'] == 'TabBlock' and block['template'] == 'tabs':
@@ -96,41 +109,309 @@ def get_shows(id, last_season = False):
                             season_item = None
                             for season in criteria['items']:   
                                 season_item = {'title' : season['label'], 'id' : season['criteria'], 'carouselId' : carousel['id']}
-                                if last_season == False and season_item not in seasons:
-                                    seasons.append(season_item)
-                                if last_season == True and first == True and '.' in season['label'] and season['label'].split('.')[0] != '1':
+                                if first == True and '.' in season['label'] and season['label'].split('.')[0] != '1':
                                     break
                                 first = False
-                            if last_season == True:
-                                seasons.append(season_item)
-                if len(seasons) == 0:
-                    for item in carousel['tiles']:
-                        if 'params' in item['action'] and 'contentId' in item['action']['params']['payload']['criteria']:
-                            if 'subTitle' in item:
-                                item['title'] = item['title'] + ' ' + item['subTitle']
-                            title = item['title']
-                            subtitle = ''
-                            if 'additionalFragments' in item and len(item['additionalFragments']) > 0 and 'labels' in item['additionalFragments'][0]:
-                                for label in item['labels']:
-                                    if 'Vyprší' not in label['name']:
-                                        subtitle = label['name']
-                                for label in item['additionalFragments'][0]['labels']:
-                                    if ':' in label['name']:
-                                        if len(subtitle) > 0:
-                                            subtitle += ' | ' + label['name']
-                                        else:
-                                            subtitle = label['name']
-                                    if 'Díl' in label['name']:
-                                        if len(subtitle) > 0:
-                                            subtitle += ' | ' + label['name']
-                                        else:
-                                            subtitle = label['name']
-                            if len(subtitle) > 1:
-                                item['title'] = item['title'] + ' | [COLOR=gray]' + subtitle + '[/COLOR]'
-                            image = item['image'].replace('{WIDTH}', '480').replace('{HEIGHT}', '320')
-                            show_item = {'title' : item['title'], 'id' : item['action']['params']['payload']['criteria']['contentId'], 'image' : image, 'description' : item['description']}
-                            shows.append(show_item)
-    return {'seasons' : seasons, 'shows' : shows}
+                            seasons.append(season_item)
+    return seasons
+
+def get_contentId(params):
+    if 'contentId' in params['payload']:
+        return params['payload']['contentId']
+    else:
+        return params['payload']['criteria']['contentId']
+
+def remote_favourite_menu(data):
+     return [('Odebrat z oblíbených Oneplay', 'RunPlugin(plugin://' + plugin_id + '?action=remove_favourite&type=' + data['favourite_type'] + '&id=' + data['favourite_id'] + ')')]
+
+def add_favourite_menu(type, id, image, title):
+     return [('Přidat do oblíbených Oneplay', 'RunPlugin(plugin://' + plugin_id + '?action=add_favourite&type=' + type + '&id=' + id + '&image=' + image + '&title=' + title + ')')]
+
+class Item:
+    def __init__(self, label, title, type, schema, call, params, tracking, data):
+        self.label = label
+        self.title = title
+        self.type = type
+        self.schema = schema
+        self.call = call
+        self.params = params
+        self.tracking = tracking
+        self.data = data
+        func = getattr(self, self.schema)
+        func()
+
+    def ApiAppAction(self):
+        self.call = self.call.replace('.', '_')
+        if 'payload' in self.params and self.params and 'contentId' in self.params['payload']:
+            item = get_item_detail(self.params['payload']['contentId'], True, self.data)
+        elif self.data is not None:
+            item = self.data
+        else:
+            item = {}
+        list_item = xbmcgui.ListItem(label = self.title)
+        if 'schema' in self.params and (self.params['schema'] == 'ContentPlayApiAction' or (self.params['schema'] == 'PageContentDisplayApiAction' and self.params['contentType'] in ['movie', 'epgitem'])):
+            list_item = epg_listitem(list_item, item, None)
+            url = get_url(action = self.call, params = json.dumps(self.params), label = self.title)
+            list_item.setContentLookup(False)          
+            list_item.setProperty('IsPlayable', 'true')
+            if self.type in ['movie','epgitem','match','highlight']:
+                if self.data is not None and 'favourite_id' in self.data:
+                    menus = remote_favourite_menu(self.data)
+                else:
+                    contentId = get_contentId(self.params)
+                    menus = add_favourite_menu('item', contentId, self.data['cover'], self.title)
+                list_item.addContextMenuItems(menus)       
+            xbmcplugin.addDirectoryItem(_handle, url, list_item, False)
+        else:
+            if self.params['schema'] == 'PageContentDisplayApiAction' and self.params['contentType'] not in ['competition']:
+                list_item = epg_listitem(list_item, item, None)
+            url = get_url(action = self.call, params = json.dumps(self.params), label = self.label)
+            if self.type in ['show', 'category_item', 'criteria_item']:
+                menus = []
+                if self.data is not None and 'favourite_id' in self.data:
+                    menus = remote_favourite_menu(self.data)
+                else:
+                    if self.type == 'show':
+                        menus = add_favourite_menu('show', self.params['payload']['contentId'], self.data['cover'], self.title)
+                    elif self.type == 'category_item' and 'payload' in self.params:
+                        if 'criteria' in self.params['payload']:
+                            criteria = self.params['payload']['criteria']['filterCriterias']
+                        else:
+                            criteria = None
+                        menus = add_favourite_menu('category', self.params['payload']['categoryId'] + '~' + self.tracking['id'] + '~' + str(criteria), 'None', self.label.replace('Kategorie / ',''))
+                if len(menus) > 0:
+                    list_item.addContextMenuItems(menus)  
+            xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
+
+    def CarouselBlock(self):
+        list_item = xbmcgui.ListItem(label = self.title)
+        url = get_url(action = 'page_category_display', params = json.dumps(self.params), id = self.tracking['id'], show_filter = False, label = self.label)
+        if self.type in ['category_item']:
+            if self.data is not None and 'favourite_id' in self.data:
+                menus = remote_favourite_menu(self.data)
+            else:
+                if 'criteria' in self.params['payload']:
+                    criteria = self.params['payload']['criteria']['filterCriterias']
+                else:
+                    criteria = None
+                menus = add_favourite_menu('category', self.params['payload']['categoryId'] + '~' + self.tracking['id'] + '~' + str(criteria), 'None', self.label.replace('Kategorie / ',''))
+            list_item.addContextMenuItems(menus)
+        xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
+
+    def CarouselGenericFilter(self):
+        list_item = xbmcgui.ListItem(label = self.title)
+        url = get_url(action = self.call, params = json.dumps(self.params), label = self.label)
+        if self.data is not None and 'image' in self.data:
+            list_item.setArt({ 'thumb' : self.data['image'], 'icon' : self.data['image'] })
+        if self.type == 'season':
+            if self.data is not None and 'favourite_id' in self.data:
+                menus = remote_favourite_menu(self.data)
+            else:
+                menus = add_favourite_menu('season', self.params['payload']['criteria']['filterCriterias'] + '~' + self.params['payload']['carouselId'], 'None', self.label)
+            list_item.addContextMenuItems(menus)       
+        xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
+
+    def SubMenu(self):
+        list_item = xbmcgui.ListItem(label = self.title)
+        url = get_url(action = self.call, params = json.dumps(self.params), id = self.data['id'], show_filter = True, label = self.label)
+        xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
+
+def CarouselBlock(label, block, params, id):
+    addon = xbmcaddon.Addon()
+    for carousel in block['carousels']:
+        if 'paging' in carousel and 'next' in carousel['paging'] and carousel['paging']['next'] == True:
+            paging = True
+        else:
+            paging = False
+        if params['schema'] == 'PageCategoryDisplayApiAction' and id is None and block['template'] != 'contentFilter' and 'myList' not in block['template'] and 'search' not in block['template']:
+            title = carousel['tracking']['title']
+            if 'showMore' in carousel:
+                item = carousel['showMore']
+                Item(label = label + ' / ' + title , title = title, type = 'category_item', schema = item['action']['schema'], call = item['action']['call'], params = item['action']['params'], tracking = carousel['tracking'], data = None)
+            else:
+                Item(label = label + ' / ' + title, title = title, type = 'category_item', schema = block['schema'], call = None, params = params, tracking = carousel['tracking'], data = None)
+        else:
+            if params['schema'] == 'PageContentDisplayApiAction' and 'criteria' in carousel and carousel['criteria'][0]['schema'] == 'CarouselGenericFilter':
+                carouselId = carousel['id']
+                for item in carousel['criteria'][0]['items']:
+                    if 'additionalText' in item:
+                        title = item['label'] + ' (' + item['additionalText'] + ')'
+                    else:
+                        title = item['label']
+                    if addon.getSetting('episodes_order') == 'sestupně':
+                        order = 'DESC'
+                    else:
+                        order = 'ASC'
+                    Item(label = label + ' / ' + item['label'], title = title, type = 'season', schema = carousel['criteria'][0]['schema'], call = 'carousel_display', params = {'payload' : {'carouselId' : carouselId, 'criteria' : {'filterCriterias' : item['criteria'], 'sortOption' : order}}}, tracking = None, data = None)
+            elif 'tiles' in carousel:
+                if id is None or id == carousel['tracking']['id'] or id == block['id']:
+                        if paging == True and 'pageCount' not in carousel['paging']:
+                            carousel_display(label, json.dumps({'payload' : {'carouselId' : carousel['id']}}))
+                        else:
+                            for item in carousel['tiles']:
+                                exp_info = ''
+                                if params['schema'] == 'PageCategoryDisplayApiAction' and 'payload' in params and 'categoryId' in params['payload'] and params['payload']['categoryId'] == '8' and 'additionalFragments' in item:
+                                    year = datetime.now().year
+                                    expiration = int(time.mktime(time.strptime(item['additionalFragments'][0]['labels'][0]['name'] + str(year) + ' ' + item['additionalFragments'][0]['labels'][1]['name'], '%d.%m.%Y %H:%M'))) + 30*24*60*60
+                                    exp_info = '[COLOR=gray] (do ' + datetime.fromtimestamp(expiration).strftime('%d.%m').lstrip("0").replace(" 0", " ") +')[/COLOR]'
+                                if 'contentType' in item['action']['params']:
+                                    item_type = item['action']['params']['contentType']
+                                else:
+                                    item_type = 'other'
+                                Item(label = item['title'], title = item_data(item)['title'] + exp_info, type = item_type, schema = item['action']['schema'], call = item['action']['call'], params = item['action']['params'], tracking = None, data = item_data(item))
+                            if paging == True:
+                                addon = xbmcaddon.Addon()
+                                icons_dir = os.path.join(addon.getAddonInfo('path'), 'resources','images')
+                                pageCount = carousel['paging']['pageCount']
+                                count = len(carousel['tiles'])
+                                page = 2
+                                carouselId = carousel['id']
+                                image = os.path.join(icons_dir , 'next_arrow.png')
+                                Item(label = label, title = 'Následující strana (' + str(page) + '/' + str(pageCount) + ')', type = 'arrow', schema = carousel['criteria'][0]['schema'], call = 'carousel_display', params = {'payload' : {'carouselId' : carouselId, 'criteria' : block['carousels'][0]['paging']['criteria'], 'paging' : {'count' : count, 'position' : count * (page - 1) + 1}}}, tracking = None, data = {'image' : image})
+
+def TabBlock(label, block, params):
+    for block in block['layout']['blocks']:
+        CarouselBlock(label, block, params, None)
+
+def BreadcrumbBlock(label, block, params, id, show_filter):
+    for item in block['menu']['groups'][0]['items']:
+        if item['schema'] == 'SubMenu':
+            if show_filter == False or show_filter == 'False':
+                Item(label = label, title = item['title'], type = 'criteria', schema = item['schema'], call = 'page_category_display', params = params, tracking = None, data = {'id' : id})
+            else:
+                for filter in item['groups'][0]['items']:
+                    Item(label = label + ' / ' + filter['title'], title = filter['title'], type = 'criteria_item', schema = filter['action']['schema'], call = filter['action']['call'], params = filter['action']['params'], tracking = None, data = None)
+        
+def page_category_display(label, params, id, show_filter):
+    xbmcplugin.setPluginCategory(_handle, label)
+    xbmcplugin.setContent(_handle, 'movies')
+    params = json.loads(params)
+    session = Session()
+    api = API()
+    post = {'payload' : params['payload']}
+    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/page.category.display', data = post, session = session) 
+    if 'err' not in data:
+        for block in data['layout']['blocks']:
+            if block['schema'] == 'BreadcrumbBlock':
+                BreadcrumbBlock(label, block, params, id, show_filter)
+            if block['schema'] == 'TabBlock':                
+                TabBlock(label, block, params)
+            if block['schema'] == 'CarouselBlock' and (show_filter == False or show_filter == 'False'):
+                CarouselBlock(label, block, params, id)
+    xbmcplugin.endOfDirectory(_handle, cacheToDisc = False)    
+
+def page_content_display(label, params):
+    xbmcplugin.setPluginCategory(_handle, label)
+    xbmcplugin.setContent(_handle, 'movies')
+    params = json.loads(params)
+    session = Session()
+    api = API()
+    post = {'payload' : params['payload']}
+    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/page.content.display', data = post, session = session)
+    if 'err' not in data:
+        if data['tracking']['type'] in ['movie', 'epgitem']:
+            params = None
+            for block in data['layout']['blocks']:
+                if block['schema'] == 'ContentHeaderBlock':
+                    params = block['mainAction']['action']['params']
+            if params is None:
+                params = {'payload' : {'criteria' : {'schema' : 'ContentCriteria', 'contentId' : data['tracking']['id']}}}
+            content_play(json.dumps(params))
+        else:
+            list = True
+            for block in data['layout']['blocks']:
+                if block['schema'] == 'CarouselBlock':
+                    if block['header']['title'] == 'Celé díly':
+                        list = False
+                        CarouselBlock(label, block, params, None)
+                    elif block['header']['title'] == 'Vysílané v TV':
+                        list = False
+                        CarouselBlock(label, block, params, None)
+                    if list == True:                
+                        CarouselBlock(label, block, params, None)
+                if block['schema'] == 'TabBlock':
+                    list = False
+                    TabBlock(label, block, params)
+    xbmcplugin.endOfDirectory(_handle, cacheToDisc = False)    
+
+def carousel_display(label, params):
+    xbmcplugin.setPluginCategory(_handle, label)
+    xbmcplugin.setContent(_handle, 'movies')
+    params = json.loads(params)
+    get_page = True
+    page = 1
+    session = Session()
+    api = API()
+    post = {'payload' : params['payload']}
+    while get_page == True:
+        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/carousel.display', data = post, session = session)
+        if 'err' not in data:
+            if data['carousel']['paging']['next'] == True and 'pageCount' in data['carousel']['paging']:
+                pageCount = data['carousel']['paging']['pageCount']
+                count = len(data['carousel']['tiles'])
+                if 'paging' in post['payload']:
+                    position = post['payload']['paging']['position']
+                    page = int((position - 1) / count + 1 - 1)
+                else:
+                    page = 0
+                if 'criteria' in data['carousel']['paging'] and page > 0:
+                    carouselId = data['carousel']['id']
+                    addon = xbmcaddon.Addon()
+                    icons_dir = os.path.join(addon.getAddonInfo('path'), 'resources','images')
+                    image = os.path.join(icons_dir , 'previous_arrow.png')
+                    Item(label = label, title = 'Předchozí strana (' + str(page) + '/' + str(pageCount) + ')',type = 'arrow', schema = 'CarouselGenericFilter', call = 'carousel_display', params = {'payload' : {'carouselId' : carouselId, 'criteria' : data['carousel']['paging']['criteria'], 'paging' : {'count' : count, 'position' : count * (page - 1) + 1}}}, tracking = None, data = {'image' : image})                    
+
+            for item in data['carousel']['tiles']:
+                if 'call' in item['action']:
+                    Item(label = item['title'], title = item_data(item)['title'], type = item['tracking']['type'], schema = item['action']['schema'], call = item['action']['call'], params = item['action']['params'], tracking = None, data = item_data(item))
+
+            if data['carousel']['paging']['next'] == True:
+                if 'pageCount' in data['carousel']['paging']:
+                    if 'paging' in post['payload']:
+                        position = post['payload']['paging']['position']
+                        page = int((position - 1) / count + 1 + 1)
+                    else:
+                        page = 2
+                    if 'criteria' in data['carousel']['paging'] and page < pageCount:
+                        carouselId = data['carousel']['id']
+                        addon = xbmcaddon.Addon()
+                        icons_dir = os.path.join(addon.getAddonInfo('path'), 'resources','images')
+                        image = os.path.join(icons_dir , 'previous_arrow.png')
+                        Item(label = label, title = 'Následující strana (' + str(page) + '/' + str(pageCount) + ')', type = 'arrow', schema = 'CarouselGenericFilter', call = 'carousel_display', params = {'payload' : {'carouselId' : carouselId, 'criteria' : data['carousel']['paging']['criteria'], 'paging' : {'count' : count, 'position' : count * (page - 1) + 1}}}, tracking = None, data = {'image' : image})                    
+                        get_page = False
+                else:
+                    count = len(data['carousel']['tiles'])
+                    page = page + 1
+                    post['payload']['paging'] = {'count' : count, 'position' : count * (page - 1) + 1}
+            else:
+                get_page = False
+        else:
+            get_page = False                
+    xbmcplugin.endOfDirectory(_handle, cacheToDisc = False)       
+
+def content_play(params):
+    params = json.loads(params)
+    contentId = get_contentId(params)
+    if 'channel,' in contentId:
+        contentId = contentId.replace('channel.', '')
+        mode = 'start'
+    else:
+        mode = 'archive'
+    play_stream(contentId, mode)
+
+def page_search_display(query):
+    session = Session()
+    api = API()    
+    post = {"payload":{"query":query}}
+    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/page.search.display', data = post, session = session)  
+    if 'err' not in data:
+        if 'blocks' in data['layout']:
+            for block in data['layout']['blocks']:
+                if block['schema'] == 'CarouselBlock':
+                    CarouselBlock('', block, {'schema' : 'PageCategoryDisplayApiAction'}, None)
+        else:
+            xbmcgui.Dialog().notification('Oneplay','Nic nenalezeno', xbmcgui.NOTIFICATION_INFO, 3000)
+    xbmcplugin.endOfDirectory(_handle, cacheToDisc = False)              
 
 def list_categories(label):
     xbmcplugin.setPluginCategory(_handle, label)
@@ -145,261 +426,5 @@ def list_categories(label):
             if group['position'] == 'top':
                 for item in group['items']:
                     if item['action']['call'] == 'page.category.display':
-                        list_item = xbmcgui.ListItem(label = item['title'])
-                        url = get_url(action='list_category', id = item['action']['params']['payload']['categoryId'], label = label + ' / ' + item['title'])  
-                        xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
+                        Item(label = item['title'], title = item['title'], type = 'category_menu', schema = item['action']['schema'], call = item['action']['call'], params = item['action']['params'], tracking = None, data = None)
     xbmcplugin.endOfDirectory(_handle, cacheToDisc = False)    
-
-def list_category(id, carouselId, criteria, label):
-    xbmcplugin.setPluginCategory(_handle, label)
-    xbmcplugin.setContent(_handle, 'movies')
-    addon = xbmcaddon.Addon()
-    icons_dir = os.path.join(addon.getAddonInfo('path'), 'resources','images')
-    session = Session()
-    api = API()
-    if criteria is not None:
-        post = {"payload":{"categoryId":id,"criteria":{"filterCriterias":criteria}}}
-    else:
-        post = {"payload":{"categoryId":id}}
-    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/page.category.display', data = post, session = session) 
-    if 'err' not in data:
-        for block in data['layout']['blocks']:
-            if block['schema'] == 'BreadcrumbBlock':
-                for item in block['menu']['groups'][0]['items']:
-                    if item['schema'] == 'SubMenu':
-                        list_item = xbmcgui.ListItem(label = item['title'])
-                        url = get_url(action='list_filters', id = id, filters = item['id'], label = label)  
-                        xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
-            if block['schema'] in ['CarouselBlock', 'TabBlock']:
-                if carouselId is None and criteria is None and block['schema'] != 'TabBlock':
-                    list_item = xbmcgui.ListItem(label = block['header']['title'])
-                    url = get_url(action='list_category', id = id, carouselId = block['id'], criteria = criteria, label = label + ' / ' + block['header']['title'])  
-                    menus = [('Přidat do oblíbených Oneplay', 'RunPlugin(plugin://' + plugin_id + '?action=add_favourite&type=category&id=' + id + '~' + block['id'] + '~' + str(criteria) + '&image=None&title=' + (label + ' / ' + block['header']['title']).replace('Kategorie / ','') + ')')]
-                    list_item.addContextMenuItems(menus)       
-                    xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
-                elif block['id'] == carouselId or criteria is not None or block['schema'] == 'TabBlock':
-                    if block['schema'] == 'TabBlock':
-                        blocks =  block['layout']['blocks']
-                    else:
-                        blocks = [block]
-                    for block in blocks:
-                        for carousel in block['carousels']:
-                            for item in carousel['tiles']:
-                                if item['action']['params']['schema'] == 'PageContentDisplayApiAction':
-                                    item_detail = get_item_detail(item['action']['params']['payload']['contentId'])
-                                    if id == '8' and 'additionalFragments' in item:
-                                        year = datetime.now().year
-                                        expiration = int(time.mktime(time.strptime(item['additionalFragments'][0]['labels'][0]['name'] + str(year) + ' ' + item['additionalFragments'][0]['labels'][1]['name'], '%d.%m.%Y %H:%M'))) + 30*24*60*60
-                                        item['title'] = item['title'] + '\n[COLOR=gray]' + item['labels'][0]['name'] + ' | ' + item['additionalFragments'][0]['labels'][0]['name'] + ' ' + item['additionalFragments'][0]['labels'][1]['name'] + ' (do ' + datetime.fromtimestamp(expiration).strftime('%d.%m').lstrip("0").replace(" 0", " ") +')[/COLOR]'
-                                    list_item = xbmcgui.ListItem(label = item['title'])
-                                    image = item['image'].replace('{WIDTH}', '320').replace('{HEIGHT}', '480')
-                                    list_item.setArt({'poster': image})    
-                                    list_item.setInfo('video', {'mediatype':'movie', 'title': item['title']}) 
-                                    list_item = epg_listitem(list_item, item_detail, None)
-                                    if item['action']['params']['contentType'] in ['show','highlight']:
-                                        url = get_url(action = 'list_show', id = item['action']['params']['payload']['contentId'], label = label + ' / ' + item['title'] )
-                                        menus = [('Přidat do oblíbených Oneplay', 'RunPlugin(plugin://' + plugin_id + '?action=add_favourite&type=show&id=' + item['action']['params']['payload']['contentId'] + '&image=' + image + '&title=' + item['title'] + ')')]
-                                        if id == '8':
-                                            menus.append(('Smazat nahrávku', 'RunPlugin(plugin://' + plugin_id + '?action=delete_recording&id=' + item['action']['params']['payload']['contentId'] + ')'))
-                                        list_item.addContextMenuItems(menus)       
-                                        xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
-                                    elif item['action']['params']['contentType']  in ['movie','epgitem','match','highlight']:
-                                        list_item.setContentLookup(False)          
-                                        list_item.setProperty('IsPlayable', 'true')
-                                        if 'startMode' in item['action']['params']['payload']:
-                                            url = get_url(action = 'play_live', id = item['action']['params']['payload']['contentId'].replace('channel.'), mode = 'start')
-                                        else:
-                                            url = get_url(action = 'play_archive', id = item['action']['params']['payload']['contentId'])
-                                        menus = [('Přidat do oblíbených Oneplay', 'RunPlugin(plugin://' + plugin_id + '?action=add_favourite&type=item&id=' + item['action']['params']['payload']['contentId'] + '&image=' + image + '&title=' + item['title'] + ')')]
-                                        if id == '8':
-                                            menus.append(('Smazat nahrávku', 'RunPlugin(plugin://' + plugin_id + '?action=delete_recording&id=' + item['action']['params']['payload']['contentId'] + ')'))
-                                        list_item.addContextMenuItems(menus)       
-                                        xbmcplugin.addDirectoryItem(_handle, url, list_item, False)
-                                    elif item['action']['params']['contentType'] not in ['competition']:
-                                        xbmcgui.Dialog().notification('Oneplay','Neznámý typ: ' + item['action']['params']['contentType'], xbmcgui.NOTIFICATION_INFO, 2000)                                    
-                                elif item['action']['params']['schema'] == 'PageCategoryDisplayApiAction':
-                                    list_item = xbmcgui.ListItem(label = item['title'])
-                                    image = item['image'].replace('{WIDTH}', '540').replace('{HEIGHT}', '320')
-                                    list_item.setArt({'poster': image})    
-                                    url = get_url(action='list_category', id = item['action']['params']['payload']['categoryId'], criteria = criteria, label = label + ' / ' + item['title'])  
-                                    xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
-                                elif item['action']['params']['schema'] == 'ContentPlayApiAction':
-                                    list_item = xbmcgui.ListItem(label = item['title'])
-                                    image = item['image'].replace('{WIDTH}', '320').replace('{HEIGHT}', '480')
-                                    list_item.setArt({'poster': image})    
-                                    list_item.setInfo('video', {'mediatype':'movie', 'title': item['title']}) 
-                                    list_item.setContentLookup(False)          
-                                    list_item.setProperty('IsPlayable', 'true')
-                                    if 'startMode' in item['action']['params']['payload']:
-                                        url = get_url(action = 'play_live', id = item['action']['params']['payload']['criteria']['contentId'].replace('channel.',''), mode = 'start')
-                                    else:
-                                        url = get_url(action = 'play_archive', id = item['action']['params']['payload']['criteria']['contentId'])
-                                    menus = [('Přidat do oblíbených Oneplay', 'RunPlugin(plugin://' + plugin_id + '?action=add_favourite&type=item&id=' + item['action']['params']['payload']['criteria']['contentId'] + '&image=' + image + '&title=' + item['title'] + ')')]
-                                    list_item.addContextMenuItems(menus)       
-                                    xbmcplugin.addDirectoryItem(_handle, url, list_item, False)
-                                else:
-                                    xbmcgui.Dialog().notification('Oneplay','Neznámá položka: ' + item['action']['params']['schema'], xbmcgui.NOTIFICATION_INFO, 2000)                                    
-                            if 'pagein' in carousel and carousel['paging']['next'] == True:
-                                list_item = xbmcgui.ListItem(label='Následující strana')
-                                url = get_url(action='list_carousel', id = carousel['id'], criteria = criteria, page = 2, label = label)  
-                                list_item.setArt({ 'thumb' : os.path.join(icons_dir , 'next_arrow.png'), 'icon' : os.path.join(icons_dir , 'next_arrow.png') })
-                                xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
-    xbmcplugin.endOfDirectory(_handle, cacheToDisc = False)              
-
-def list_season(carouselId, id, label):
-    xbmcplugin.setPluginCategory(_handle, label)
-    xbmcplugin.setContent(_handle, 'episodes')
-    season_title = label.split(' / ')[-2] + ' / ' + label.split(' / ')[-1]
-    kodi_version = get_kodi_version()
-    episodes = get_episodes(carouselId, id, season_title)
-    for episodeId in episodes:
-        item = episodes[episodeId]
-        list_item = xbmcgui.ListItem(label = item['title'])
-        list_item.setArt({'poster': item['image']})    
-        if kodi_version >= 20:
-            infotag = list_item.getVideoInfoTag()
-            infotag.setMediaType('episode')
-        else:
-            list_item.setInfo('video', {'mediatype' : 'episode'})
-        if kodi_version >= 20:
-            infotag.setTitle(item['title'])
-        else:
-            list_item.setInfo('video', {'title' : item['title']})
-        if kodi_version >= 20:
-            infotag.setTvShowTitle(item['season_title'])
-        else:
-            list_item.setInfo('video', {'tvshowtitle' : item['season_title']})   
-        list_item.setContentLookup(False)          
-        list_item.setProperty('IsPlayable', 'true')
-        url = get_url(action = 'play_archive', id = item['id'])
-        xbmcplugin.addDirectoryItem(_handle, url, list_item, False)
-    xbmcplugin.endOfDirectory(_handle, cacheToDisc = False)  
-
-def list_show(id, label):
-    xbmcplugin.setPluginCategory(_handle, label)
-    xbmcplugin.setContent(_handle, 'episodes')
-    data = get_shows(id)
-    if len(data['seasons']) > 0:
-        for season in data['seasons']:
-            list_item = xbmcgui.ListItem(label = season['title'])
-            url = get_url(action = 'list_season', carouselId = season['carouselId'], id = season['id'], label = label + ' / ' + season['title'])
-            menus = [('Přidat do oblíbených Oneplay', 'RunPlugin(plugin://' + plugin_id + '?action=add_favourite&type=season&id=' + season['id'] + '~' + season['carouselId'] + '&image=None&title=' + label.split(' / ')[-1] + ' / ' + season['title'] + ')')]
-            list_item.addContextMenuItems(menus)       
-            xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
-    else:
-        kodi_version = get_kodi_version()
-        for show in data['shows']:
-            list_item = xbmcgui.ListItem(label = show['title'])
-            list_item.setArt({'poster': show['image']})    
-            list_item.setInfo('video', {'mediatype':'movie', 'title': show['title']}) 
-            if kodi_version >= 20:
-                infotag = list_item.getVideoInfoTag()
-                infotag.setPlot(show['description'])
-            else:
-                list_item.setInfo('video', {'plot': show['description']})
-            list_item.setContentLookup(False)          
-            list_item.setProperty('IsPlayable', 'true')
-            url = get_url(action = 'play_archive', id = show['id'])
-            xbmcplugin.addDirectoryItem(_handle, url, list_item, False)                            
-    xbmcplugin.endOfDirectory(_handle, cacheToDisc = False)  
-
-def list_tv_episodes(id, label):
-    xbmcplugin.setPluginCategory(_handle, label)
-    xbmcplugin.setContent(_handle, 'episodes')
-    session = Session()
-    api = API()
-    post = {"payload":{"contentId":id}}
-    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/page.content.display', data = post, session = session)
-    for block in data['layout']['blocks']:
-        if block['schema'] == 'CarouselBlock' and 'header' in block and block['header']['title'] == 'Vysílané v TV':
-            carouselId = block['carousels'][0]['id']
-            kodi_version = get_kodi_version()
-            episodes = get_episodes(carouselId, id, '')
-            for episodeId in episodes:
-                item = episodes[episodeId]
-                if len(item['subtitle']) > 0:
-                    list_item = xbmcgui.ListItem(label = item['title'] + '\n[COLOR=gray]' + item['subtitle'] + '[/COLOR]')
-                else:
-                    list_item = xbmcgui.ListItem(label = item['title'])
-                list_item.setArt({'poster': item['image']})    
-                if kodi_version >= 20:
-                    infotag = list_item.getVideoInfoTag()
-                    infotag.setMediaType('episode')
-                else:
-                    list_item.setInfo('video', {'mediatype' : 'episode'})
-                if kodi_version >= 20:
-                    infotag.setTitle(item['title'])
-                else:
-                    list_item.setInfo('video', {'title' : item['title']})
-                if kodi_version >= 20:
-                    infotag.setTvShowTitle(item['subtitle'])
-                else:
-                    list_item.setInfo('video', {'tvshowtitle' : item['season_title']})   
-                list_item.setContentLookup(False)          
-                list_item.setProperty('IsPlayable', 'true')
-                url = get_url(action = 'play_archive', id = item['id'])
-                xbmcplugin.addDirectoryItem(_handle, url, list_item, False)
-    xbmcplugin.endOfDirectory(_handle, cacheToDisc = False)  
-
-def list_carousel(id, criteria, page, label):
-    page = int(page)
-    xbmcplugin.setPluginCategory(_handle, label)
-    xbmcplugin.setContent(_handle, 'movies')    
-    addon = xbmcaddon.Addon()
-    icons_dir = os.path.join(addon.getAddonInfo('path'), 'resources','images')
-    session = Session()
-    api = API()
-    post = {"payload":{"carouselId":id,"paging":{"count":24,"position":24*(page-1)+1},"criteria":{"filterCriterias":criteria,"sortOption":"sorting-date-desc"}}}
-    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/carousel.display', data = post, session = session) 
-    if page > 1:
-        list_item = xbmcgui.ListItem(label='Přechozí strana (' + str(page-1) + '/' + str(data['carousel']['paging']['pageCount']) + ')')
-        url = get_url(action='list_carousel', id = id, criteria = filter, page = page-1, label = label)  
-        list_item.setArt({ 'thumb' : os.path.join(icons_dir , 'previous_arrow.png'), 'icon' : os.path.join(icons_dir , 'previous_arrow.png') })
-        xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
-    for item in data['carousel']['tiles']:
-        if 'contentId' in item['action']['params']['payload']:
-            item_detail = get_item_detail(item['action']['params']['payload']['contentId'])
-            list_item = xbmcgui.ListItem(label = item['title'])
-            image = item['image'].replace('{WIDTH}', '320').replace('{HEIGHT}', '480')
-            list_item.setArt({'poster': image})    
-            list_item.setInfo('video', {'mediatype':'movie', 'title': item['title']}) 
-            list_item = epg_listitem(list_item, item_detail, None)        
-            if item['action']['params']['contentType'] == 'show':
-                url = get_url(action = 'list_show', id = item['action']['params']['payload']['contentId'], label = label + ' / ' + item['title'] )
-                xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
-            else:
-                list_item.setContentLookup(False)          
-                list_item.setProperty('IsPlayable', 'true')
-                url = get_url(action = 'play_archive', id = item['action']['params']['payload']['contentId'])
-                xbmcplugin.addDirectoryItem(_handle, url, list_item, False)
-    if data['carousel']['paging']['next'] == True:
-        list_item = xbmcgui.ListItem(label='Následující strana (' + str(page+1) + '/' + str(data['carousel']['paging']['pageCount']) + ')')
-        url = get_url(action='list_carousel', id = id, criteria = filter, page = page+1, label = label)  
-        list_item.setArt({ 'thumb' : os.path.join(icons_dir , 'next_arrow.png'), 'icon' : os.path.join(icons_dir , 'next_arrow.png') })
-        xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
-    xbmcplugin.endOfDirectory(_handle, cacheToDisc = False)              
-
-def list_filters(id, filters, label):
-    xbmcplugin.setPluginCategory(_handle, label)
-    session = Session()
-    api = API()
-    post = {"payload":{"categoryId":id}}
-    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/page.category.display', data = post, session = session) 
-    for block in data['layout']['blocks']:
-        if block['schema'] == 'BreadcrumbBlock':
-            for item in block['menu']['groups'][0]['items']:
-                if item['schema'] == 'SubMenu' and item['id'] == filters:
-                    for filter in item['groups'][0]['items']:
-                        if 'categoryId' in filter['action']['params']['payload']:
-                            list_item = xbmcgui.ListItem(label = filter['title'])
-                            if 'criteria' in filter['action']['params']['payload']:
-                                criteria = filter['action']['params']['payload']['criteria']['filterCriterias']
-                            else:
-                                criteria = ''
-                            url = get_url(action='list_category', id = filter['action']['params']['payload']['categoryId'], criteria = criteria, label = label + ' / ' + filter['title'])  
-                            menus = [('Přidat do oblíbených Oneplay', 'RunPlugin(plugin://' + plugin_id + '?action=add_favourite&type=category&id=' + filter['action']['params']['payload']['categoryId'] + '~None~' + str(criteria) + '&image=None&title=' + (label + ' / ' + filter['title']).replace('Kategorie / ','') + ')')]
-                            list_item.addContextMenuItems(menus)       
-                            xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
-    xbmcplugin.endOfDirectory(_handle, cacheToDisc = False)              
-
-

@@ -107,6 +107,8 @@ def get_stream_url(post, mode, next = False):
     drm = None
     if next == False:
         data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/content.play', data = post, session = session)
+        if 'err' in data:
+            return None, None, None, None
     else:
         data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/content.playnext', data = post, session = session)
         if 'err' in data or 'offer' not in data or 'channelUpdate' not in data['offer']:
@@ -229,7 +231,7 @@ def play_stream(id, mode):
         url, keepalive = get_manifest_redirect(url_hls)
         get_list_item('hls', url, None, next_url_hls, None)
     else:
-        xbmcgui.Dialog().notification('Oneplay','Problém při přehrání', xbmcgui.NOTIFICATION_ERROR, 5000)
+        xbmcgui.Dialog().notification('Oneplay','Pořad nelze přehrát', xbmcgui.NOTIFICATION_ERROR, 3000)
     if keepalive is not None:
         time.sleep(3)
         while(xbmc.Player().isPlaying()):

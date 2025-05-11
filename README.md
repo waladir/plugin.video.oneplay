@@ -6,6 +6,11 @@ VOD, živé vysílání, archiv, nahrávky, vytváření playlistu a EPG pro IPT
 <a href="https://www.xbmc-kodi.cz/prispevek-oneplay">Vlákno na fóru XBMC-Kodi.cz</a><br><br>
 </p>
 <p>
+1.5.0 (11.5.2025)<br>
+- přepracování kategorií<br>
+- přidání možnosti změnit řazení epizod v Nastavení<br>
+- úprava logování (možnost vypnout zkracování odpovědí)<br><br>
+
 1.4.6 (6.5.2025)<br>
 - přidání detailů k pořadům v archivu<br><br>
 
@@ -17,7 +22,4 @@ VOD, živé vysílání, archiv, nahrávky, vytváření playlistu a EPG pro IPT
 
 1.4.3 (1.5.2025)<br>
 - rozšíření informací u některých pořadů v kategoriích/vyhledávání<br><br>
-
-1.4.2 (26.4.2025)<br>
-- doplnění následujícího pořadu u živého vysílání<br><br>
 </p>

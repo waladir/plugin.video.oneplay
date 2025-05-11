@@ -86,7 +86,7 @@ def list_program(id, day_min, label):
             list_item = epg_listitem(list_item = list_item, epg = epg[key], icon = None)
             menus = []
             menus.append(('Přidat nahrávku', 'RunPlugin(plugin://' + plugin_id + '?action=add_recording&id=' + str(epg[key]['id']) + ')'))
-            if epg[key]['type'] == 'show':
+            if epg[key]['type'] == 'tvshow':
                 menus.append(('Zobrazit epizody', 'Container.Update(plugin://' + plugin_id + '?action=list_tv_episodes&id=' + str(epg[key]['referenceid']) + '&label=' + epg[key]['title'] + ')'))
             list_item.addContextMenuItems(menus)       
             list_item.setContentLookup(False)          

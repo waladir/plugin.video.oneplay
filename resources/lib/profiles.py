@@ -16,8 +16,8 @@ import json
 from resources.lib.api import API
 from resources.lib.utils import get_url
 
-
 _url = sys.argv[0]
+
 if len(sys.argv) > 1:
     _handle = int(sys.argv[1])
 
@@ -100,7 +100,7 @@ def get_profile_id():
     profile = get_profiles(active = True)
     return profile['id']
 
-def reset_profiles():
+def reset_profiles(load_profiles = True):
     addon = xbmcaddon.Addon()
     addon_userdata_dir = translatePath(addon.getAddonInfo('profile'))
     filename = os.path.join(addon_userdata_dir, 'profiles.txt')
@@ -109,9 +109,10 @@ def reset_profiles():
             os.remove(filename) 
         except IOError:
             xbmcgui.Dialog().notification('Oneplay', 'Chyba při znovunačtení profilů', xbmcgui.NOTIFICATION_ERROR, 5000)
-    get_profiles()
-    xbmcgui.Dialog().notification('Oneplay', 'Profily byly znovu načtené', xbmcgui.NOTIFICATION_INFO, 5000)    
-    xbmc.executebuiltin('Container.Refresh')
+    if load_profiles == True:
+        get_profiles()
+        xbmcgui.Dialog().notification('Oneplay', 'Profily byly znovu načtené', xbmcgui.NOTIFICATION_INFO, 5000)    
+        xbmc.executebuiltin('Container.Refresh')
 
 def list_accounts(label):
     xbmcplugin.setPluginCategory(_handle, label)
@@ -130,6 +131,7 @@ def list_accounts(label):
 
 def set_active_account(name):
     from resources.lib.session import Session
+    from resources.lib.channels import Channels
     addon = xbmcaddon.Addon()
     addon_userdata_dir = translatePath(addon.getAddonInfo('profile'))
     filename = os.path.join(addon_userdata_dir, 'accounts.txt')
@@ -144,9 +146,11 @@ def set_active_account(name):
             file.write('%s\n' % json.dumps(accounts))        
     except IOError as error:
         xbmcgui.Dialog().notification('Oneplay', 'Chyba při uložení účtů', xbmcgui.NOTIFICATION_ERROR, 5000)   
-    reset_profiles()
+    reset_profiles(load_profiles = False)
     session = Session()
     session.remove_session()
+    channels = Channels()
+    channels.reset_channels_full()
     xbmc.executebuiltin('Container.Refresh')
 
 def get_accounts(active = False, accounts_data = None):
@@ -190,6 +194,7 @@ def get_account_id(accounts_data = None):
 
 def reset_accounts():
     from resources.lib.session import Session
+    from resources.lib.channels import Channels
     addon = xbmcaddon.Addon()
     addon_userdata_dir = translatePath(addon.getAddonInfo('profile'))
     filename = os.path.join(addon_userdata_dir, 'accounts.txt')
@@ -198,8 +203,10 @@ def reset_accounts():
             os.remove(filename) 
         except IOError:
             xbmcgui.Dialog().notification('Oneplay', 'Chyba při znovunačtení účtů', xbmcgui.NOTIFICATION_ERROR, 5000)
-    reset_profiles()
+    reset_profiles(load_profiles = False)
     session = Session()
     session.remove_session()
+    channels = Channels()
+    channels.reset_channels_full()
     xbmcgui.Dialog().notification('Oneplay', 'Účty byly znovu načtené', xbmcgui.NOTIFICATION_INFO, 5000)    
   
