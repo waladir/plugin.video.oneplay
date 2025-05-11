@@ -175,7 +175,7 @@ class Item:
                 if self.data is not None and 'recording' in self.data and self.data['recording'] == True:
                     menus.append(('Smazat nahrávku', 'RunPlugin(plugin://' + plugin_id + '?action=delete_recording&id=' + get_contentId(self.params) + ')'))
                 if self.data is not None and 'favourite_id' in self.data:
-                    menus = remote_favourite_menu(self.data)
+                    menus.append(remote_favourite_menu(self.data))
                 else:
                     if self.type == 'show':
                         menus.append(add_favourite_menu('show', self.params['payload']['contentId'], self.data['cover'], self.title))
