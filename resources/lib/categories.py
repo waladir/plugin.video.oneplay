@@ -249,16 +249,17 @@ def CarouselBlock(label, block, params, id):
                             carousel_display(label, json.dumps({'payload' : {'carouselId' : carousel['id']}}))
                         else:
                             for item in carousel['tiles']:
-                                exp_info = ''
-                                if params['schema'] == 'PageCategoryDisplayApiAction' and 'payload' in params and 'categoryId' in params['payload'] and params['payload']['categoryId'] == '8' and 'additionalFragments' in item:
-                                    year = datetime.now().year
-                                    expiration = int(time.mktime(time.strptime(item['additionalFragments'][0]['labels'][0]['name'] + str(year) + ' ' + item['additionalFragments'][0]['labels'][1]['name'], '%d.%m.%Y %H:%M'))) + 30*24*60*60
-                                    exp_info = '[COLOR=gray] (do ' + datetime.fromtimestamp(expiration).strftime('%d.%m').lstrip("0").replace(" 0", " ") +')[/COLOR]'
-                                if 'contentType' in item['action']['params']:
-                                    item_type = item['action']['params']['contentType']
-                                else:
-                                    item_type = 'other'
-                                Item(label = item['title'], title = item_data(item)['title'] + exp_info, type = item_type, schema = item['action']['schema'], call = item['action']['call'], params = item['action']['params'], tracking = None, data = item_data(item))
+                                if item['action']['schema'] != 'NoAppAction':
+                                    exp_info = ''
+                                    if params['schema'] == 'PageCategoryDisplayApiAction' and 'payload' in params and 'categoryId' in params['payload'] and params['payload']['categoryId'] == '8' and 'additionalFragments' in item:
+                                        year = datetime.now().year
+                                        expiration = int(time.mktime(time.strptime(item['additionalFragments'][0]['labels'][0]['name'] + str(year) + ' ' + item['additionalFragments'][0]['labels'][1]['name'], '%d.%m.%Y %H:%M'))) + 30*24*60*60
+                                        exp_info = '[COLOR=gray] (do ' + datetime.fromtimestamp(expiration).strftime('%d.%m').lstrip("0").replace(" 0", " ") +')[/COLOR]'
+                                    if 'params' in item['action'] and 'contentType' in item['action']['params']:
+                                        item_type = item['action']['params']['contentType']
+                                    else:
+                                        item_type = 'other'
+                                    Item(label = item['title'], title = item_data(item)['title'] + exp_info, type = item_type, schema = item['action']['schema'], call = item['action']['call'], params = item['action']['params'], tracking = None, data = item_data(item))
                             if paging == True:
                                 addon = xbmcaddon.Addon()
                                 icons_dir = os.path.join(addon.getAddonInfo('path'), 'resources','images')
