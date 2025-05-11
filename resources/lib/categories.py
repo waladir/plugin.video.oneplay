@@ -122,10 +122,10 @@ def get_contentId(params):
         return params['payload']['criteria']['contentId']
 
 def remote_favourite_menu(data):
-     return [('Odebrat z oblíbených Oneplay', 'RunPlugin(plugin://' + plugin_id + '?action=remove_favourite&type=' + data['favourite_type'] + '&id=' + data['favourite_id'] + ')')]
+     return ('Odebrat z oblíbených Oneplay', 'RunPlugin(plugin://' + plugin_id + '?action=remove_favourite&type=' + data['favourite_type'] + '&id=' + data['favourite_id'] + ')')
 
 def add_favourite_menu(type, id, image, title):
-     return [('Přidat do oblíbených Oneplay', 'RunPlugin(plugin://' + plugin_id + '?action=add_favourite&type=' + type + '&id=' + id + '&image=' + image + '&title=' + title + ')')]
+     return ('Přidat do oblíbených Oneplay', 'RunPlugin(plugin://' + plugin_id + '?action=add_favourite&type=' + type + '&id=' + id + '&image=' + image + '&title=' + title + ')')
 
 class Item:
     def __init__(self, label, title, type, schema, call, params, tracking, data):
@@ -154,12 +154,16 @@ class Item:
             url = get_url(action = self.call, params = json.dumps(self.params), label = self.title)
             list_item.setContentLookup(False)          
             list_item.setProperty('IsPlayable', 'true')
+            menus = []
+            if 'recording' in self.data and self.data['recording'] == True:
+                menus.append(('Smazat nahrávku', 'RunPlugin(plugin://' + plugin_id + '?action=delete_recording&id=' + get_contentId(self.params) + ')'))
             if self.type in ['movie','epgitem','match','highlight']:
                 if self.data is not None and 'favourite_id' in self.data:
-                    menus = remote_favourite_menu(self.data)
+                    menus.append(remote_favourite_menu(self.data))
                 else:
                     contentId = get_contentId(self.params)
-                    menus = add_favourite_menu('item', contentId, self.data['cover'], self.title)
+                    menus.append(add_favourite_menu('item', contentId, self.data['cover'], self.title))
+            if len(menus) > 0:
                 list_item.addContextMenuItems(menus)       
             xbmcplugin.addDirectoryItem(_handle, url, list_item, False)
         else:
@@ -168,17 +172,19 @@ class Item:
             url = get_url(action = self.call, params = json.dumps(self.params), label = self.label)
             if self.type in ['show', 'category_item', 'criteria_item']:
                 menus = []
+                if 'recording' in self.data and self.data['recording'] == True:
+                    menus.append(('Smazat nahrávku', 'RunPlugin(plugin://' + plugin_id + '?action=delete_recording&id=' + get_contentId(self.params) + ')'))
                 if self.data is not None and 'favourite_id' in self.data:
                     menus = remote_favourite_menu(self.data)
                 else:
                     if self.type == 'show':
-                        menus = add_favourite_menu('show', self.params['payload']['contentId'], self.data['cover'], self.title)
+                        menus.append(add_favourite_menu('show', self.params['payload']['contentId'], self.data['cover'], self.title))
                     elif self.type == 'category_item' and 'payload' in self.params:
                         if 'criteria' in self.params['payload']:
                             criteria = self.params['payload']['criteria']['filterCriterias']
                         else:
                             criteria = None
-                        menus = add_favourite_menu('category', self.params['payload']['categoryId'] + '~' + self.tracking['id'] + '~' + str(criteria), 'None', self.label.replace('Kategorie / ',''))
+                        menus.append(add_favourite_menu('category', self.params['payload']['categoryId'] + '~' + self.tracking['id'] + '~' + str(criteria), 'None', self.label.replace('Kategorie / ','')))
                 if len(menus) > 0:
                     list_item.addContextMenuItems(menus)  
             xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
@@ -187,15 +193,17 @@ class Item:
         list_item = xbmcgui.ListItem(label = self.title)
         url = get_url(action = 'page_category_display', params = json.dumps(self.params), id = self.tracking['id'], show_filter = False, label = self.label)
         if self.type in ['category_item']:
+            menus = []
             if self.data is not None and 'favourite_id' in self.data:
-                menus = remote_favourite_menu(self.data)
+                menus.append(remote_favourite_menu(self.data))
             else:
                 if 'criteria' in self.params['payload']:
                     criteria = self.params['payload']['criteria']['filterCriterias']
                 else:
                     criteria = None
-                menus = add_favourite_menu('category', self.params['payload']['categoryId'] + '~' + self.tracking['id'] + '~' + str(criteria), 'None', self.label.replace('Kategorie / ',''))
-            list_item.addContextMenuItems(menus)
+                menus.append(add_favourite_menu('category', self.params['payload']['categoryId'] + '~' + self.tracking['id'] + '~' + str(criteria), 'None', self.label.replace('Kategorie / ','')))
+            if len(menus) > 0:
+                list_item.addContextMenuItems(menus)
         xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
 
     def CarouselGenericFilter(self):
@@ -204,11 +212,13 @@ class Item:
         if self.data is not None and 'image' in self.data:
             list_item.setArt({ 'thumb' : self.data['image'], 'icon' : self.data['image'] })
         if self.type == 'season':
+            menus = []
             if self.data is not None and 'favourite_id' in self.data:
-                menus = remote_favourite_menu(self.data)
+                menus.append(remote_favourite_menu(self.data))
             else:
-                menus = add_favourite_menu('season', self.params['payload']['criteria']['filterCriterias'] + '~' + self.params['payload']['carouselId'], 'None', self.label)
-            list_item.addContextMenuItems(menus)       
+                menus.append(add_favourite_menu('season', self.params['payload']['criteria']['filterCriterias'] + '~' + self.params['payload']['carouselId'], 'None', self.label))
+            if len(menus) > 0:
+                list_item.addContextMenuItems(menus)       
         xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
 
     def SubMenu(self):
@@ -259,7 +269,10 @@ def CarouselBlock(label, block, params, id):
                                         item_type = item['action']['params']['contentType']
                                     else:
                                         item_type = 'other'
-                                    Item(label = item['title'], title = item_data(item)['title'] + exp_info, type = item_type, schema = item['action']['schema'], call = item['action']['call'], params = item['action']['params'], tracking = None, data = item_data(item))
+                                    itemdata = item_data(item)
+                                    if 'payload' in params and 'categoryId' in params['payload'] and params['payload']['categoryId'] == '8':
+                                        itemdata['recording'] = True
+                                    Item(label = item['title'], title = item_data(item)['title'] + exp_info, type = item_type, schema = item['action']['schema'], call = item['action']['call'], params = item['action']['params'], tracking = None, data = itemdata)
                             if paging == True:
                                 addon = xbmcaddon.Addon()
                                 icons_dir = os.path.join(addon.getAddonInfo('path'), 'resources','images')
