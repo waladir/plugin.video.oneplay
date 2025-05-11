@@ -155,7 +155,7 @@ class Item:
             list_item.setContentLookup(False)          
             list_item.setProperty('IsPlayable', 'true')
             menus = []
-            if 'recording' in self.data and self.data['recording'] == True:
+            if self.data is not None and 'recording' in self.data and self.data['recording'] == True:
                 menus.append(('Smazat nahrávku', 'RunPlugin(plugin://' + plugin_id + '?action=delete_recording&id=' + get_contentId(self.params) + ')'))
             if self.type in ['movie','epgitem','match','highlight']:
                 if self.data is not None and 'favourite_id' in self.data:
@@ -172,7 +172,7 @@ class Item:
             url = get_url(action = self.call, params = json.dumps(self.params), label = self.label)
             if self.type in ['show', 'category_item', 'criteria_item']:
                 menus = []
-                if 'recording' in self.data and self.data['recording'] == True:
+                if self.data is not None and 'recording' in self.data and self.data['recording'] == True:
                     menus.append(('Smazat nahrávku', 'RunPlugin(plugin://' + plugin_id + '?action=delete_recording&id=' + get_contentId(self.params) + ')'))
                 if self.data is not None and 'favourite_id' in self.data:
                     menus = remote_favourite_menu(self.data)

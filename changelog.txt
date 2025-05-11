@@ -1,3 +1,6 @@
+1.5.3 (11.5.2025)
+- oprava chyby v kategoriích
+
 1.5.2 (11.5.2025)
 - přidání možnosti smazat nahrávky
 
@@ -11,6 +14,3 @@
 
 1.4.6 (6.5.2025)
 - přidání detailů k pořadům v archivu
-
-1.4.5 (5.5.2025)
-- přesun zobrazení následující pořadu na konec popisu
