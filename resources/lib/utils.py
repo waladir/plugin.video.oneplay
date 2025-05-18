@@ -75,7 +75,4 @@ def get_color():
         return ''
 
 def get_label_color(label, color):
-    if color != 'dimgray':
-        return '[COLOR ' + color + ']' + label + '[/COLOR]'    
-    else:
-        return label
+    return '[COLOR ' + color + ']' + label + '[/COLOR]'    
