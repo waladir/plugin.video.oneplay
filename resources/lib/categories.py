@@ -27,17 +27,32 @@ def item_data(item):
     else:
         type = 'item'
     subtitle = ''
+    if 'subTitle' in item:
+        subtitle = item['subTitle']
     if 'additionalFragments' in item and len(item['additionalFragments']) > 0 and 'labels' in item['additionalFragments'][0]:
         for label in item['labels']:
             if 'Vyprší' not in label['name'] and 'Můj seznam' not in label['name']:
-                subtitle = label['name']
-        for label in item['additionalFragments'][0]['labels']:
-            if ':' in label['name']:
                 if len(subtitle) > 0:
                     subtitle += ' | ' + label['name']
                 else:
                     subtitle = label['name']
-            if 'Díl' in label['name']:
+        has_date = False
+        for label in item['additionalFragments'][0]['labels']:
+            if label['name'].count('.') == 2:
+                has_date = True
+                if len(subtitle) > 0:
+                    subtitle += ' | ' + label['name']
+                else:
+                    subtitle = label['name']
+            elif ':' in label['name']:
+                if len(subtitle) > 0:
+                    if has_date == True:
+                        subtitle += ' ' + label['name']
+                    else:
+                        subtitle += ' | ' + label['name']
+                else:
+                    subtitle = label['name']
+            elif 'Díl' in label['name']:
                 if len(subtitle) > 0:
                     subtitle += ' | ' + label['name']
                 else:
