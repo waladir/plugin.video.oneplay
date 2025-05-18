@@ -15,7 +15,7 @@ import codecs
 import json
 
 from resources.lib.categories import Item, get_seasons, get_episodes
-from resources.lib.utils import get_url, plugin_id, get_kodi_version
+from resources.lib.utils import get_url, plugin_id, get_kodi_version, get_color, get_label_color
 
 if len(sys.argv) > 1:
     _handle = int(sys.argv[1])
@@ -102,6 +102,7 @@ def list_favourites(label):
 
 def list_favourites_new(label):
     addon = xbmcaddon.Addon()
+    color = get_color()
     xbmcplugin.setPluginCategory(_handle, label)
     xbmcplugin.setContent(_handle, 'episodes')
     limit = int(addon.getSetting('favourites_new_count'))
@@ -126,12 +127,17 @@ def list_favourites_new(label):
                         if season_item not in seasons:
                             seasons.append(season_item)
     episodes = {}
+    if addon.getSetting('episodes_order') == 'sestupně':
+        reverse = True
+    else:
+        reverse = False
     for season in seasons:
         episodes.update(get_episodes(season['carouselId'], season['id'], season['title'], limit))
-    for episodeId in sorted(episodes.keys(), reverse = True):
+
+    for episodeId in sorted(episodes.keys(), reverse = reverse):
         item = episodes[episodeId]
         if item['id'] not in blacklist:
-            list_item = xbmcgui.ListItem(label = item['title'] + '\n' + '[COLOR=gray]' + item['season_title'] + '[/COLOR]')
+            list_item = xbmcgui.ListItem(label = item['title'] + '\n' + get_label_color(item['season_title'], color))
             list_item.setArt({'poster': item['image']})    
             if kodi_version >= 20:
                 infotag = list_item.getVideoInfoTag()

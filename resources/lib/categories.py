@@ -12,7 +12,7 @@ from datetime import datetime
 from resources.lib.session import Session
 from resources.lib.api import API
 from resources.lib.epg import get_item_detail, epg_listitem
-from resources.lib.utils import get_url, plugin_id
+from resources.lib.utils import get_url, plugin_id, get_color, get_label_color
 from resources.lib.stream import play_stream
 
 
@@ -20,6 +20,7 @@ if len(sys.argv) > 1:
     _handle = int(sys.argv[1])
 
 def item_data(item):
+    color = get_color()
     title = item['title']
     if 'tracking' in item and 'type' in item['tracking']:
         type = item['tracking']['type']
@@ -42,7 +43,7 @@ def item_data(item):
                 else:
                     subtitle = label['name']
     if len(subtitle) > 1:
-        title = item['title'] + '\n[COLOR=gray]' + subtitle + '[/COLOR]'                
+        title = item['title'] + '\n' + get_label_color(subtitle, color)
     image = item['image'].replace('{WIDTH}', '320').replace('{HEIGHT}', '480')
     if 'description' in item:
         description = item['description']
@@ -157,6 +158,11 @@ class Item:
             menus = []
             if self.data is not None and 'recording' in self.data and self.data['recording'] == True:
                 menus.append(('Smazat nahrávku', 'RunPlugin(plugin://' + plugin_id + '?action=delete_recording&id=' + get_contentId(self.params) + ')'))
+            elif self.params is not None and 'payload' in self.params:
+                if 'contentType' in self.params and self.params['contentType'] == 'epgitem':
+                    menus.append(('Přidat nahrávku', 'RunPlugin(plugin://' + plugin_id + '?action=add_recording&id=' + self.params['payload']['contentId'] + ')'))
+                elif 'deeplink' in self.params['payload'] and 'epgItem' in self.params['payload']['deeplink']:
+                    menus.append(('Přidat nahrávku', 'RunPlugin(plugin://' + plugin_id + '?action=add_recording&id=' + self.params['payload']['deeplink']['epgItem'] + ')'))
             if self.type in ['movie','epgitem','match','highlight']:
                 if self.data is not None and 'favourite_id' in self.data:
                     menus.append(remote_favourite_menu(self.data))
@@ -228,6 +234,7 @@ class Item:
 
 def CarouselBlock(label, block, params, id):
     addon = xbmcaddon.Addon()
+    color = get_color()
     for carousel in block['carousels']:
         if 'paging' in carousel and 'next' in carousel['paging'] and carousel['paging']['next'] == True:
             paging = True
@@ -264,7 +271,7 @@ def CarouselBlock(label, block, params, id):
                                     if params['schema'] == 'PageCategoryDisplayApiAction' and 'payload' in params and 'categoryId' in params['payload'] and params['payload']['categoryId'] == '8' and 'additionalFragments' in item:
                                         year = datetime.now().year
                                         expiration = int(time.mktime(time.strptime(item['additionalFragments'][0]['labels'][0]['name'] + str(year) + ' ' + item['additionalFragments'][0]['labels'][1]['name'], '%d.%m.%Y %H:%M'))) + 30*24*60*60
-                                        exp_info = '[COLOR=gray] (do ' + datetime.fromtimestamp(expiration).strftime('%d.%m').lstrip("0").replace(" 0", " ") +')[/COLOR]'
+                                        exp_info = get_label_color(' (do ' + datetime.fromtimestamp(expiration).strftime('%d.%m').lstrip("0").replace(" 0", " ") + ')', color)
                                     if 'params' in item['action'] and 'contentType' in item['action']['params']:
                                         item_type = item['action']['params']['contentType']
                                     else:

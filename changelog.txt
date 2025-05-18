@@ -1,3 +1,8 @@
+1.5.5 (18.5.2025)
+- doplnění možnosti přidat nahrávku z výsledků vyhledávání (u TV položek)
+- možnost nastavení alternativní barvy použité v popiscích (bylo jen u živého vysílání)
+- změna řazení epizod má vliv i na nejnovější epizody oblíbených pořadů
+
 1.5.3+4 (11.5.2025)
 - oprava chyby v kategoriích
 
@@ -11,6 +16,3 @@
 - přepracování kategorií
 - přidání možnosti změnit řazení epizod v Nastavení
 - úprava logování (možnost vypnout zkracování odpovědí)
-
-1.4.6 (6.5.2025)
-- přidání detailů k pořadům v archivu
