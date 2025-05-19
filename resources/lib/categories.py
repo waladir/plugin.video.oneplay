@@ -355,19 +355,31 @@ def page_content_display(label, params):
             content_play(json.dumps(params))
         else:
             list = True
+            switch_tab = False
             for block in data['layout']['blocks']:
-                if block['schema'] == 'CarouselBlock':
-                    if block['header']['title'] == 'Celé díly':
-                        list = False
-                        CarouselBlock(label, block, params, None)
-                    elif block['header']['title'] == 'Vysílané v TV':
-                        list = False
-                        CarouselBlock(label, block, params, None)
-                    if list == True:                
-                        CarouselBlock(label, block, params, None)
                 if block['schema'] == 'TabBlock':
-                    list = False
-                    TabBlock(label, block, params)
+                    for tab in block['tabs']:
+                        if tab['label']['name'] == 'Celé díly':
+                            if tab['isActive'] == False:
+                                post = {"payload":{"tabId":tab['id']}}
+                                data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/tab.display', data = post, session = session)
+                                for block in data['layout']['blocks']:
+                                    CarouselBlock(label, block, params, None)
+                                switch_tab = True
+            if switch_tab == False:
+                for block in data['layout']['blocks']:
+                    if block['schema'] == 'CarouselBlock':
+                        if block['header']['title'] == 'Celé díly':
+                            list = False
+                            CarouselBlock(label, block, params, None)
+                        elif block['header']['title'] == 'Vysílané v TV':
+                            list = False
+                            CarouselBlock(label, block, params, None)
+                        if list == True:                
+                            CarouselBlock(label, block, params, None)
+                    if block['schema'] == 'TabBlock':
+                        list = False
+                        TabBlock(label, block, params)
     xbmcplugin.endOfDirectory(_handle, cacheToDisc = False)    
 
 def carousel_display(label, params):
@@ -408,7 +420,7 @@ def carousel_display(label, params):
                         page = int((position - 1) / count + 1 + 1)
                     else:
                         page = 2
-                    if 'criteria' in data['carousel']['paging'] and page < pageCount:
+                    if 'criteria' in data['carousel']['paging'] and page <= pageCount:
                         carouselId = data['carousel']['id']
                         addon = xbmcaddon.Addon()
                         icons_dir = os.path.join(addon.getAddonInfo('path'), 'resources','images')

@@ -1,3 +1,7 @@
+1.5.8 (19.5.2025)
+- oprava stránkování
+- úprava načítání seznamu sérií
+
 1.5.7 (18.5.2025)
 - rozšíření doplňujících informací k pořadům
 
@@ -11,6 +15,3 @@
 
 1.5.3+4 (11.5.2025)
 - oprava chyby v kategoriích
-
-1.5.2 (11.5.2025)
-- přidání možnosti smazat nahrávky
