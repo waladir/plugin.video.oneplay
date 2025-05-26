@@ -138,6 +138,8 @@ def list_favourites_new(label):
         item = episodes[episodeId]
         if item['id'] not in blacklist:
             list_item = xbmcgui.ListItem(label = item['title'] + '\n' + get_label_color(item['season_title'], color))
+            if '\n' in item['title']:
+                item['title'] = item['title'].split('\n')[0]
             list_item.setArt({'poster': item['image']})    
             if kodi_version >= 20:
                 infotag = list_item.getVideoInfoTag()

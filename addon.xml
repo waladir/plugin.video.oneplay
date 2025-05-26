@@ -1,4 +1,4 @@
-﻿<addon id="plugin.video.oneplay" name="Oneplay" provider-name="waladir" version="1.5.8">
+﻿<addon id="plugin.video.oneplay" name="Oneplay" provider-name="waladir" version="1.5.9">
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
     <import addon="inputstream.adaptive" version="19.0.0"/>
@@ -38,6 +38,13 @@ Další informace a podporu najdete na fóru www.xbmc-kodi.cz (https://www.xbmc-
     <platform>all</platform>
     <source>https://github.com/waladir/plugin.video.oneplay</source>
     <news>
+1.5.9 (26.5.2025)
+- úprava metadat u Nejnovějších epizod oblíbených pořadů
+
+1.5.8 (19.5.2025)
+- oprava stránkování
+- úprava načítání seznamu sérií
+
 1.5.7 (18.5.2025)
 - rozšíření doplňujících informací k pořadům
 
@@ -48,12 +55,6 @@ Další informace a podporu najdete na fóru www.xbmc-kodi.cz (https://www.xbmc-
 - doplnění možnosti přidat nahrávku z výsledků vyhledávání (u TV položek)
 - možnost nastavení alternativní barvy použité v popiscích (bylo jen u živého vysílání)
 - změna řazení epizod má vliv i na nejnovější epizody oblíbených pořadů
-
-1.5.3+4 (11.5.2025)
-- oprava chyby v kategoriích
-
-1.5.2 (11.5.2025)
-- přidání možnosti smazat nahrávky
     </news>
     <assets>
         <icon>icon.jpg</icon>
