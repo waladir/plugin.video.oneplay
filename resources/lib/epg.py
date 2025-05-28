@@ -190,7 +190,6 @@ def epg_listitem(list_item, epg, icon):
     cast = []
     directors = []
     genres = []
-
     kodi_version = get_kodi_version()
     if 'type' not in epg or epg['type'] not in ['episode', 'show']:
         epg['type'] = 'movie'

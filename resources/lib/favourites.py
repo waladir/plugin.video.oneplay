@@ -14,8 +14,9 @@ except ImportError:
 import codecs
 import json
 
+from resources.lib.epg import epg_listitem
 from resources.lib.categories import Item, get_seasons, get_episodes
-from resources.lib.utils import get_url, plugin_id, get_kodi_version, get_color, get_label_color
+from resources.lib.utils import get_url, plugin_id, get_color, get_label_color
 
 if len(sys.argv) > 1:
     _handle = int(sys.argv[1])
@@ -104,9 +105,8 @@ def list_favourites_new(label):
     addon = xbmcaddon.Addon()
     color = get_color()
     xbmcplugin.setPluginCategory(_handle, label)
-    xbmcplugin.setContent(_handle, 'episodes')
+    xbmcplugin.setContent(_handle, 'movies')
     limit = int(addon.getSetting('favourites_new_count'))
-    kodi_version = get_kodi_version()
     types = ['show', 'season']
     seasons = []
     favourites = get_favourites()
@@ -137,23 +137,10 @@ def list_favourites_new(label):
     for episodeId in sorted(episodes.keys(), reverse = reverse):
         item = episodes[episodeId]
         if item['id'] not in blacklist:
-            list_item = xbmcgui.ListItem(label = item['title'] + '\n' + get_label_color(item['season_title'], color))
-            if '\n' in item['title']:
-                item['title'] = item['title'].split('\n')[0]
-            list_item.setArt({'poster': item['image']})    
-            if kodi_version >= 20:
-                infotag = list_item.getVideoInfoTag()
-                infotag.setMediaType('episode')
-            else:
-                list_item.setInfo('video', {'mediatype' : 'episode'})
-            if kodi_version >= 20:
-                infotag.setTitle(item['title'])
-            else:
-                list_item.setInfo('video', {'title' : item['title']})
-            if kodi_version >= 20:
-                infotag.setTvShowTitle(item['season_title'])
-            else:
-                list_item.setInfo('video', {'tvshowtitle' : item['season_title']})                
+            if '\n' not in item['title']:
+                item['title'] = item['title'] + '\n' + get_label_color(item['showtitle'], color)
+            list_item = xbmcgui.ListItem(label = item['title'])            
+            list_item = epg_listitem(list_item, item, None)
             list_item.setContentLookup(False)          
             list_item.setProperty('IsPlayable', 'true')
             menus = [('Skrýt epizodu', 'RunPlugin(plugin://' + plugin_id + '?action=add_favourites_episodes_bl&id=' + item['id'] + ')')]

@@ -1,3 +1,6 @@
+1.6.0 (28.5.2025)
+- úprava zobrazení u epizod
+
 1.5.9 (26.5.2025)
 - úprava metadat u Nejnovějších epizod oblíbených pořadů
 
@@ -10,8 +13,3 @@
 
 1.5.6 (18.5.2025)
 - oprava výchozího nastavení barev
-
-1.5.5 (18.5.2025)
-- doplnění možnosti přidat nahrávku z výsledků vyhledávání (u TV položek)
-- možnost nastavení alternativní barvy použité v popiscích (bylo jen u živého vysílání)
-- změna řazení epizod má vliv i na nejnovější epizody oblíbených pořadů

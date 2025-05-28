@@ -88,7 +88,7 @@ def get_episodes(carouselId, id, season_title, limit = 1000):
                     episodeId = int(contentId.split('.')[1])
                     if id not in episodes:
                         item = item_data(item)
-                        episodes.update({episodeId : {'id' : contentId, 'season_title' : season_title, 'title' : item['title'], 'image' : item['cover']}})
+                        episodes.update({episodeId : {'id' : contentId, 'type' : item['type'], 'showtitle' : season_title, 'title' : item['title'], 'cover' : item['cover'], 'poster' : item['cover'], 'description' : item['description']}})
                     if cnt >= limit:
                         get_page = False
                         break
