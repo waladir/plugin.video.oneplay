@@ -1,3 +1,6 @@
+v1.6.1 (24.7.2025)
+- přidání možnosti nahrávání pro epizody z IPTV
+
 1.6.0 (28.5.2025)
 - úprava zobrazení u epizod
 
@@ -10,6 +13,3 @@
 
 1.5.7 (18.5.2025)
 - rozšíření doplňujících informací k pořadům
-
-1.5.6 (18.5.2025)
-- oprava výchozího nastavení barev

@@ -195,6 +195,8 @@ class Item:
                 menus = []
                 if self.data is not None and 'recording' in self.data and self.data['recording'] == True:
                     menus.append(('Smazat nahrávku', 'RunPlugin(plugin://' + plugin_id + '?action=delete_recording&id=' + get_contentId(self.params) + ')'))
+                elif self.type in ['show'] and 'deeplink' in self.params['payload'] and 'epgItem' in self.params['payload']['deeplink']:
+                        menus.append(('Přidat nahrávku', 'RunPlugin(plugin://' + plugin_id + '?action=add_recording&id=' + self.params['payload']['deeplink']['epgItem'] + ')'))
                 if self.data is not None and 'favourite_id' in self.data:
                     menus.append(remote_favourite_menu(self.data))
                 else:
@@ -277,33 +279,33 @@ def CarouselBlock(label, block, params, id):
                     Item(label = label + ' / ' + item['label'], title = title, type = 'season', schema = carousel['criteria'][0]['schema'], call = 'carousel_display', params = {'payload' : {'carouselId' : carouselId, 'criteria' : {'filterCriterias' : item['criteria'], 'sortOption' : order}}}, tracking = None, data = None)
             elif 'tiles' in carousel:
                 if id is None or id == carousel['tracking']['id'] or id == block['id']:
-                        if paging == True and 'pageCount' not in carousel['paging']:
-                            carousel_display(label, json.dumps({'payload' : {'carouselId' : carousel['id']}}))
-                        else:
-                            for item in carousel['tiles']:
-                                if item['action']['schema'] != 'NoAppAction':
-                                    exp_info = ''
-                                    if params['schema'] == 'PageCategoryDisplayApiAction' and 'payload' in params and 'categoryId' in params['payload'] and params['payload']['categoryId'] == '8' and 'additionalFragments' in item:
-                                        year = datetime.now().year
-                                        expiration = int(time.mktime(time.strptime(item['additionalFragments'][0]['labels'][0]['name'] + str(year) + ' ' + item['additionalFragments'][0]['labels'][1]['name'], '%d.%m.%Y %H:%M'))) + 30*24*60*60
-                                        exp_info = get_label_color(' (do ' + datetime.fromtimestamp(expiration).strftime('%d.%m').lstrip("0").replace(" 0", " ") + ')', color)
-                                    if 'params' in item['action'] and 'contentType' in item['action']['params']:
-                                        item_type = item['action']['params']['contentType']
-                                    else:
-                                        item_type = 'other'
-                                    itemdata = item_data(item)
-                                    if 'payload' in params and 'categoryId' in params['payload'] and params['payload']['categoryId'] == '8':
-                                        itemdata['recording'] = True
-                                    Item(label = item['title'], title = item_data(item)['title'] + exp_info, type = item_type, schema = item['action']['schema'], call = item['action']['call'], params = item['action']['params'], tracking = None, data = itemdata)
-                            if paging == True:
-                                addon = xbmcaddon.Addon()
-                                icons_dir = os.path.join(addon.getAddonInfo('path'), 'resources','images')
-                                pageCount = carousel['paging']['pageCount']
-                                count = len(carousel['tiles'])
-                                page = 2
-                                carouselId = carousel['id']
-                                image = os.path.join(icons_dir , 'next_arrow.png')
-                                Item(label = label, title = 'Následující strana (' + str(page) + '/' + str(pageCount) + ')', type = 'arrow', schema = carousel['criteria'][0]['schema'], call = 'carousel_display', params = {'payload' : {'carouselId' : carouselId, 'criteria' : block['carousels'][0]['paging']['criteria'], 'paging' : {'count' : count, 'position' : count * (page - 1) + 1}}}, tracking = None, data = {'image' : image})
+                    if paging == True and 'pageCount' not in carousel['paging']:
+                        carousel_display(label, json.dumps({'payload' : {'carouselId' : carousel['id']}}))
+                    else:
+                        for item in carousel['tiles']:
+                            if item['action']['schema'] != 'NoAppAction':
+                                exp_info = ''
+                                if params['schema'] == 'PageCategoryDisplayApiAction' and 'payload' in params and 'categoryId' in params['payload'] and params['payload']['categoryId'] == '8' and 'additionalFragments' in item:
+                                    year = datetime.now().year
+                                    expiration = int(time.mktime(time.strptime(item['additionalFragments'][0]['labels'][0]['name'] + str(year) + ' ' + item['additionalFragments'][0]['labels'][1]['name'], '%d.%m.%Y %H:%M'))) + 30*24*60*60
+                                    exp_info = get_label_color(' (do ' + datetime.fromtimestamp(expiration).strftime('%d.%m').lstrip("0").replace(" 0", " ") + ')', color)
+                                if 'params' in item['action'] and 'contentType' in item['action']['params']:
+                                    item_type = item['action']['params']['contentType']
+                                else:
+                                    item_type = 'other'
+                                itemdata = item_data(item)
+                                if 'payload' in params and 'categoryId' in params['payload'] and params['payload']['categoryId'] == '8':
+                                    itemdata['recording'] = True
+                                Item(label = item['title'], title = item_data(item)['title'] + exp_info, type = item_type, schema = item['action']['schema'], call = item['action']['call'], params = item['action']['params'], tracking = None, data = itemdata)
+                        if paging == True:
+                            addon = xbmcaddon.Addon()
+                            icons_dir = os.path.join(addon.getAddonInfo('path'), 'resources','images')
+                            pageCount = carousel['paging']['pageCount']
+                            count = len(carousel['tiles'])
+                            page = 2
+                            carouselId = carousel['id']
+                            image = os.path.join(icons_dir , 'next_arrow.png')
+                            Item(label = label, title = 'Následující strana (' + str(page) + '/' + str(pageCount) + ')', type = 'arrow', schema = carousel['criteria'][0]['schema'], call = 'carousel_display', params = {'payload' : {'carouselId' : carouselId, 'criteria' : block['carousels'][0]['paging']['criteria'], 'paging' : {'count' : count, 'position' : count * (page - 1) + 1}}}, tracking = None, data = {'image' : image})
 
 def TabBlock(label, block, params):
     for block in block['layout']['blocks']:
@@ -411,7 +413,10 @@ def carousel_display(label, params):
 
             for item in data['carousel']['tiles']:
                 if 'call' in item['action']:
-                    Item(label = item['title'], title = item_data(item)['title'], type = item['tracking']['type'], schema = item['action']['schema'], call = item['action']['call'], params = item['action']['params'], tracking = None, data = item_data(item))
+                    itemdata = item_data(item)
+                    if 'payload' in params and 'carouselId' in params['payload'] and 'page:8;' in params['payload']['carouselId']:
+                        itemdata['recording'] = True
+                    Item(label = item['title'], title = item_data(item)['title'], type = item['tracking']['type'], schema = item['action']['schema'], call = item['action']['call'], params = item['action']['params'], tracking = None, data = itemdata)
 
             if data['carousel']['paging']['next'] == True:
                 if 'pageCount' in data['carousel']['paging']:
