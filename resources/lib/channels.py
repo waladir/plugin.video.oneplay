@@ -304,7 +304,11 @@ class Channels:
                 liveOnly = True
             else:
                 liveOnly = False
-            channels.update({channel['id'] : {'channel_number' : int(channel['order']), 'oneplay_number' : int(channel['order']), 'name' : channel['name'], 'id' : channel['id'], 'logo' : image, 'logosq' : imagesq, 'adult' : channel['adult'] , 'liveOnly' : liveOnly, 'visible' : True}})
+            if 'addult' in channel:
+                adult = channel['adult']
+            else:
+                adult = False
+            channels.update({channel['id'] : {'channel_number' : int(channel['order']), 'oneplay_number' : int(channel['order']), 'name' : channel['name'], 'id' : channel['id'], 'logo' : image, 'logosq' : imagesq, 'adult' : adult , 'liveOnly' : liveOnly, 'visible' : True}})
         return channels
 
     def load_channels(self):

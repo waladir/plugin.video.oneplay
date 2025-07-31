@@ -1,4 +1,4 @@
-﻿<addon id="plugin.video.oneplay" name="Oneplay" provider-name="waladir" version="1.6.1">
+﻿<addon id="plugin.video.oneplay" name="Oneplay" provider-name="waladir" version="1.6.2">
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
     <import addon="inputstream.adaptive" version="19.0.0"/>
@@ -38,6 +38,9 @@ Další informace a podporu najdete na fóru www.xbmc-kodi.cz (https://www.xbmc-
     <platform>all</platform>
     <source>https://github.com/waladir/plugin.video.oneplay</source>
     <news>
+v1.6.2 (31.7.2025)
+- oštření chybějících dat u kanálů
+
 v1.6.1 (24.7.2025)
 - přidání možnosti nahrávání pro epizody z IPTV
 
@@ -50,9 +53,6 @@ v1.6.1 (24.7.2025)
 1.5.8 (19.5.2025)
 - oprava stránkování
 - úprava načítání seznamu sérií
-
-1.5.7 (18.5.2025)
-- rozšíření doplňujících informací k pořadům
     </news>
     <assets>
         <icon>icon.jpg</icon>
