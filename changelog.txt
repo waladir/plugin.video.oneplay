@@ -1,5 +1,8 @@
+v1.6.3 (31.7.2025)
+- úprava detekce kanálů chráněných pinem
+
 v1.6.2 (31.7.2025)
-- oštření chybějících dat u kanálů
+- ošetření chybějících dat u kanálů
 
 v1.6.1 (24.7.2025)
 - přidání možnosti nahrávání pro epizody z IPTV
@@ -9,7 +12,3 @@ v1.6.1 (24.7.2025)
 
 1.5.9 (26.5.2025)
 - úprava metadat u Nejnovějších epizod oblíbených pořadů
-
-1.5.8 (19.5.2025)
-- oprava stránkování
-- úprava načítání seznamu sérií
