@@ -40,8 +40,9 @@ class Session:
             accounts_data = []
             authToken = data['step']['authToken']
             for account in data['step']['accounts']:
-                accounts.update({account['name'] : account['accountId']})
-                accounts_data.append(account['name'])
+                account_name = account['name'] + f" ({account['extId']})"
+                accounts.update({account_name : account['accountId']})
+                accounts_data.append(account_name)
             account = get_account_id(accounts_data)
             post = {"payload":{"command":{"schema":"LoginWithAccountCommand","accountId":accounts[account],"authCode":authToken}}}
             data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/user.login.step', data = post)   
