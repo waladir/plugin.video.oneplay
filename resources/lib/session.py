@@ -34,16 +34,19 @@ class Session:
         if 'err' in data or 'step' not in data or ('bearerToken' not in data['step'] and data['step']['schema'] != 'ShowAccountChooserStep'):
             xbmcgui.Dialog().notification('Oneplay','Problém při přihlášení', xbmcgui.NOTIFICATION_ERROR, 5000)
             sys.exit()
-
         if data['step']['schema'] == 'ShowAccountChooserStep':
             accounts = {}
+            accounts_ext = {}
             accounts_data = []
             authToken = data['step']['authToken']
             for account in data['step']['accounts']:
-                account_name = account['name'] + f" ({account['extId']})"
-                accounts.update({account_name : account['accountId']})
+                account_name = account['name'] + '|' + account['extId']
+                accounts.update({account['name'] : account['accountId']})
+                accounts_ext.update({account_name : account['accountId']})
                 accounts_data.append(account_name)
             account = get_account_id(accounts_data)
+            if '|' in account:
+                accounts = accounts_ext
             post = {"payload":{"command":{"schema":"LoginWithAccountCommand","accountId":accounts[account],"authCode":authToken}}}
             data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/user.login.step', data = post)   
             if 'err' in data or 'step' not in data or 'bearerToken' not in data['step']:
