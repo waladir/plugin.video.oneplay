@@ -1,3 +1,6 @@
+v1.6.5 (5.8.2025)
+- přidaná možnost vypnout InputStream Helper, který se stará o instalaci a aktualizaci knihovny pro Widevine CDM
+
 v1.6.4 (2.8.2025)
 - rozšíření popisu účtů, kvůli rozlišení stejných názvů (PR od Vpatrik)
 
@@ -9,6 +12,3 @@ v1.6.2 (31.7.2025)
 
 v1.6.1 (24.7.2025)
 - přidání možnosti nahrávání pro epizody z IPTV
-
-1.6.0 (28.5.2025)
-- úprava zobrazení u epizod

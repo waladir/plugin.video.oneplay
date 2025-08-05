@@ -33,6 +33,7 @@
                 <setting label="Generovat EPG" type="action" action="RunPlugin(plugin://plugin.video.oneplay?action=generate_epg)"/>
 	</category>    
 	<category label="InputStream Helper/Widevine">
+                <setting label="Používat InputStream Helper" type="bool" id="inputstream_helper" default="true"/>
                 <setting label="Zobrazení informací" type="action" action="RunScript(script.module.inputstreamhelper,info)"/>
                 <setting label="Nastavení InputStream Helper" type="action" action="Addon.OpenSettings(script.module.inputstreamhelper)" option="close"/>                              
                 <setting label="(Re)instalovat Widevine CDM" type="action" action="RunScript(script.module.inputstreamhelper,widevine_install)" visible="!system.platform.android"/>  

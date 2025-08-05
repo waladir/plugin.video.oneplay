@@ -6,6 +6,9 @@ VOD, živé vysílání, archiv, nahrávky, vytváření playlistu a EPG pro IPT
 <a href="https://www.xbmc-kodi.cz/prispevek-oneplay">Vlákno na fóru XBMC-Kodi.cz</a><br><br>
 </p>
 <p>
+v1.6.5 (5.8.2025)<br>
+- přidaná možnost vypnout InputStream Helper, který se stará o instalaci a aktualizaci knihovny pro Widevine CDM<br><br>
+
 v1.6.4 (2.8.2025)<br>
 - rozšíření popisu účtů, kvůli rozlišení stejných názvů (PR od Vpatrik)<br><br>
 
@@ -17,7 +20,4 @@ v1.6.2 (31.7.2025)<br>
 
 v1.6.1 (24.7.2025)<br>
 - přidání možnosti nahrávání pro epizody z IPTV<br><br>
-
-1.6.0 (28.5.2025)<br>
-- úprava zobrazení u epizod<br><br>
 </p>
