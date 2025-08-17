@@ -1,4 +1,4 @@
-﻿<addon id="plugin.video.oneplay" name="Oneplay" provider-name="waladir" version="1.6.5">
+﻿<addon id="plugin.video.oneplay" name="Oneplay" provider-name="waladir" version="1.6.6">
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
     <import addon="inputstream.adaptive" version="19.0.0"/>
@@ -38,6 +38,10 @@ Další informace a podporu najdete na fóru www.xbmc-kodi.cz (https://www.xbmc-
     <platform>all</platform>
     <source>https://github.com/waladir/plugin.video.oneplay</source>
     <news>
+v1.6.6 (17.8.2025)
+- ošetření problémů s oblíbenými kanály Oneplay
+- náhrada obsolete funkce utcnow
+
 v1.6.5 (5.8.2025)
 - přidaná možnost vypnout InputStream Helper, který se stará o instalaci a aktualizaci knihovny pro Widevine CDM
 
@@ -49,9 +53,6 @@ v1.6.3 (31.7.2025)
 
 v1.6.2 (31.7.2025)
 - ošetření chybějících dat u kanálů
-
-v1.6.1 (24.7.2025)
-- přidání možnosti nahrávání pro epizody z IPTV
     </news>
     <assets>
         <icon>icon.jpg</icon>

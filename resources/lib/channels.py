@@ -242,6 +242,7 @@ class Channels:
     def __init__(self):
         self.channels = {}    
         self.valid_to = -1
+        self.favorites = 0
         self.load_channels()
 
     def set_visibility(self, id, visibility):
@@ -309,7 +310,12 @@ class Channels:
             else:
                 adult = False
             channels.update({channel['id'] : {'channel_number' : int(channel['order']), 'oneplay_number' : int(channel['order']), 'name' : channel['name'], 'id' : channel['id'], 'logo' : image, 'logosq' : imagesq, 'adult' : adult , 'liveOnly' : liveOnly, 'visible' : True}})
-        return channels
+        if 'userFavorites' in data and 'channels' in data['userFavorites'] and len(data['userFavorites']['channels']) > 0:
+            print('xxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
+            favorites = 1
+        else:
+            favorites = 0
+        return channels, favorites
 
     def load_channels(self):
         settings = Settings()
@@ -330,6 +336,8 @@ class Channels:
                 self.valid_to = -1
                 self.merge_channels()
                 self.save_channels()
+            if 'favorites' in data and data['favorites'] == 1:
+                self.favorites = 1
         else:
             self.channels = {}
             self.merge_channels()
@@ -343,7 +351,7 @@ class Channels:
             self.backup_channels()            
         settings = Settings()
         self.valid_to = int(time.time()) + 60*60*24
-        data = json.dumps({'channels' : self.channels, 'valid_to' : self.valid_to})
+        data = json.dumps({'channels' : self.channels, 'favorites' : self.favorites, 'valid_to' : self.valid_to})
         settings.save_json_data({'filename' : 'channels.txt', 'description' : 'kanálů'}, data)
 
     def reset_channels(self):
@@ -436,7 +444,7 @@ class Channels:
             xbmcgui.Dialog().notification('Oneplay', 'Záloha nenalezena', xbmcgui.NOTIFICATION_ERROR, 5000)      
 
     def merge_channels(self):
-        oneplay_channels = self.get_channels()
+        oneplay_channels, favorites = self.get_channels()
         max_number = 0
         if len(self.channels) > 0:
             max_number = self.channels[max(self.channels, key = lambda channel: self.channels[channel]['channel_number'])]['channel_number']
@@ -461,6 +469,7 @@ class Channels:
         for channel in list(self.channels):
             if channel not in oneplay_channels:
                 del self.channels[channel]
+        self.favorites = favorites
 
 class Channels_groups:
     def __init__(self):

@@ -110,6 +110,10 @@ def get_epg_data(post, channel_id):
                             key = startts
                         epg_item = {'id' : id, 'type' : item['actions'][0]['params']['contentType'], 'referenceid' : item['referenceId'], 'title' : item['title'], 'channel_id' : channel['channelId'], 'description' : item['description'], 'startts' : startts, 'endts' : endts, 'cover' : item['image'].replace('{WIDTH}', '480').replace('{HEIGHT}', '320'), 'poster' : item['image'].replace('{WIDTH}', '480').replace('{HEIGHT}', '320')}
                         epg.update({key : epg_item})
+        if len(epg) == 0 and channel_id is not None:
+            channels = Channels()
+            if channels.favorites == 1:
+                xbmcgui.Dialog().textviewer('Problém s pořadím kanálů', 'Máte nastavené Oblíbené kanály ve Oneplay, které mohou ovlivnit správné fungování doplňku. Pro profil použitý v doplňku všechny oblíbené kanály odznačte.')
     return epg
 
 def get_item_detail_from_api(id):
