@@ -311,7 +311,6 @@ class Channels:
                 adult = False
             channels.update({channel['id'] : {'channel_number' : int(channel['order']), 'oneplay_number' : int(channel['order']), 'name' : channel['name'], 'id' : channel['id'], 'logo' : image, 'logosq' : imagesq, 'adult' : adult , 'liveOnly' : liveOnly, 'visible' : True}})
         if 'userFavorites' in data and 'channels' in data['userFavorites'] and len(data['userFavorites']['channels']) > 0:
-            print('xxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
             favorites = 1
         else:
             favorites = 0
