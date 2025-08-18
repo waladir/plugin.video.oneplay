@@ -1,3 +1,6 @@
+v1.6.7 (18.8.2025)
+- odfiltrování nedostupných promo kanálů
+
 v1.6.6 (17.8.2025)
 - ošetření problémů s oblíbenými kanály Oneplay
 - náhrada obsolete funkce utcnow
@@ -10,6 +13,3 @@ v1.6.4 (2.8.2025)
 
 v1.6.3 (31.7.2025)
 - úprava detekce kanálů chráněných pinem
-
-v1.6.2 (31.7.2025)
-- ošetření chybějících dat u kanálů

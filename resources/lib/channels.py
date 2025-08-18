@@ -291,25 +291,26 @@ class Channels:
             xbmcgui.Dialog().notification('Oneplay','Problém při načtení kanálů', xbmcgui.NOTIFICATION_ERROR, 5000)
             sys.exit()
         for channel in data['channelList']:
-            image = None
-            imagesq = None
-            if len(channel['logo']) > 1:
-                if image is None:  
-                    image = channel['logo'].replace('{WIDTH}', '480').replace('{HEIGHT}', '320')
-                if imagesq is None:  
-                    imagesq = channel['logo'].replace('{WIDTH}', '256').replace('{HEIGHT}', '256')
-            else:
+            if 'upsell' not in channel or channel['upsell'] == False:
                 image = None
                 imagesq = None
-            if 'flags' in channel and 'liveOnly' in channel['flags']:
-                liveOnly = True
-            else:
-                liveOnly = False
-            if 'flags' in channel and 'adult' in channel['flags']:
-                adult = True
-            else:
-                adult = False
-            channels.update({channel['id'] : {'channel_number' : int(channel['order']), 'oneplay_number' : int(channel['order']), 'name' : channel['name'], 'id' : channel['id'], 'logo' : image, 'logosq' : imagesq, 'adult' : adult , 'liveOnly' : liveOnly, 'visible' : True}})
+                if len(channel['logo']) > 1:
+                    if image is None:  
+                        image = channel['logo'].replace('{WIDTH}', '480').replace('{HEIGHT}', '320')
+                    if imagesq is None:  
+                        imagesq = channel['logo'].replace('{WIDTH}', '256').replace('{HEIGHT}', '256')
+                else:
+                    image = None
+                    imagesq = None
+                if 'flags' in channel and 'liveOnly' in channel['flags']:
+                    liveOnly = True
+                else:
+                    liveOnly = False
+                if 'flags' in channel and 'adult' in channel['flags']:
+                    adult = True
+                else:
+                    adult = False
+                channels.update({channel['id'] : {'channel_number' : int(channel['order']), 'oneplay_number' : int(channel['order']), 'name' : channel['name'], 'id' : channel['id'], 'logo' : image, 'logosq' : imagesq, 'adult' : adult , 'liveOnly' : liveOnly, 'visible' : True}})
         if 'userFavorites' in data and 'channels' in data['userFavorites'] and len(data['userFavorites']['channels']) > 0:
             favorites = 1
         else:

@@ -1,4 +1,4 @@
-﻿<addon id="plugin.video.oneplay" name="Oneplay" provider-name="waladir" version="1.6.6">
+﻿<addon id="plugin.video.oneplay" name="Oneplay" provider-name="waladir" version="1.6.7">
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
     <import addon="inputstream.adaptive" version="19.0.0"/>
@@ -38,6 +38,9 @@ Další informace a podporu najdete na fóru www.xbmc-kodi.cz (https://www.xbmc-
     <platform>all</platform>
     <source>https://github.com/waladir/plugin.video.oneplay</source>
     <news>
+v1.6.7 (18.8.2025)
+- odfiltrování nedostupných promo kanálů
+    
 v1.6.6 (17.8.2025)
 - ošetření problémů s oblíbenými kanály Oneplay
 - náhrada obsolete funkce utcnow
@@ -50,9 +53,6 @@ v1.6.4 (2.8.2025)
 
 v1.6.3 (31.7.2025)
 - úprava detekce kanálů chráněných pinem
-
-v1.6.2 (31.7.2025)
-- ošetření chybějících dat u kanálů
     </news>
     <assets>
         <icon>icon.jpg</icon>
