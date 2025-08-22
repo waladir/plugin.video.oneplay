@@ -132,19 +132,20 @@ def generate_epg(output_file = '', show_progress = True):
                     epg = get_day_epg(today_start_ts + day*60*60*24, today_end_ts + day*60*60*24)
                     for ts in sorted(epg.keys()):
                         epg_item = epg[ts]
-                        starttime = datetime.fromtimestamp(epg_item['startts']).strftime('%Y%m%d%H%M%S')
-                        endtime = datetime.fromtimestamp(epg_item['endts']).strftime('%Y%m%d%H%M%S')
-                        content = content + '    <programme start="' + starttime + ' +0' + str(tz_offset) + '00" stop="' + endtime + ' +0' + str(tz_offset) + '00" channel="' +  replace_by_html_entity(channels_list_by_id[epg_item['channel_id']]['name']) + '">\n'
-                        content = content + '       <title lang="cs">' +  replace_by_html_entity(epg_item['title']) + '</title>\n'
-                        if epg_item['description'] != None and len(epg_item['description']) > 0:
-                            content = content + '       <desc lang="cs">' +  replace_by_html_entity(epg_item['description']) + '</desc>\n'
-                        content = content + '       <icon src="' + epg_item['poster'] + '"/>\n'
-                        content = content + '    </programme>\n'
-                        cnt = cnt + 1
-                        if cnt > 20:
-                            file.write(bytearray((content).encode('utf-8')))
-                            content = ''
-                            cnt = 0
+                        if epg_item['channel_id'] in channels_list_by_id:
+                            starttime = datetime.fromtimestamp(epg_item['startts']).strftime('%Y%m%d%H%M%S')
+                            endtime = datetime.fromtimestamp(epg_item['endts']).strftime('%Y%m%d%H%M%S')
+                            content = content + '    <programme start="' + starttime + ' +0' + str(tz_offset) + '00" stop="' + endtime + ' +0' + str(tz_offset) + '00" channel="' +  replace_by_html_entity(channels_list_by_id[epg_item['channel_id']]['name']) + '">\n'
+                            content = content + '       <title lang="cs">' +  replace_by_html_entity(epg_item['title']) + '</title>\n'
+                            if epg_item['description'] != None and len(epg_item['description']) > 0:
+                                content = content + '       <desc lang="cs">' +  replace_by_html_entity(epg_item['description']) + '</desc>\n'
+                            content = content + '       <icon src="' + epg_item['poster'] + '"/>\n'
+                            content = content + '    </programme>\n'
+                            cnt = cnt + 1
+                            if cnt > 20:
+                                file.write(bytearray((content).encode('utf-8')))
+                                content = ''
+                                cnt = 0
                     file.write(bytearray((content).encode('utf-8')))                          
                 file.write(bytearray(('</tv>\n').encode('utf-8')))
                 file.close()

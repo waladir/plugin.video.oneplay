@@ -1,3 +1,6 @@
+v1.6.8 (22.8.2025)
+- oprava generování EPG s nedostupnými promo kanály
+
 v1.6.7 (18.8.2025)
 - odfiltrování nedostupných promo kanálů
 
@@ -10,6 +13,3 @@ v1.6.5 (5.8.2025)
 
 v1.6.4 (2.8.2025)
 - rozšíření popisu účtů, kvůli rozlišení stejných názvů (PR od Vpatrik)
-
-v1.6.3 (31.7.2025)
-- úprava detekce kanálů chráněných pinem
