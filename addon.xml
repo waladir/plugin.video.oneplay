@@ -1,4 +1,4 @@
-﻿<addon id="plugin.video.oneplay" name="Oneplay" provider-name="waladir" version="1.6.8">
+﻿<addon id="plugin.video.oneplay" name="Oneplay" provider-name="waladir" version="1.6.9">
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
     <import addon="inputstream.adaptive" version="19.0.0"/>
@@ -38,6 +38,9 @@ Další informace a podporu najdete na fóru www.xbmc-kodi.cz (https://www.xbmc-
     <platform>all</platform>
     <source>https://github.com/waladir/plugin.video.oneplay</source>
     <news>
+v1.6.9 (10.9.2025)
+- ošetření Canal+ Sport při generování EPG pro IPTV SC
+    
 v1.6.8 (22.8.2025)
 - oprava generování EPG s nedostupnými promo kanály
 
@@ -50,9 +53,6 @@ v1.6.6 (17.8.2025)
 
 v1.6.5 (5.8.2025)
 - přidaná možnost vypnout InputStream Helper, který se stará o instalaci a aktualizaci knihovny pro Widevine CDM
-
-v1.6.4 (2.8.2025)
-- rozšíření popisu účtů, kvůli rozlišení stejných názvů (PR od Vpatrik)
     </news>
     <assets>
         <icon>icon.jpg</icon>
