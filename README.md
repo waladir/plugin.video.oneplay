@@ -6,6 +6,9 @@ VOD, živé vysílání, archiv, nahrávky, vytváření playlistu a EPG pro IPT
 <a href="https://www.xbmc-kodi.cz/prispevek-oneplay">Vlákno na fóru XBMC-Kodi.cz</a><br><br>
 </p>
 <p>
+v1.7.0 (15.9.2025)<br>
+- úprava spouštění DASH streamů<br><br>
+
 v1.6.9 (10.9.2025)<br>
 - ošetření Canal+ Sport při generování EPG pro IPTV SC<br><br>
 
@@ -18,7 +21,4 @@ v1.6.7 (18.8.2025)<br>
 v1.6.6 (17.8.2025)<br>
 - ošetření problémů s oblíbenými kanály Oneplay<br>
 - náhrada obsolete funkce utcnow<br><br>
-
-v1.6.5 (5.8.2025)<br>
-- přidaná možnost vypnout InputStream Helper, který se stará o instalaci a aktualizaci knihovny pro Widevine CDM<br><br>
 </p>

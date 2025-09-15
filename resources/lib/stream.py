@@ -67,16 +67,19 @@ def get_keepalive_url(manifest, response):
     return keepalive
 
 def get_list_item(type, url, drm, next_url, next_drm):
+    from urllib.parse import urlencode
+    headers = {'User-Agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0', 'Accept-Encoding' : 'gzip, deflate, br, zstd', 'Accept' : '*/*'}
     addon = xbmcaddon.Addon()
     list_item = xbmcgui.ListItem(path = url)
     list_item.setProperty('inputstream', 'inputstream.adaptive')
     list_item.setProperty('inputstream.adaptive.manifest_type', type)
+    list_item.setProperty('inputstream.adaptive.stream_headers', urlencode(headers))
+    list_item.setProperty('inputstream.adaptive.manifest_headers', urlencode(headers))
     if drm is not None:
         from inputstreamhelper import Helper # type: ignore
         is_helper = Helper('mpd', drm = 'com.widevine.alpha')
         if addon.getSetting('inputstream_helper') == 'false' or is_helper.check_inputstream():            
             list_item.setProperty('inputstream.adaptive.license_type', 'com.widevine.alpha')
-            from urllib.parse import urlencode
             list_item.setProperty('inputstream.adaptive.license_key', drm['licenceUrl'] + '|' + urlencode({'x-axdrm-message' : drm['token']}) + '|R{SSM}|')                
     if type == 'mpd':
         list_item.setMimeType('application/dash+xml')
@@ -85,6 +88,8 @@ def get_list_item(type, url, drm, next_url, next_drm):
         next_list_item = xbmcgui.ListItem(path = next_url)
         next_list_item.setProperty('inputstream', 'inputstream.adaptive')
         next_list_item.setProperty('inputstream.adaptive.manifest_type', type)
+        next_list_item.setProperty('inputstream.adaptive.stream_headers', urlencode(headers))
+        next_list_item.setProperty('inputstream.adaptive.manifest_headers', urlencode(headers))
         if next_drm is not None:
             from inputstreamhelper import Helper # type: ignore
             is_helper = Helper('mpd', drm = 'com.widevine.alpha')

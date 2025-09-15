@@ -1,3 +1,6 @@
+v1.7.0 (15.9.2025)
+- úprava spouštění DASH streamů
+
 v1.6.9 (10.9.2025)
 - ošetření Canal+ Sport při generování EPG pro IPTV SC
 
@@ -10,7 +13,3 @@ v1.6.7 (18.8.2025)
 v1.6.6 (17.8.2025)
 - ošetření problémů s oblíbenými kanály Oneplay
 - náhrada obsolete funkce utcnow
-
-v1.6.5 (5.8.2025)
-- přidaná možnost vypnout InputStream Helper, který se stará o instalaci a aktualizaci knihovny pro Widevine CDM
-
