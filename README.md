@@ -6,6 +6,9 @@ VOD, živé vysílání, archiv, nahrávky, vytváření playlistu a EPG pro IPT
 <a href="https://www.xbmc-kodi.cz/prispevek-oneplay">Vlákno na fóru XBMC-Kodi.cz</a><br><br>
 </p>
 <p>
+v1.7.1 (7.11.2025)<br>
+- ošetření účtu na zkoušku<br><br>
+
 v1.7.0 (15.9.2025)<br>
 - úprava spouštění DASH streamů<br><br>
 
@@ -17,8 +20,4 @@ v1.6.8 (22.8.2025)<br>
 
 v1.6.7 (18.8.2025)<br>
 - odfiltrování nedostupných promo kanálů<br><br>
-
-v1.6.6 (17.8.2025)<br>
-- ošetření problémů s oblíbenými kanály Oneplay<br>
-- náhrada obsolete funkce utcnow<br><br>
 </p>

@@ -40,10 +40,11 @@ class Session:
             accounts_data = []
             authToken = data['step']['authToken']
             for account in data['step']['accounts']:
-                account_name = account['name'] + '|' + account['extId']
-                accounts.update({account['name'] : account['accountId']})
-                accounts_ext.update({account_name : account['accountId']})
-                accounts_data.append(account_name)
+                if 'extId' in account:
+                    account_name = account['name'] + '|' + account['extId']
+                    accounts.update({account['name'] : account['accountId']})
+                    accounts_ext.update({account_name : account['accountId']})
+                    accounts_data.append(account_name)
             account = get_account_id(accounts_data)
             if '|' in account:
                 accounts = accounts_ext
