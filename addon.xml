@@ -1,4 +1,4 @@
-﻿<addon id="plugin.video.oneplay" name="Oneplay" provider-name="waladir" version="1.7.1">
+﻿<addon id="plugin.video.oneplay" name="Oneplay" provider-name="waladir" version="1.7.2">
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
     <import addon="inputstream.adaptive" version="19.0.0"/>
@@ -38,6 +38,9 @@ Další informace a podporu najdete na fóru www.xbmc-kodi.cz (https://www.xbmc-
     <platform>all</platform>
     <source>https://github.com/waladir/plugin.video.oneplay</source>
     <news>
+v1.7.2 (11.11.2025)
+- ošetření chyb při načtení profilu
+
 v1.7.1 (7.11.2025)
 - ošetření účtu na zkoušku
 
@@ -49,9 +52,6 @@ v1.6.9 (10.9.2025)
     
 v1.6.8 (22.8.2025)
 - oprava generování EPG s nedostupnými promo kanály
-
-v1.6.7 (18.8.2025)
-- odfiltrování nedostupných promo kanálů
     </news>
     <assets>
         <icon>icon.jpg</icon>

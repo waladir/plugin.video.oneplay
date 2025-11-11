@@ -1,3 +1,6 @@
+v1.7.2 (11.11.2025)
+- ošetření chyb při načtení profilu
+
 v1.7.1 (7.11.2025)
 - ošetření účtu na zkoušku
 
@@ -9,6 +12,3 @@ v1.6.9 (10.9.2025)
 
 v1.6.8 (22.8.2025)
 - oprava generování EPG s nedostupnými promo kanály
-
-v1.6.7 (18.8.2025)
-- odfiltrování nedostupných promo kanálů

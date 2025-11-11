@@ -328,7 +328,7 @@ def page_category_display(label, params, id, show_filter):
     api = API()
     post = {'payload' : params['payload']}
     data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/page.category.display', data = post, session = session) 
-    if 'err' not in data:
+    if 'err' not in data and 'layout' in data and 'blocks' in data['layout']:
         for block in data['layout']['blocks']:
             if block['schema'] == 'BreadcrumbBlock':
                 BreadcrumbBlock(label, block, params, id, show_filter)

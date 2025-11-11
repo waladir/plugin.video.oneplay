@@ -82,7 +82,10 @@ class Session:
                 post = {"payload":{"profileId":profileId}}
             data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/user.profile.select', data = post, session = self)            
             if 'err' in data or 'bearerToken' not in data:
-                xbmcgui.Dialog().notification('Oneplay','Problém při přihlášení', xbmcgui.NOTIFICATION_ERROR, 5000)
+                if 'err' in data:
+                    xbmcgui.Dialog().notification('Oneplay', str(data['err']), xbmcgui.NOTIFICATION_ERROR, 5000)
+                else:
+                    xbmcgui.Dialog().notification('Oneplay', 'Problém při přihlášení', xbmcgui.NOTIFICATION_ERROR, 5000)
             sys.exit()
         self.token = data['bearerToken']
 
