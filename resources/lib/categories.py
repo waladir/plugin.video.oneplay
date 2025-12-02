@@ -30,12 +30,13 @@ def item_data(item):
     if 'subTitle' in item:
         subtitle = item['subTitle']
     if 'additionalFragments' in item and len(item['additionalFragments']) > 0 and 'labels' in item['additionalFragments'][0]:
-        for label in item['labels']:
-            if 'Vyprší' not in label['name'] and 'Můj seznam' not in label['name']:
-                if len(subtitle) > 0:
-                    subtitle += ' | ' + label['name']
-                else:
-                    subtitle = label['name']
+        if 'labels' in item:
+            for label in item['labels']:
+                if 'Vyprší' not in label['name'] and 'Můj seznam' not in label['name']:
+                    if len(subtitle) > 0:
+                        subtitle += ' | ' + label['name']
+                    else:
+                        subtitle = label['name']
         has_date = False
         for label in item['additionalFragments'][0]['labels']:
             if label['name'].count('.') == 2:
@@ -59,7 +60,7 @@ def item_data(item):
                     subtitle = label['name']
     if len(subtitle) > 1:
         title = item['title'] + '\n' + get_label_color(subtitle, color)
-    image = item['image'].replace('{WIDTH}', '320').replace('{HEIGHT}', '480')
+    image = item['image']['image'].replace('{WIDTH}', '320').replace('{HEIGHT}', '480')
     if 'description' in item:
         description = item['description']
     else:

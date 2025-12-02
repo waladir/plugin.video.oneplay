@@ -1,3 +1,6 @@
+v1.7.4 (2.12.2025)
+- změna v datech k pořadům
+
 v1.7.3 (2.12.2025)
 - změna API Oneplay
 
@@ -9,6 +12,3 @@ v1.7.1 (7.11.2025)
 
 v1.7.0 (15.9.2025)
 - úprava spouštění DASH streamů
-
-v1.6.9 (10.9.2025)
-- ošetření Canal+ Sport při generování EPG pro IPTV SC

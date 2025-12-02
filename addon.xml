@@ -1,4 +1,4 @@
-﻿<addon id="plugin.video.oneplay" name="Oneplay" provider-name="waladir" version="1.7.3">
+﻿<addon id="plugin.video.oneplay" name="Oneplay" provider-name="waladir" version="1.7.4">
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
     <import addon="inputstream.adaptive" version="19.0.0"/>
@@ -38,6 +38,9 @@ Další informace a podporu najdete na fóru www.xbmc-kodi.cz (https://www.xbmc-
     <platform>all</platform>
     <source>https://github.com/waladir/plugin.video.oneplay</source>
     <news>
+v1.7.4 (2.12.2025)
+- změna v datech k pořadům
+
 v1.7.3 (2.12.2025)
 - změna API Oneplay
 
@@ -49,9 +52,6 @@ v1.7.1 (7.11.2025)
 
 v1.7.0 (15.9.2025)
 - úprava spouštění DASH streamů
-
-v1.6.9 (10.9.2025)
-- ošetření Canal+ Sport při generování EPG pro IPTV SC
     </news>
     <assets>
         <icon>icon.jpg</icon>
