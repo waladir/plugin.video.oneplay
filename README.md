@@ -6,6 +6,9 @@ VOD, živé vysílání, archiv, nahrávky, vytváření playlistu a EPG pro IPT
 <a href="https://www.xbmc-kodi.cz/prispevek-oneplay">Vlákno na fóru XBMC-Kodi.cz</a><br><br>
 </p>
 <p>
+v1.7.3 (2.12.2025)<br>
+- změna API Oneplay<br>
+
 v1.7.2 (11.11.2025)<br>
 - ošetření chyb při načtení profilu<br><br>
 
@@ -17,7 +20,4 @@ v1.7.0 (15.9.2025)<br>
 
 v1.6.9 (10.9.2025)<br>
 - ošetření Canal+ Sport při generování EPG pro IPTV SC<br><br>
-
-v1.6.8 (22.8.2025)<br>
-- oprava generování EPG s nedostupnými promo kanály<br><br>
 </p>

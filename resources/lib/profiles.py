@@ -74,7 +74,7 @@ def get_profiles(active = False):
     else:
         api = API()
         session = Session()
-        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/user.profiles.display', data = None, session = session)
+        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/user.profiles.display', data = None, session = session)
         if 'err' in data or 'availableProfiles' not in data or 'profiles' not in data['availableProfiles']:
             xbmcgui.Dialog().notification('Oneplay', 'Chyba při načtení profilů', xbmcgui.NOTIFICATION_ERROR, 5000)
             sys.exit()

@@ -79,7 +79,7 @@ def get_episodes(carouselId, id, season_title, limit = 1000):
     filterCriterias = id
     while get_page == True:
         post = {"payload":{"carouselId":carouselId,"paging":{"count":12,"position":12*(page-1)+1},"criteria":{"filterCriterias":filterCriterias,"sortOption":"DESC"}}}
-        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/carousel.display', data = post, session = session)
+        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/carousel.display', data = post, session = session)
         if not 'err' in data and 'carousel' in data:
             for item in data['carousel']['tiles']:
                 if 'params' in item['action'] and ('contentId' in item['action']['params']['payload'] or 'contentId' in item['action']['params']['payload']['criteria']):
@@ -105,7 +105,7 @@ def get_seasons(id):
     api = API()
     post = {'payload' : {'contentId' : id}}
     seasons = []
-    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/page.content.display', data = post, session = session)
+    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/page.content.display', data = post, session = session)
     for block in data['layout']['blocks']:
         if block['schema'] == 'TabBlock' and block['template'] == 'tabs':
             for tab in block['tabs']:
@@ -114,7 +114,7 @@ def get_seasons(id):
                         data = block
                     else:
                         post = {"payload":{"tabId":tab['id']}}
-                        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/tab.display', data = post, session = session)
+                        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/tab.display', data = post, session = session)
     for block in data['layout']['blocks']:
         if block['schema'] == 'CarouselBlock' and block['template'] in ['list','grid']:
             for carousel in block['carousels']:
@@ -327,7 +327,7 @@ def page_category_display(label, params, id, show_filter):
     session = Session()
     api = API()
     post = {'payload' : params['payload']}
-    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/page.category.display', data = post, session = session) 
+    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/page.category.display', data = post, session = session) 
     if 'err' not in data and 'layout' in data and 'blocks' in data['layout']:
         for block in data['layout']['blocks']:
             if block['schema'] == 'BreadcrumbBlock':
@@ -345,7 +345,7 @@ def page_content_display(label, params):
     session = Session()
     api = API()
     post = {'payload' : params['payload']}
-    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/page.content.display', data = post, session = session)
+    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/page.content.display', data = post, session = session)
     if 'err' not in data:
         if data['tracking']['type'] in ['movie', 'epgitem']:
             params = None
@@ -364,7 +364,7 @@ def page_content_display(label, params):
                         if tab['label']['name'] == 'Celé díly':
                             if tab['isActive'] == False:
                                 post = {"payload":{"tabId":tab['id']}}
-                                data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/tab.display', data = post, session = session)
+                                data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/tab.display', data = post, session = session)
                                 for block in data['layout']['blocks']:
                                     CarouselBlock(label, block, params, None)
                                 switch_tab = True
@@ -394,7 +394,7 @@ def carousel_display(label, params):
     api = API()
     post = {'payload' : params['payload']}
     while get_page == True:
-        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/carousel.display', data = post, session = session)
+        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/carousel.display', data = post, session = session)
         if 'err' not in data:
             if data['carousel']['paging']['next'] == True and 'pageCount' in data['carousel']['paging']:
                 pageCount = data['carousel']['paging']['pageCount']
@@ -456,7 +456,7 @@ def page_search_display(query):
     session = Session()
     api = API()    
     post = {"payload":{"query":query}}
-    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/page.search.display', data = post, session = session)  
+    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/page.search.display', data = post, session = session)  
     if 'err' not in data:
         if 'blocks' in data['layout']:
             for block in data['layout']['blocks']:
@@ -471,7 +471,7 @@ def list_categories(label):
     session = Session()
     api = API()
     post = {"payload":{"reason":"start"}}
-    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/app.init', data = post, session = session) 
+    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/app.init', data = post, session = session) 
     if 'err' in data or not 'menu' in data:
         xbmcgui.Dialog().notification('Oneplay','Problém při načtení kategorií', xbmcgui.NOTIFICATION_ERROR, 5000)
     else:

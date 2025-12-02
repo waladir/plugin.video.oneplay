@@ -112,11 +112,11 @@ def get_stream_url(post, mode, next = False):
     url_hls = None
     drm = None
     if next == False:
-        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/content.play', data = post, session = session)
+        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/content.play', data = post, session = session)
         if 'err' in data:
             return None, None, None, None
     else:
-        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/content.playnext', data = post, session = session)
+        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/content.playnext', data = post, session = session)
         if 'err' in data or 'offer' not in data or 'channelUpdate' not in data['offer']:
             return None, None, None, None
         data = data['offer']['channelUpdate']
@@ -131,7 +131,7 @@ def get_stream_url(post, mode, next = False):
             else:
                 pin = str(addon.getSetting('pin'))
             post['authorization'] = [{"schema":"PinRequestAuthorization","pin":pin,"type":"parental"}]
-            data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/content.play', data = post, session = session)
+            data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/content.play', data = post, session = session)
             if 'err' in data:
                 if len(data['err']) > 0:
                     xbmcgui.Dialog().notification('Oneplay', data['err'], xbmcgui.NOTIFICATION_ERROR, 5000)
@@ -147,9 +147,9 @@ def get_stream_url(post, mode, next = False):
         if mode == 'start' and 'liveControl' in data['playerControl'] and 'timeShift' in data['playerControl']['liveControl']['timeline'] and data['playerControl']['liveControl']['timeline']['timeShift']['available'] == False:
             post.update({'payload' : {'criteria' : post['payload']['criteria'], 'startMode' : 'live'}})
             if next == False:
-                data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/content.play', data = post, session = session)
+                data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/content.play', data = post, session = session)
             else:
-                data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/content.playnext', data = post, session = session)
+                data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/content.playnext', data = post, session = session)
 
         if 'liveControl' in data['playerControl'] and 'mosaic' in data['playerControl']['liveControl'] and next == False:
             md_titles = []
@@ -165,7 +165,7 @@ def get_stream_url(post, mode, next = False):
                 post = {"payload":{"criteria":{"schema":"MDPlaybackCriteria","contentId":id,"position":0}},"playbackCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","subtitle":{"formats":["vtt"],"locations":["InstreamTrackLocation","ExternalTrackLocation"]},"liveSpecificCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","multipleAudio":False}}}
             else:
                 post = {"payload":{"criteria":{"schema":"MDPlaybackCriteria","contentId":id,"position":0},"startMode":mode},"playbackCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","subtitle":{"formats":["vtt"],"locations":["InstreamTrackLocation","ExternalTrackLocation"]},"liveSpecificCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","multipleAudio":False}}}
-            data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/content.play', data = post, session = session)
+            data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/content.play', data = post, session = session)
             if 'err' in data or 'media' not in data:
                 if len(data['err']) > 0:
                     xbmcgui.Dialog().notification('Oneplay', data['err'], xbmcgui.NOTIFICATION_ERROR, 5000)
@@ -211,7 +211,7 @@ def play_stream(id, mode):
             post = {"payload":{"criteria":{"schema":"ContentCriteria","contentId":"channel." + id},"startMode":mode},"playbackCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","subtitle":{"formats":["vtt"],"locations":["InstreamTrackLocation","ExternalTrackLocation"]},"liveSpecificCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","multipleAudio":False}}}
     else:
         post = {"payload":{"contentId":id}}
-        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/page.content.display', data = post, session = session)
+        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/page.content.display', data = post, session = session)
         if 'err' not in data:
             for block in data['layout']['blocks']:            
                 if block['schema'] == 'ContentHeaderBlock':

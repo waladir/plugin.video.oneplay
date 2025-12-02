@@ -94,7 +94,7 @@ def get_epg_data(post, channel_id):
     channels_list = channels.get_channels_list('id')    
     api = API()
     epg = {}
-    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/epg.display', data = post, session = session)
+    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/epg.display', data = post, session = session)
     if 'err' not in data:
         for channel in data['schedule']:
             if channel['channelId'] in channels_list:
@@ -124,7 +124,7 @@ def get_item_detail_from_api(id):
     api = API()
     item_detail = {}
     post = {"payload":{"contentId":id}}
-    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/page.content.display', data = post, session = session)
+    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/page.content.display', data = post, session = session)
     if 'err' not in data:
         for block in data['layout']['blocks']:
             if block['schema'] == 'OnAirContentInfoBlock' and block['template'] == 'fullInfo' and 'additionalContentData' in block and 'lists' in block['additionalContentData']:

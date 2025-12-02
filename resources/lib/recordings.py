@@ -32,7 +32,7 @@ def delete_recording(id):
     session = Session()
     api = API()
     post = {"payload":{"contentId":id}}
-    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/user.mylist.remove', data = post, session = session) 
+    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/user.mylist.remove', data = post, session = session) 
     if 'err' in data:
         xbmcgui.Dialog().notification('Oneplay', 'Problém se smazáním nahrávky', xbmcgui.NOTIFICATION_ERROR, 5000)
     else:
@@ -123,7 +123,7 @@ def add_recording(id):
     session = Session()
     api = API()
     post = {"payload":{"contentId":id}}
-    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v3/user.mylist.add', data = post, session = session) 
+    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/user.mylist.add', data = post, session = session) 
     if 'err' in data:
         xbmcgui.Dialog().notification('Oneplay', 'Problém s přidáním nahrávky', xbmcgui.NOTIFICATION_ERROR, 5000)
     else:
