@@ -109,7 +109,7 @@ class Session:
     def save_session(self):
         from resources.lib.settings import Settings
         settings = Settings()
-        data = json.dumps({'token' : self.token, 'valid_to' : int(time.time() + 60*60*24)})        
+        data = json.dumps({'token' : self.token, 'valid_to' : int(time.time() + 60*60*4)})        
         settings.save_json_data({'filename' : 'session.txt', 'description' : 'session'}, data)
 
     def remove_session(self):

@@ -1,3 +1,7 @@
+v1.7.5 (3.12.2025)
+- oprava nahrávek
+- zkrácení platnosti sessiony z 24 hodin na 4 hodiny
+
 v1.7.4 (2.12.2025)
 - změna v datech k pořadům
 
@@ -9,6 +13,3 @@ v1.7.2 (11.11.2025)
 
 v1.7.1 (7.11.2025)
 - ošetření účtu na zkoušku
-
-v1.7.0 (15.9.2025)
-- úprava spouštění DASH streamů

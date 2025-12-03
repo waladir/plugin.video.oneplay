@@ -31,9 +31,9 @@ def list_recordings(label):
 def delete_recording(id):
     session = Session()
     api = API()
-    post = {"payload":{"contentId":id}}
-    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/user.mylist.remove', data = post, session = session) 
-    if 'err' in data:
+    post = {"payload":{"changes":[{"schema":"UserMyListChange","ref":{"schema":"MyListRef","id":id},"type":"remove"}]}}
+    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/user.list.change', data = post, session = session) 
+    if 'err' in data and data['err'] != 'Chyba při volání API':
         xbmcgui.Dialog().notification('Oneplay', 'Problém se smazáním nahrávky', xbmcgui.NOTIFICATION_ERROR, 5000)
     else:
         xbmcgui.Dialog().notification('Oneplay', 'Nahrávka smazána', xbmcgui.NOTIFICATION_INFO, 5000)
@@ -122,9 +122,9 @@ def future_program(id, day, label):
 def add_recording(id):
     session = Session()
     api = API()
-    post = {"payload":{"contentId":id}}
-    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/user.mylist.add', data = post, session = session) 
-    if 'err' in data:
+    post = {"payload":{"changes":[{"schema":"UserMyListChange","ref":{"schema":"MyListRef","id":id},"type":"add"}]}}
+    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/user.list.change', data = post, session = session) 
+    if 'err' in data and data['err'] != 'Chyba při volání API':
         xbmcgui.Dialog().notification('Oneplay', 'Problém s přidáním nahrávky', xbmcgui.NOTIFICATION_ERROR, 5000)
     else:
         xbmcgui.Dialog().notification('Oneplay', 'Nahrávka přidána', xbmcgui.NOTIFICATION_INFO, 5000)
