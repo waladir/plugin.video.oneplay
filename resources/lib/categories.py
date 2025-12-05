@@ -30,6 +30,11 @@ def item_data(item):
     if 'subTitle' in item:
         subtitle = item['subTitle']
     if 'additionalFragments' in item and len(item['additionalFragments']) > 0 and 'labels' in item['additionalFragments'][0]:
+        if 'image' in item and 'labels' in item['image'] and len(item['image']['labels']) > 0:
+            if len(subtitle) > 0:
+                subtitle += ' | ' + item['image']['labels'][0]['name']
+            else:
+                subtitle = item['image']['labels'][0]['name']
         if 'labels' in item:
             for label in item['labels']:
                 if 'Vyprší' not in label['name'] and 'Můj seznam' not in label['name']:

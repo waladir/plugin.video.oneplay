@@ -1,4 +1,4 @@
-﻿<addon id="plugin.video.oneplay" name="Oneplay" provider-name="waladir" version="1.7.5">
+﻿<addon id="plugin.video.oneplay" name="Oneplay" provider-name="waladir" version="1.7.6">
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
     <import addon="inputstream.adaptive" version="19.0.0"/>
@@ -38,6 +38,9 @@ Další informace a podporu najdete na fóru www.xbmc-kodi.cz (https://www.xbmc-
     <platform>all</platform>
     <source>https://github.com/waladir/plugin.video.oneplay</source>
     <news>
+v1.7.6 (5.12.2025)
+- zobrazení jména kanálu u nahrávek
+
 v1.7.5 (3.12.2025)
 - oprava nahrávek
 - zkrácení platnosti sessiony z 24 hodin na 4 hodiny
@@ -50,9 +53,6 @@ v1.7.3 (2.12.2025)
 
 v1.7.2 (11.11.2025)
 - ošetření chyb při načtení profilu
-
-v1.7.1 (7.11.2025)
-- ošetření účtu na zkoušku
     </news>
     <assets>
         <icon>icon.jpg</icon>
