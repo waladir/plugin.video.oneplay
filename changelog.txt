@@ -1,3 +1,6 @@
+v1.7.7 (7.12.2025)
+- úprava zobrazení seriálů v kategoriích/nahrávkách
+
 v1.7.6 (5.12.2025)
 - zobrazení jména kanálu u nahrávek
 
@@ -10,6 +13,3 @@ v1.7.4 (2.12.2025)
 
 v1.7.3 (2.12.2025)
 - změna API Oneplay
-
-v1.7.2 (11.11.2025)
-- ošetření chyb při načtení profilu

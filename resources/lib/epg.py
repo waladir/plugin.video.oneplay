@@ -200,7 +200,7 @@ def epg_listitem(list_item, epg, icon):
     kodi_version = get_kodi_version()
     if 'type' not in epg or epg['type'] not in ['episode', 'show']:
         epg['type'] = 'movie'
-    elif epg['type'] == 'show':
+    elif epg['type'] == 'episode':
         epg['type'] = 'tvshow'
     if kodi_version >= 20:
         infotag = list_item.getVideoInfoTag()
