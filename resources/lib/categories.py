@@ -484,6 +484,6 @@ def list_categories(label):
         for group in data['menu']['groups']:
             if group['position'] == 'top':
                 for item in group['items']:
-                    if item['action']['call'] == 'page.category.display':
+                    if 'action' in item and 'call' in item['action'] and item['action']['call'] == 'page.category.display':
                         Item(label = item['title'], title = item['title'], type = 'category_menu', schema = item['action']['schema'], call = item['action']['call'], params = item['action']['params'], tracking = None, data = None)
     xbmcplugin.endOfDirectory(_handle, cacheToDisc = False)    

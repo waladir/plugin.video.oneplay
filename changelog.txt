@@ -1,3 +1,6 @@
+v1.7.8 (13.12.2025)
+- ošetření nestandardních dat v kategoriích
+
 v1.7.7 (7.12.2025)
 - úprava zobrazení seriálů v kategoriích/nahrávkách
 
@@ -10,6 +13,3 @@ v1.7.5 (3.12.2025)
 
 v1.7.4 (2.12.2025)
 - změna v datech k pořadům
-
-v1.7.3 (2.12.2025)
-- změna API Oneplay
