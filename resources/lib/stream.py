@@ -114,10 +114,14 @@ def get_stream_url(post, mode, next = False):
     if next == False:
         data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/content.play', data = post, session = session)
         if 'err' in data:
+            if len(data['err']) > 0:
+                xbmcgui.Dialog().notification('Oneplay', data['err'], xbmcgui.NOTIFICATION_ERROR, 5000)
             return None, None, None, None
     else:
         data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/content.playnext', data = post, session = session)
         if 'err' in data or 'offer' not in data or 'channelUpdate' not in data['offer']:
+            if len(data['err']) > 0:
+                xbmcgui.Dialog().notification('Oneplay', data['err'], xbmcgui.NOTIFICATION_ERROR, 5000)
             return None, None, None, None
         data = data['offer']['channelUpdate']
     if 'err' in data:

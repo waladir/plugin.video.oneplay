@@ -1,3 +1,7 @@
+v1.7.9 (17.12.2025)
+- ošetření výberu účetů
+- zobrazení chyby při přehrávání
+
 v1.7.8 (13.12.2025)
 - ošetření nestandardních dat v kategoriích
 
@@ -10,6 +14,3 @@ v1.7.6 (5.12.2025)
 v1.7.5 (3.12.2025)
 - oprava nahrávek
 - zkrácení platnosti sessiony z 24 hodin na 4 hodiny
-
-v1.7.4 (2.12.2025)
-- změna v datech k pořadům

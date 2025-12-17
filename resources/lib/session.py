@@ -40,8 +40,11 @@ class Session:
             accounts_data = []
             authToken = data['step']['authToken']
             for account in data['step']['accounts']:
-                if 'extId' in account:
-                    account_name = account['name'] + '|' + account['extId']
+                if 'extId' in account or ('isActive' in account and account['isActive'] == True):
+                    if 'extId' in account:
+                        account_name = account['name'] + '|' + account['extId']
+                    else:
+                        account_name = account['name'] + '|' + account['accountProvider']
                     accounts.update({account['name'] : account['accountId']})
                     accounts_ext.update({account_name : account['accountId']})
                     accounts_data.append(account_name)
