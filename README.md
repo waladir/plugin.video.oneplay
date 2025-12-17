@@ -7,7 +7,7 @@ VOD, živé vysílání, archiv, nahrávky, vytváření playlistu a EPG pro IPT
 </p>
 <p>
 v1.7.9 (17.12.2025)<br>
-- ošetření výberu účetů<br>
+- ošetření výběru účtů<br>
 - zobrazení chyby při přehrávání<br><br>
 
 v1.7.8 (13.12.2025)<br>

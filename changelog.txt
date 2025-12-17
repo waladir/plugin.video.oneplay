@@ -1,5 +1,5 @@
 v1.7.9 (17.12.2025)
-- ošetření výberu účetů
+- ošetření výběru účtů
 - zobrazení chyby při přehrávání
 
 v1.7.8 (13.12.2025)
