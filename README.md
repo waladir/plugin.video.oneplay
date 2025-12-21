@@ -6,6 +6,9 @@ VOD, živé vysílání, archiv, nahrávky, vytváření playlistu a EPG pro IPT
 <a href="https://www.xbmc-kodi.cz/prispevek-oneplay">Vlákno na fóru XBMC-Kodi.cz</a><br><br>
 </p>
 <p>
+v1.8.0 (21.12.2025)<br>
+- ošetření chyby v datech následujícího pořadu<br><br>
+
 v1.7.9 (17.12.2025)<br>
 - ošetření výběru účtů<br>
 - zobrazení chyby při přehrávání<br><br>
@@ -18,8 +21,4 @@ v1.7.7 (7.12.2025)<br>
 
 v1.7.6 (5.12.2025)<br>
 - zobrazení jména kanálu u nahrávek<br><br>
-
-v1.7.5 (3.12.2025)<br>
-- oprava nahrávek<br>
-- zkrácení platnosti sessiony z 24 hodin na 4 hodiny<br><br>
 </p>
