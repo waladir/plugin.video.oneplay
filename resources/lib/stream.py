@@ -104,24 +104,44 @@ def get_list_item(type, url, drm, next_url, next_drm):
         playlist.add(next_url, next_list_item)
     xbmcplugin.setResolvedUrl(_handle, True, list_item)
 
-def get_stream_url(post, mode, next = False):
+def get_stream_url(post, mode, next = False, reload_profile = False):
     api = API()
     session = Session()
+    if reload_profile == True:
+        xbmcgui.Dialog().notification('Oneplay','Znovunačtení profilu', xbmcgui.NOTIFICATION_INFO, 3000)
+        session.reload_profile()
     url_dash = None
     url_dash_drm = None
     url_hls = None
     drm = None
+    skip_error = False
     if next == False:
         data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/content.play', data = post, session = session)
-        if 'err' in data:
-            if len(data['err']) > 0:
+        # data['err'] = 'Potvrďte spuštění dalšího videa'
+        if 'err' in data and reload_profile == False:
+            if len(data['err']) > 0 and data['err'] == 'Kdo se dívá?':
+                return get_stream_url(post, mode, next, True)
+            elif len(data['err']) > 0 and data['err'] == 'Potvrďte spuštění dalšího videa':
+                response = xbmcgui.Dialog().yesno('Potvrzení spuštění', 'Máte limitovaný počet přehrání. Opravdu chcete pořad přehrát?', nolabel = 'Ne', yeslabel = 'Ano')
+                if response:
+                    post['authorization'] = [{"schema":"UserConfirmAuthorization","type":"tasting"}]
+                    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/content.play', data = post, session = session)
+                    if 'err' not in data:
+                        skip_error = True
+            elif len(data['err']) > 0:
                 xbmcgui.Dialog().notification('Oneplay', data['err'], xbmcgui.NOTIFICATION_ERROR, 5000)
-            return None, None, None, None
+            if skip_error == False:
+                return None, None, None, None
     else:
         data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/content.playnext', data = post, session = session)
         if 'err' in data or 'offer' not in data or 'channelUpdate' not in data['offer']:
             if 'err' in data and len(data['err']) > 0:
-                xbmcgui.Dialog().notification('Oneplay', data['err'], xbmcgui.NOTIFICATION_ERROR, 5000)
+                if data['err'] == 'Kdo se dívá?' and reload_profile == False:
+                    return get_stream_url(post, mode, next, True)
+                elif data['err'] == 'Potvrďte spuštění dalšího videa':
+                    pass
+                else:
+                    xbmcgui.Dialog().notification('Oneplay', data['err'], xbmcgui.NOTIFICATION_ERROR, 5000)
             return None, None, None, None
         data = data['offer']['channelUpdate']
     if 'err' in data:
@@ -141,7 +161,6 @@ def get_stream_url(post, mode, next = False):
                     xbmcgui.Dialog().notification('Oneplay', data['err'], xbmcgui.NOTIFICATION_ERROR, 5000)
                 else:
                     xbmcgui.Dialog().notification('Oneplay', 'Problém při přehrání', xbmcgui.NOTIFICATION_ERROR, 5000)                    
-
         else:            
             if len(data['err']) > 0:
                 xbmcgui.Dialog().notification('Oneplay', data['err'], xbmcgui.NOTIFICATION_ERROR, 5000)

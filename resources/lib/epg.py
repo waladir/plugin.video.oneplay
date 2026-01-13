@@ -161,6 +161,11 @@ def get_item_detail_from_api(id):
                     #     print(name)
                     #     print(item['valueList'])     
                 item_detail = {'description' : description, 'original' : original, 'year' : year, 'genres' : genres, 'cast' : cast, 'directors' : directors, 'country' : country}
+            elif 'description' in block:
+                item_detail = {'description' : block['description'], 'original' : '', 'year' : '', 'genres' : [], 'cast' : [], 'directors' : [], 'country' : ''}
+
+
+
     return item_detail
 
 def get_item_detail(id, download_details = True, item_data = None):

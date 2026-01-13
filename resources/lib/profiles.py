@@ -14,7 +14,7 @@ import codecs
 import json
 
 from resources.lib.api import API
-from resources.lib.utils import get_url
+from resources.lib.utils import get_url, log_to_file
 
 _url = sys.argv[0]
 
@@ -61,23 +61,28 @@ def get_profiles(active = False):
     filename = os.path.join(addon_userdata_dir, 'profiles.txt')
     profiles = []
     data = None
+    # log_to_file('PROFILE', 'get_profiles: ' + str(active))
     try:
         with codecs.open(filename, 'r', encoding='utf-8') as file:
             for row in file:
                 data = row[:-1]
     except IOError as error:
+        # log_to_file('PROFILE', 'get_profiles: IO error')
         if error.errno != 2:
             xbmcgui.Dialog().notification('Oneplay', 'Chyba při načtení profilů', xbmcgui.NOTIFICATION_ERROR, 5000)
             sys.exit()
+    # log_to_file('PROFILE', 'get_profiles: data = ' + str(data))
     if data is not None:
         profiles = json.loads(data)
     else:
         api = API()
         session = Session()
+        # log_to_file('PROFILE', 'get_profiles: data = None')
         data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/user.profiles.display', data = None, session = session)
         if 'err' in data or 'availableProfiles' not in data or 'profiles' not in data['availableProfiles']:
             xbmcgui.Dialog().notification('Oneplay', 'Chyba při načtení profilů', xbmcgui.NOTIFICATION_ERROR, 5000)
             sys.exit()
+        # log_to_file('PROFILE', 'get_profiles: API data ' + str(data['availableProfiles']['profiles']))
         is_active = True
         for profile in data['availableProfiles']['profiles']:
             profiles.append({'id' : profile['profile']['id'], 'name' : profile['profile']['name'], 'image' : profile['profile']['avatarUrl'], 'active' : is_active})
@@ -97,10 +102,12 @@ def get_profiles(active = False):
         return profiles
 
 def get_profile_id():
+    # log_to_file('PROFILE', 'get_profile_id')
     profile = get_profiles(active = True)
     return profile['id']
 
 def reset_profiles(load_profiles = True):
+    # log_to_file('PROFILE', 'reset_profiles: ' + str(load_profiles))
     addon = xbmcaddon.Addon()
     addon_userdata_dir = translatePath(addon.getAddonInfo('profile'))
     filename = os.path.join(addon_userdata_dir, 'profiles.txt')

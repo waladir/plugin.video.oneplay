@@ -12,7 +12,7 @@ import uuid
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError
 
-from resources.lib.utils import appVersion
+from resources.lib.utils import appVersion, log_to_file
 
 class API:
     def __init__(self):
@@ -24,6 +24,8 @@ class API:
             self.headers['Authorization'] = 'Bearer ' + session.token
         if addon.getSetting('log_request_url') == 'true':
             xbmc.log('Oneplay > ' + str(url))
+        # if 'profile' in url and data != None:
+        #     log_to_file('PROFILE', 'call_api: data ' + url)
         if addon.getSetting('log_request_url') == 'true' and data != None and sensitive == False:
             xbmc.log('Oneplay > ' + str(data))
         try:
@@ -45,6 +47,9 @@ class API:
             if len(data) > 0:
                 data = json.loads(data)
             if 'result' not in data or 'status' not in data['result'] or data['result']['status'] != 'OkAsync':
+                # if 'profile' in url:
+                #     log_to_file('PROFILE', 'call_api: err' + url)
+                #     log_to_file('PROFILE', 'call_api: err' + str(data))
                 xbmc.log('Oneplay > Chyba při volání '+ str(url))
                 ws.close()
                 return { 'err' : 'Chyba při volání API' }  
@@ -54,6 +59,9 @@ class API:
                 if 'response' in data and 'context' in data['response'] and 'requestId' in data['response']['context']:
                     if requestId != data['response']['context']['requestId']:
                         response = ws.recv()
+            # if 'profile' in url:
+            #     log_to_file('PROFILE', 'call_api: ' + url)
+            #     log_to_file('PROFILE', 'call_api: ' + str(data))
             if addon.getSetting('log_response') == 'true':
                 if len(str(response)) > 5000 and addon.getSetting('skip_long') == 'true':
                     xbmc.log('Oneplay > odpověď obdržena (' + str(len(str(response))) + ')')
@@ -62,6 +70,8 @@ class API:
             if response and len(response) > 0:
                 data = json.loads(response)
                 if 'response' not in data or 'result' not in data['response'] or 'status' not in data['response']['result'] or data['response']['result']['status'] != 'Ok' or data['response']['context']['requestId'] != requestId:
+                    # if 'profile' in url:
+                    #     log_to_file('PROFILE', 'call_api: err')
                     xbmc.log('Oneplay > Chyba při volání '+ str(url))
                     ws.close()
                     if 'response' in data and 'result' in data['response'] and 'message' in data['response']['result']:

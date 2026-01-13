@@ -1,4 +1,4 @@
-﻿<addon id="plugin.video.oneplay" name="Oneplay" provider-name="waladir" version="1.8.0">
+﻿<addon id="plugin.video.oneplay" name="Oneplay" provider-name="waladir" version="1.8.1">
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
     <import addon="inputstream.adaptive" version="19.0.0"/>
@@ -38,6 +38,12 @@ Další informace a podporu najdete na fóru www.xbmc-kodi.cz (https://www.xbmc-
     <platform>all</platform>
     <source>https://github.com/waladir/plugin.video.oneplay</source>
     <news>
+v1.8.1 (13.1.2026)
+- ošetření výběru profilu při vrácení dialogu Kdo se dívá?
+- ošetření přhrávání v kategoriích u tarifů s limitem
+- custom logování do souboru
+- přidání popisu k nahrávkám/pořadům v kategoriích
+
 v1.8.0 (21.12.2025)
 - ošetření chyby v datech následujícího pořadu
 
@@ -50,9 +56,6 @@ v1.7.8 (13.12.2025)
 
 v1.7.7 (7.12.2025)
 - úprava zobrazení seriálů v kategoriích/nahrávkách
-
-v1.7.6 (5.12.2025)
-- zobrazení jména kanálu u nahrávek
     </news>
     <assets>
         <icon>icon.jpg</icon>

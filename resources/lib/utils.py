@@ -1,10 +1,16 @@
 # -*- coding: utf-8 -*-
 import sys
+import os
 import xbmc
 import xbmcaddon
 import xbmcgui
 import uuid
 
+try:
+    from xbmcvfs import translatePath
+except ImportError:
+    from xbmc import translatePath
+from datetime import datetime
 from urllib.parse import urlencode
 
 plugin_id = 'plugin.video.oneplay'
@@ -76,3 +82,14 @@ def get_color():
 
 def get_label_color(label, color):
     return '[COLOR ' + color + ']' + label + '[/COLOR]'    
+
+
+def log_to_file(type, message):
+    addon = xbmcaddon.Addon()
+    addon_userdata_dir = translatePath(addon.getAddonInfo('profile'))
+    filename = os.path.join(addon_userdata_dir, 'log.txt')
+    try:
+        with open(filename, 'a') as file:
+            file.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ' ' + type + ' > ' + message + '\n')        
+    except IOError:
+        pass
