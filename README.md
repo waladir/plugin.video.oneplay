@@ -8,7 +8,7 @@ VOD, živé vysílání, archiv, nahrávky, vytváření playlistu a EPG pro IPT
 <p>
 v1.8.1 (13.1.2026)<br>
 - ošetření výběru profilu při vrácení dialogu Kdo se dívá?<br>
-- ošetření přhrávání v kategoriích u tarifů s limitem<br>
+- ošetření přerávání v kategoriích u tarifů s limitem<br>
 - custom logování do souboru<br>
 - přidání popisu k nahrávkám/pořadům v kategoriích<br><br>
 
