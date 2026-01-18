@@ -291,7 +291,7 @@ class Channels:
             xbmcgui.Dialog().notification('Oneplay','Problém při načtení kanálů', xbmcgui.NOTIFICATION_ERROR, 5000)
             sys.exit()
         for channel in data['channelList']:
-            if 'upsell' not in channel or channel['upsell'] == False:
+            if ('upsell' not in channel or channel['upsell'] == False) and ('flags' not in channel or 'upsell' not in channel['flags']):
                 image = None
                 imagesq = None
                 if len(channel['logo']) > 1:

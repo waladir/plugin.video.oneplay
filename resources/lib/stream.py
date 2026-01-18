@@ -117,7 +117,6 @@ def get_stream_url(post, mode, next = False, reload_profile = False):
     skip_error = False
     if next == False:
         data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/content.play', data = post, session = session)
-        # data['err'] = 'Potvrďte spuštění dalšího videa'
         if 'err' in data and reload_profile == False:
             if len(data['err']) > 0 and data['err'] == 'Kdo se dívá?':
                 return get_stream_url(post, mode, next, True)

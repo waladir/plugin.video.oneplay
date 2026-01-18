@@ -8,7 +8,6 @@ import time
 
 from resources.lib.api import API
 from resources.lib.profiles import get_profile_id, get_account_id, reset_profiles
-from resources.lib.utils import log_to_file
 
 class Session:
     def __init__(self):
@@ -71,7 +70,6 @@ class Session:
                 post = {"payload":{"criteria":{"schema":"UserDeviceIdCriteria","id":device['id']}}}
                 data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/user.device.remove', data = post, session = self)
         self.save_session()
-        # log_to_file('PROFILE', 'get_token: get_profile_id')        
         profileId = get_profile_id()
         if len(str(addon.getSetting('profile_pin'))) > 0:
             post = {"payload":{"profileId":profileId},"authorization":[{"schema":"PinRequestAuthorization","pin":str(addon.getSetting('profile_pin')),"type":"profile"}]}
@@ -79,8 +77,8 @@ class Session:
             post = {"payload":{"profileId":profileId}}
         data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/user.profile.select', data = post, session = self)
         if 'err' in data or 'bearerToken' not in data:
-            # log_to_file('PROFILE', 'get_token: error in profile data')        
-            reset_profiles()
+            if 'err' in data and data['err'] == 'Profil nenalezen':
+                reset_profiles()
             profileId = get_profile_id()
             if len(str(addon.getSetting('profile_pin'))) > 0:
                 post = {"payload":{"profileId":profileId},"authorization":[{"schema":"PinRequestAuthorization","pin":str(addon.getSetting('profile_pin')),"type":"profile"}]}
@@ -92,12 +90,11 @@ class Session:
                     xbmcgui.Dialog().notification('Oneplay', str(data['err']), xbmcgui.NOTIFICATION_ERROR, 5000)
                 else:
                     xbmcgui.Dialog().notification('Oneplay', 'Problém při přihlášení', xbmcgui.NOTIFICATION_ERROR, 5000)
-            sys.exit()
+                sys.exit()
         self.token = data['bearerToken']
 
     def reload_profile(self):
         addon = xbmcaddon.Addon()
-        # log_to_file('PROFILE', 'reload_profile')        
         api = API()
         profileId = get_profile_id()
         if len(str(addon.getSetting('profile_pin'))) > 0:

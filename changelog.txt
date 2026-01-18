@@ -1,3 +1,7 @@
+v1.8.2 (18.1.2026)
+- úprava výběru profilu
+- změna filtrování upsell kanálů
+
 v1.8.1 (13.1.2026)
 - ošetření výběru profilu při vrácení dialogu Kdo se dívá?
 - ošetření přehrávání v kategoriích u tarifů s limitem
@@ -13,6 +17,3 @@ v1.7.9 (17.12.2025)
 
 v1.7.8 (13.12.2025)
 - ošetření nestandardních dat v kategoriích
-
-v1.7.7 (7.12.2025)
-- úprava zobrazení seriálů v kategoriích/nahrávkách
