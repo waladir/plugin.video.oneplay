@@ -1,3 +1,6 @@
+v1.8.3 (25.1.2026)
+- přidaná možnost použít Picons Server
+
 v1.8.2 (18.1.2026)
 - úprava výběru profilu
 - změna filtrování upsell kanálů
@@ -14,6 +17,3 @@ v1.8.0 (21.12.2025)
 v1.7.9 (17.12.2025)
 - ošetření výběru účtů
 - zobrazení chyby při přehrávání
-
-v1.7.8 (13.12.2025)
-- ošetření nestandardních dat v kategoriích

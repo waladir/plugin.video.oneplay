@@ -281,6 +281,13 @@ class Channels:
         return channels
 
     def get_channels(self):
+        addon = xbmcaddon.Addon()
+        if addon.getSetting('use_picons_server') == 'true':
+            use_picons_server = True
+            picons_server_ip = addon.getSetting('picons_server_ip')
+            picons_server_port = addon.getSetting('picons_server_port')
+        else:
+            use_picons_server = False
         channels = {}
         api = API()
         session = Session()
@@ -310,6 +317,8 @@ class Channels:
                     adult = True
                 else:
                     adult = False
+                if use_picons_server == True:
+                    image = 'http://' + picons_server_ip + ':' +  picons_server_port + '/picons/' + quote(channel['name'])
                 channels.update({channel['id'] : {'channel_number' : int(channel['order']), 'oneplay_number' : int(channel['order']), 'name' : channel['name'], 'id' : channel['id'], 'logo' : image, 'logosq' : imagesq, 'adult' : adult , 'liveOnly' : liveOnly, 'visible' : True}})
         if 'userFavorites' in data and 'channels' in data['userFavorites'] and len(data['userFavorites']['channels']) > 0:
             favorites = 1

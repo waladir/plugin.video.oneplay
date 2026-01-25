@@ -20,6 +20,11 @@
                 <setting label="Vymazat keš" type="action" action="RunPlugin(plugin://plugin.video.oneplay?action=remove_cache)"/>                
                 <setting label="Skrýt Nastavení Oneplay v menu" type="bool" id="hide_settings" default="false"/>
 	</category>
+	<category label="Picons Server">
+                <setting label="Pro loga kanálů použít Picons Server" type="bool" id="use_picons_server" default="false"/>
+                <setting label="IP adresa" type="text" id="picons_server_ip" default="127.0.0.1"/>
+                <setting label="Port" type="text" id="picons_server_port" default="8083"/>
+	</category>
 	<category label="IPTV Simple Client">
                 <setting label="Adresář pro playlist a EPG" type="folder" id="output_dir" default=""/>
                 <setting label="Soubor s playlistem" type="select" id="playlist_filename" values="playlist.m3u|playlist.txt (pro Android)" default="playlist.m3u"/>

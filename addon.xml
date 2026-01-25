@@ -1,4 +1,4 @@
-﻿<addon id="plugin.video.oneplay" name="Oneplay" provider-name="waladir" version="1.8.2">
+﻿<addon id="plugin.video.oneplay" name="Oneplay" provider-name="waladir" version="1.8.3">
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
     <import addon="inputstream.adaptive" version="19.0.0"/>
@@ -38,6 +38,9 @@ Další informace a podporu najdete na fóru www.xbmc-kodi.cz (https://www.xbmc-
     <platform>all</platform>
     <source>https://github.com/waladir/plugin.video.oneplay</source>
     <news>
+v1.8.3 (25.1.2026)
+- přidaná možnost použít Picons Server
+
 v1.8.2 (18.1.2026)
 - úprava výběru profilu
 - změna filtrování upsell kanálů
@@ -54,9 +57,6 @@ v1.8.0 (21.12.2025)
 v1.7.9 (17.12.2025)
 - ošetření výběru účtů
 - zobrazení chyby při přehrávání
-
-v1.7.8 (13.12.2025)
-- ošetření nestandardních dat v kategoriích
     </news>
     <assets>
         <icon>icon.jpg</icon>
