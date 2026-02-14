@@ -6,6 +6,9 @@ VOD, živé vysílání, archiv, nahrávky, vytváření playlistu a EPG pro IPT
 <a href="https://www.xbmc-kodi.cz/prispevek-oneplay">Vlákno na fóru XBMC-Kodi.cz</a><br><br>
 </p>
 <p>
+v1.8.4 (14.2.2026)<br>
+- oprava automatického spouštení generování EPG<br><br>
+
 v1.8.3 (25.1.2026)<br>
 - přidaná možnost použít Picons Server<br><br>
 
@@ -21,8 +24,4 @@ v1.8.1 (13.1.2026)<br>
 
 v1.8.0 (21.12.2025)<br>
 - ošetření chyby v datech následujícího pořadu<br><br>
-
-v1.7.9 (17.12.2025)<br>
-- ošetření výběru účtů<br>
-- zobrazení chyby při přehrávání<br><br>
 </p>
