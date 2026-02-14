@@ -1,5 +1,5 @@
 v1.8.4 (14.2.2026)
-- oprava automatického spouštení generování EPG
+- oprava automatického spouštění generování EPG
 
 v1.8.3 (25.1.2026)
 - přidaná možnost použít Picons Server

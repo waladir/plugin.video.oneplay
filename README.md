@@ -7,7 +7,7 @@ VOD, živé vysílání, archiv, nahrávky, vytváření playlistu a EPG pro IPT
 </p>
 <p>
 v1.8.4 (14.2.2026)<br>
-- oprava automatického spouštení generování EPG<br><br>
+- oprava automatického spouštění generování EPG<br><br>
 
 v1.8.3 (25.1.2026)<br>
 - přidaná možnost použít Picons Server<br><br>
