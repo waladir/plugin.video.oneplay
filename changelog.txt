@@ -1,3 +1,6 @@
+v1.8.5 (17.2.2026)
+- přidaná možnost nastavit posun začátku generování EPG po startu Kodi
+
 v1.8.4 (14.2.2026)
 - oprava automatického spouštění generování EPG
 
@@ -13,6 +16,3 @@ v1.8.1 (13.1.2026)
 - ošetření přehrávání v kategoriích u tarifů s limitem
 - custom logování do souboru
 - přidání popisu k nahrávkám/pořadům v kategoriích
-
-v1.8.0 (21.12.2025)
-- ošetření chyby v datech následujícího pořadu

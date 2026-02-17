@@ -6,6 +6,9 @@ VOD, živé vysílání, archiv, nahrávky, vytváření playlistu a EPG pro IPT
 <a href="https://www.xbmc-kodi.cz/prispevek-oneplay">Vlákno na fóru XBMC-Kodi.cz</a><br><br>
 </p>
 <p>
+v1.8.5 (17.2.2026)<br>
+- přidaná možnost nastavit posun začátku generování EPG po startu Kodi<br><br>
+
 v1.8.4 (14.2.2026)<br>
 - oprava automatického spouštění generování EPG<br><br>
 
@@ -21,7 +24,4 @@ v1.8.1 (13.1.2026)<br>
 - ošetření přerávání v kategoriích u tarifů s limitem<br>
 - custom logování do souboru<br>
 - přidání popisu k nahrávkám/pořadům v kategoriích<br><br>
-
-v1.8.0 (21.12.2025)<br>
-- ošetření chyby v datech následujícího pořadu<br><br>
 </p>
