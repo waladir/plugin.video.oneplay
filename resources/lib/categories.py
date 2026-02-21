@@ -88,7 +88,7 @@ def get_episodes(carouselId, id, season_title, limit = 1000):
         data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/carousel.display', data = post, session = session)
         if not 'err' in data and 'carousel' in data:
             for item in data['carousel']['tiles']:
-                if 'params' in item['action'] and ('contentId' in item['action']['params']['payload'] or 'contentId' in item['action']['params']['payload']['criteria']):
+                if 'params' in item['action'] and ('contentId' in item['action']['params']['payload'] or 'contentId' in item['action']['params']['payload']['criteria']) and ('schema' not in item['action']['params'] or item['action']['params']['schema'] not in ['UserUpsellPreviewApiAction']) and 'call' in item['action']:
                     cnt += 1
                     contentId = get_contentId(item['action']['params'])
                     episodeId = int(contentId.split('.')[1])
@@ -274,15 +274,19 @@ def CarouselBlock(label, block, params, id):
             if params['schema'] == 'PageContentDisplayApiAction' and 'criteria' in carousel and carousel['criteria'][0]['schema'] == 'CarouselGenericFilter':
                 carouselId = carousel['id']
                 for item in carousel['criteria'][0]['items']:
-                    if 'additionalText' in item:
-                        title = item['label'] + ' (' + item['additionalText'] + ')'
-                    else:
-                        title = item['label']
-                    if addon.getSetting('episodes_order') == 'sestupně':
-                        order = 'DESC'
-                    else:
-                        order = 'ASC'
-                    Item(label = label + ' / ' + item['label'], title = title, type = 'season', schema = carousel['criteria'][0]['schema'], call = 'carousel_display', params = {'payload' : {'carouselId' : carouselId, 'criteria' : {'filterCriterias' : item['criteria'], 'sortOption' : order}}}, tracking = None, data = None)
+                    episodes_count = len(get_episodes(carouselId, item['criteria'], ''))
+                    if episodes_count > 0:
+                        if episodes_count == 1:
+                            title = item['label'] + ' (' + str(episodes_count) + ' díl)'
+                        elif episodes_count > 1 and episodes_count < 5:
+                            title = item['label'] + ' (' + str(episodes_count) + ' díly)'
+                        else:
+                            title = item['label'] + ' (' + str(episodes_count) + ' dílů)'
+                        if addon.getSetting('episodes_order') == 'sestupně':
+                            order = 'DESC'
+                        else:
+                            order = 'ASC'
+                        Item(label = label + ' / ' + item['label'], title = title, type = 'season', schema = carousel['criteria'][0]['schema'], call = 'carousel_display', params = {'payload' : {'carouselId' : carouselId, 'criteria' : {'filterCriterias' : item['criteria'], 'sortOption' : order}}}, tracking = None, data = None)
             elif 'tiles' in carousel:
                 if id is None or id == carousel['tracking']['id'] or id == block['id']:
                     if paging == True and 'pageCount' not in carousel['paging']:
@@ -418,7 +422,7 @@ def carousel_display(label, params):
                     Item(label = label, title = 'Předchozí strana (' + str(page) + '/' + str(pageCount) + ')',type = 'arrow', schema = 'CarouselGenericFilter', call = 'carousel_display', params = {'payload' : {'carouselId' : carouselId, 'criteria' : data['carousel']['paging']['criteria'], 'paging' : {'count' : count, 'position' : count * (page - 1) + 1}}}, tracking = None, data = {'image' : image})                    
 
             for item in data['carousel']['tiles']:
-                if 'call' in item['action']:
+                if 'call' in item['action'] and item['action']['call'] not in ['user.upsell.preview']:
                     itemdata = item_data(item)
                     if 'payload' in params and 'carouselId' in params['payload'] and 'page:8;' in params['payload']['carouselId']:
                         itemdata['recording'] = True

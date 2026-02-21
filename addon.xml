@@ -1,4 +1,4 @@
-﻿<addon id="plugin.video.oneplay" name="Oneplay" provider-name="waladir" version="1.8.5">
+﻿<addon id="plugin.video.oneplay" name="Oneplay" provider-name="waladir" version="1.8.6">
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
     <import addon="inputstream.adaptive" version="19.0.0"/>
@@ -38,6 +38,10 @@ Další informace a podporu najdete na fóru www.xbmc-kodi.cz (https://www.xbmc-
     <platform>all</platform>
     <source>https://github.com/waladir/plugin.video.oneplay</source>
     <news>
+v1.8.6 (21.2.2026)
+- odfiltrování nepřehratelných epizod
+- u sérií se zohledňuje skutečný počet přehratelných epizod
+
 v1.8.5 (17.2.2026)
 - přidaná možnost nastavit posun začátku generování EPG po startu Kodi
 
@@ -50,12 +54,6 @@ v1.8.3 (25.1.2026)
 v1.8.2 (18.1.2026)
 - úprava výběru profilu
 - změna filtrování upsell kanálů
-
-v1.8.1 (13.1.2026)
-- ošetření výběru profilu při vrácení dialogu Kdo se dívá?
-- ošetření přerávání v kategoriích u tarifů s limitem
-- custom logování do souboru
-- přidání popisu k nahrávkám/pořadům v kategoriích
     </news>
     <assets>
         <icon>icon.jpg</icon>
