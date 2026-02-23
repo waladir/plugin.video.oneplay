@@ -274,19 +274,12 @@ def CarouselBlock(label, block, params, id):
             if params['schema'] == 'PageContentDisplayApiAction' and 'criteria' in carousel and carousel['criteria'][0]['schema'] == 'CarouselGenericFilter':
                 carouselId = carousel['id']
                 for item in carousel['criteria'][0]['items']:
-                    episodes_count = len(get_episodes(carouselId, item['criteria'], ''))
-                    if episodes_count > 0:
-                        if episodes_count == 1:
-                            title = item['label'] + ' (' + str(episodes_count) + ' díl)'
-                        elif episodes_count > 1 and episodes_count < 5:
-                            title = item['label'] + ' (' + str(episodes_count) + ' díly)'
-                        else:
-                            title = item['label'] + ' (' + str(episodes_count) + ' dílů)'
-                        if addon.getSetting('episodes_order') == 'sestupně':
-                            order = 'DESC'
-                        else:
-                            order = 'ASC'
-                        Item(label = label + ' / ' + item['label'], title = title, type = 'season', schema = carousel['criteria'][0]['schema'], call = 'carousel_display', params = {'payload' : {'carouselId' : carouselId, 'criteria' : {'filterCriterias' : item['criteria'], 'sortOption' : order}}}, tracking = None, data = None)
+                    title = item['label']
+                    if addon.getSetting('episodes_order') == 'sestupně':
+                        order = 'DESC'
+                    else:
+                        order = 'ASC'
+                    Item(label = label + ' / ' + item['label'], title = title, type = 'season', schema = carousel['criteria'][0]['schema'], call = 'carousel_display', params = {'payload' : {'carouselId' : carouselId, 'criteria' : {'filterCriterias' : item['criteria'], 'sortOption' : order}}}, tracking = None, data = None)
             elif 'tiles' in carousel:
                 if id is None or id == carousel['tracking']['id'] or id == block['id']:
                     if paging == True and 'pageCount' not in carousel['paging']:
