@@ -80,7 +80,7 @@ def get_live_epg():
 def get_channel_epg(channel_id, from_ts, to_ts):
     channels = Channels()
     channels_list = channels.get_channels_list('id')
-    oneplay_number = channels_list[channel_id]['oneplay_number']
+    oneplay_number = channels_list[channel_id]['channel_number']
     post = {"payload":{"criteria":{"channelSetId":"channel_list.1","viewport":{"channelRange":{"from":oneplay_number-1,"to":oneplay_number},"timeRange":{"from":datetime.fromtimestamp(from_ts-3600).strftime('%Y-%m-%dT%H:%M:%S') + '.000Z',"to":datetime.fromtimestamp(to_ts-3600).strftime('%Y-%m-%dT%H:%M:%S') + '.000Z'},"schema":"EpgViewportAbsolute"}},"requestedOutput":{"channelList":"none","datePicker":False,"channelSets":False}}}
     return get_epg_data(post, channel_id)
 
