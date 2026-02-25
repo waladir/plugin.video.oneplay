@@ -1,4 +1,4 @@
-﻿<addon id="plugin.video.oneplay" name="Oneplay" provider-name="waladir" version="1.8.8">
+﻿<addon id="plugin.video.oneplay" name="Oneplay" provider-name="waladir" version="1.8.9">
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
     <import addon="inputstream.adaptive" version="19.0.0"/>
@@ -38,7 +38,7 @@ Další informace a podporu najdete na fóru www.xbmc-kodi.cz (https://www.xbmc-
     <platform>all</platform>
     <source>https://github.com/waladir/plugin.video.oneplay</source>
     <news>
-v1.8.8 (25.2.2026)
+v1.8.8/9 (25.2.2026)
 - oprava načítání EPG dat
 
 v1.8.7 (23.2.2026)
