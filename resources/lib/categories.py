@@ -10,6 +10,7 @@ import time
 from datetime import datetime
 
 from resources.lib.session import Session
+from resources.lib.channels import Channels
 from resources.lib.api import API
 from resources.lib.epg import get_item_detail, epg_listitem
 from resources.lib.utils import get_url, plugin_id, get_color, get_label_color
@@ -140,8 +141,30 @@ def get_seasons(id):
 def get_contentId(params):
     if 'contentId' in params['payload']:
         return params['payload']['contentId']
-    else:
+    elif 'criteria' in params['payload'] and 'contentId' in params['payload']['criteria']:
         return params['payload']['criteria']['contentId']
+    elif 'criteria' in params['payload'] and 'schema' in params['payload']['criteria'] and params['payload']['criteria']['schema'] == 'ChannelPlaybackCriteria':
+        session = Session()
+        api = API()
+        channels = Channels()
+        channel_id = params['payload']['criteria']['channel'].replace('channel.', '')
+        time = params['payload']['criteria']['time']
+        timets = int(datetime.fromisoformat(time).timestamp())
+        channels_list = channels.get_channels_list('id')
+        oneplay_number = channels_list[channel_id]['channel_number']
+        post = {"payload":{"criteria":{"channelSetId":"channel_list.1","viewport":{"channelRange":{"from":oneplay_number-1,"to":oneplay_number},"timeRange":{"from":datetime.fromtimestamp(timets-3600).strftime('%Y-%m-%dT%H:%M:%S') + '.000Z',"to":datetime.fromtimestamp(timets+3600).strftime('%Y-%m-%dT%H:%M:%S') + '.000Z'},"schema":"EpgViewportAbsolute"}},"requestedOutput":{"channelList":"none","datePicker":False,"channelSets":False}}}
+        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/epg.display', data = post, session = session)
+        if 'err' not in data:
+            for channel in data['schedule']:
+                if channel['channelId'] in channels_list and channel['channelId'] == channel_id:
+                    for item in channel['items']:
+                        print(item)
+                        if item['startAt'] == time and 'contentType' in item['actions'][0]['params'] or 'contentId' in item['actions'][0]['params']['payload']:
+                            if item['actions'][0]['params']['contentType'] in ['show','movie']:
+                                id = item['actions'][0]['params']['payload']['deeplink']['epgItem']
+                            else:
+                                id = item['actions'][0]['params']['payload']['contentId']
+                            return id
 
 def remote_favourite_menu(data):
      return ('Odebrat z oblíbených Oneplay', 'RunPlugin(plugin://' + plugin_id + '?action=remove_favourite&type=' + data['favourite_type'] + '&id=' + data['favourite_id'] + ')')
@@ -184,7 +207,7 @@ class Item:
                     menus.append(('Přidat nahrávku', 'RunPlugin(plugin://' + plugin_id + '?action=add_recording&id=' + self.params['payload']['contentId'] + ')'))
                 elif 'deeplink' in self.params['payload'] and 'epgItem' in self.params['payload']['deeplink']:
                     menus.append(('Přidat nahrávku', 'RunPlugin(plugin://' + plugin_id + '?action=add_recording&id=' + self.params['payload']['deeplink']['epgItem'] + ')'))
-            if self.type in ['movie','epgitem','match','highlight']:
+            if self.type in ['movie','epgitemxxx','match','highlight']:
                 if self.data is not None and 'favourite_id' in self.data:
                     menus.append(remote_favourite_menu(self.data))
                 else:
