@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
 import os
-import xbmc
 import xbmcplugin
 import xbmcgui
 import xbmcaddon

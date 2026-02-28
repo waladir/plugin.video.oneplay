@@ -1,4 +1,4 @@
-﻿<addon id="plugin.video.oneplay" name="Oneplay" provider-name="waladir" version="1.9.1">
+﻿<addon id="plugin.video.oneplay" name="Oneplay" provider-name="waladir" version="1.9.2">
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
     <import addon="inputstream.adaptive" version="19.0.0"/>
@@ -38,6 +38,9 @@ Další informace a podporu najdete na fóru www.xbmc-kodi.cz (https://www.xbmc-
     <platform>all</platform>
     <source>https://github.com/waladir/plugin.video.oneplay</source>
     <news>
+v1.9.2 (28.2.2026)
+- oprava přehrávání z IPTV SC
+
 v1.9.1 (28.2.2026)
 - přepracování přehrávání streamů
 - úprava zpracování EPG položek v kategoriích
@@ -51,10 +54,6 @@ v1.8.8/9 (25.2.2026)
 
 v1.8.7 (23.2.2026)
 - odstranění počítání epizod v kategoriích
-
-v1.8.6 (21.2.2026)
-- odfiltrování nepřehratelných epizod
-- u sérií se zohledňuje skutečný počet přehratelných epizod
     </news>
     <assets>
         <icon>icon.jpg</icon>

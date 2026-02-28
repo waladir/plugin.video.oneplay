@@ -24,13 +24,14 @@ def play_catchup(id, start_ts, end_ts):
     start_ts = int(start_ts)
     end_ts = int(end_ts)    
     epg = get_channel_epg(channel_id = id, from_ts = start_ts - 7200, to_ts = end_ts + 60*60*12)
+    id = {"criteria":{"schema":"ContentCriteria","contentId":"channel." + id},"startMode":"start"}
     if start_ts in epg:
         if epg[start_ts]['endts'] > int(time.mktime(datetime.now().timetuple()))-10:
-            play_stream(id, 'start')
+            play_stream(id, 'start', True)
         else:
-            play_stream(epg[start_ts]['id'], 'archive')
+            play_stream(json.dumps(epg[start_ts]['payload']), 'archive')
     else:
-        play_stream(id, 'start')
+        play_stream(id, 'start', True)
 
 def get_manifest_redirect(url):
     try:
