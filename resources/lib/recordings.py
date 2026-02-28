@@ -15,7 +15,7 @@ from resources.lib.channels import Channels
 from resources.lib.categories import page_category_display
 from resources.lib.epg import epg_listitem, get_channel_epg
 from resources.lib.api import API
-from resources.lib.utils import get_url, plugin_id, day_translation, day_translation_short
+from resources.lib.utils import get_url, plugin_id, day_translation, day_translation_short, api_version
 
 if len(sys.argv) > 1:
     _handle = int(sys.argv[1])
@@ -32,7 +32,7 @@ def delete_recording(id):
     session = Session()
     api = API()
     post = {"payload":{"changes":[{"schema":"UserMyListChange","ref":{"schema":"MyListRef","id":id},"type":"remove"}]}}
-    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/user.list.change', data = post, session = session) 
+    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/' + api_version + '/user.list.change', data = post, session = session) 
     if 'err' in data and data['err'] != 'Chyba při volání API':
         xbmcgui.Dialog().notification('Oneplay', 'Problém se smazáním nahrávky', xbmcgui.NOTIFICATION_ERROR, 5000)
     else:
@@ -123,7 +123,7 @@ def add_recording(id):
     session = Session()
     api = API()
     post = {"payload":{"changes":[{"schema":"UserMyListChange","ref":{"schema":"MyListRef","id":id},"type":"add"}]}}
-    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/user.list.change', data = post, session = session) 
+    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/' + api_version + '/user.list.change', data = post, session = session) 
     if 'err' in data and data['err'] != 'Chyba při volání API':
         xbmcgui.Dialog().notification('Oneplay', 'Problém s přidáním nahrávky', xbmcgui.NOTIFICATION_ERROR, 5000)
     else:

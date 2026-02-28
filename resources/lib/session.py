@@ -7,7 +7,7 @@ import json
 import time 
 
 from resources.lib.api import API
-from resources.lib.profiles import get_profile_id, get_account_id, reset_profiles
+from resources.lib.profiles import get_profile_id, get_account_id, reset_profiles, api_version
 
 class Session:
     def __init__(self):
@@ -30,7 +30,7 @@ class Session:
         addon = xbmcaddon.Addon()
         api = API()
         post = {"payload":{"command":{"schema":"LoginWithCredentialsCommand","email":addon.getSetting('username'),"password":addon.getSetting('password')}}}
-        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/user.login.step', data = post, sensitive = True)
+        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/' + api_version + '/user.login.step', data = post, sensitive = True)
         if 'err' in data or 'step' not in data or ('bearerToken' not in data['step'] and data['step']['schema'] != 'ShowAccountChooserStep'):
             xbmcgui.Dialog().notification('Oneplay','Problém při přihlášení', xbmcgui.NOTIFICATION_ERROR, 5000)
             sys.exit()
@@ -52,30 +52,30 @@ class Session:
             if '|' in account:
                 accounts = accounts_ext
             post = {"payload":{"command":{"schema":"LoginWithAccountCommand","accountId":accounts[account],"authCode":authToken}}}
-            data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/user.login.step', data = post)   
+            data = api.call_api(url = 'https://http.cms.jyxo.cz/api/' + api_version + '/user.login.step', data = post)   
             if 'err' in data or 'step' not in data or 'bearerToken' not in data['step']:
                 xbmcgui.Dialog().notification('Oneplay','Problém při přihlášení', xbmcgui.NOTIFICATION_ERROR, 5000)
                 sys.exit()            
         self.token = data['step']['bearerToken']
         deviceId = data['step']['currentUser']['currentDevice']['id']
         post = {"payload":{"id":deviceId,"name":addon.getSetting('deviceid')}}
-        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/user.device.change', data = post, session = self)
+        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/' + api_version + '/user.device.change', data = post, session = self)
         post = {"payload":{"screen":"devices"}}
-        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/setting.display', data = post, session = self)
+        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/' + api_version + '/setting.display', data = post, session = self)
         if 'err' in data or 'screen' not in data or 'userDevices' not in data['screen']:
             xbmcgui.Dialog().notification('Oneplay','Problém při přihlášení', xbmcgui.NOTIFICATION_ERROR, 5000)
             sys.exit()
         for device in data['screen']['userDevices']['devices']:
             if device['id'] != deviceId and device['name'] == addon.getSetting('deviceid'):
                 post = {"payload":{"criteria":{"schema":"UserDeviceIdCriteria","id":device['id']}}}
-                data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/user.device.remove', data = post, session = self)
+                data = api.call_api(url = 'https://http.cms.jyxo.cz/api/' + api_version + '/user.device.remove', data = post, session = self)
         self.save_session()
         profileId = get_profile_id()
         if len(str(addon.getSetting('profile_pin'))) > 0:
             post = {"payload":{"profileId":profileId},"authorization":[{"schema":"PinRequestAuthorization","pin":str(addon.getSetting('profile_pin')),"type":"profile"}]}
         else:
             post = {"payload":{"profileId":profileId}}
-        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/user.profile.select', data = post, session = self)
+        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/' + api_version + '/user.profile.select', data = post, session = self)
         if 'err' in data or 'bearerToken' not in data:
             if 'err' in data and data['err'] == 'Profil nenalezen':
                 reset_profiles()
@@ -84,7 +84,7 @@ class Session:
                 post = {"payload":{"profileId":profileId},"authorization":[{"schema":"PinRequestAuthorization","pin":str(addon.getSetting('profile_pin')),"type":"profile"}]}
             else:
                 post = {"payload":{"profileId":profileId}}
-            data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/user.profile.select', data = post, session = self)            
+            data = api.call_api(url = 'https://http.cms.jyxo.cz/api/' + api_version + '/user.profile.select', data = post, session = self)            
             if 'err' in data or 'bearerToken' not in data:
                 if 'err' in data:
                     xbmcgui.Dialog().notification('Oneplay', str(data['err']), xbmcgui.NOTIFICATION_ERROR, 5000)
@@ -101,7 +101,7 @@ class Session:
             post = {"payload":{"profileId":profileId},"authorization":[{"schema":"PinRequestAuthorization","pin":str(addon.getSetting('profile_pin')),"type":"profile"}]}
         else:
             post = {"payload":{"profileId":profileId}}
-        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/user.profile.select', data = post, session = self)
+        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/' + api_version + '/user.profile.select', data = post, session = self)
         if 'err' in data or 'bearerToken' not in data:
             if 'err' in data:
                 xbmcgui.Dialog().notification('Oneplay', str(data['err']), xbmcgui.NOTIFICATION_ERROR, 5000)

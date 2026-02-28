@@ -21,7 +21,7 @@ from resources.lib.settings import Settings
 from resources.lib.api import API
 from resources.lib.session import Session
 from resources.lib.profiles import get_profile_id
-from resources.lib.utils import get_url, plugin_id
+from resources.lib.utils import get_url, plugin_id, api_version
 
 if len(sys.argv) > 1:
     _handle = int(sys.argv[1])
@@ -293,7 +293,7 @@ class Channels:
         session = Session()
         profileId = get_profile_id()
         post = {"payload":{"profileId":str(profileId)}}
-        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/epg.channels.display', data = post, session = session)
+        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/' + api_version + '/epg.channels.display', data = post, session = session)
         if 'err' in data or 'channelList' not in data:
             xbmcgui.Dialog().notification('Oneplay','Problém při načtení kanálů', xbmcgui.NOTIFICATION_ERROR, 5000)
             sys.exit()

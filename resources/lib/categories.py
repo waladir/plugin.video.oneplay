@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
 import os
+import xbmc
 import xbmcplugin
 import xbmcgui
 import xbmcaddon
@@ -8,13 +9,14 @@ import xbmcaddon
 import json 
 import time
 from datetime import datetime
+from urllib.parse import quote
 
 from resources.lib.session import Session
 from resources.lib.channels import Channels
 from resources.lib.api import API
 from resources.lib.epg import get_item_detail, epg_listitem
-from resources.lib.utils import get_url, plugin_id, get_color, get_label_color
 from resources.lib.stream import play_stream
+from resources.lib.utils import get_url, plugin_id, get_color, get_label_color, api_version
 
 
 if len(sys.argv) > 1:
@@ -86,7 +88,7 @@ def get_episodes(carouselId, id, season_title, limit = 1000):
     filterCriterias = id
     while get_page == True:
         post = {"payload":{"carouselId":carouselId,"paging":{"count":12,"position":12*(page-1)+1},"criteria":{"filterCriterias":filterCriterias,"sortOption":"DESC"}}}
-        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/carousel.display', data = post, session = session)
+        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/' + api_version + '/carousel.display', data = post, session = session)
         if not 'err' in data and 'carousel' in data:
             for item in data['carousel']['tiles']:
                 if 'params' in item['action'] and ('contentId' in item['action']['params']['payload'] or 'contentId' in item['action']['params']['payload']['criteria']) and ('schema' not in item['action']['params'] or item['action']['params']['schema'] not in ['UserUpsellPreviewApiAction']) and 'call' in item['action']:
@@ -112,7 +114,7 @@ def get_seasons(id):
     api = API()
     post = {'payload' : {'contentId' : id}}
     seasons = []
-    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/page.content.display', data = post, session = session)
+    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/' + api_version + '/page.content.display', data = post, session = session)
     for block in data['layout']['blocks']:
         if block['schema'] == 'TabBlock' and block['template'] == 'tabs':
             for tab in block['tabs']:
@@ -121,7 +123,7 @@ def get_seasons(id):
                         data = block
                     else:
                         post = {"payload":{"tabId":tab['id']}}
-                        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/tab.display', data = post, session = session)
+                        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/' + api_version + '/tab.display', data = post, session = session)
     for block in data['layout']['blocks']:
         if block['schema'] == 'CarouselBlock' and block['template'] in ['list','grid']:
             for carousel in block['carousels']:
@@ -153,12 +155,11 @@ def get_contentId(params):
         channels_list = channels.get_channels_list('id')
         oneplay_number = channels_list[channel_id]['channel_number']
         post = {"payload":{"criteria":{"channelSetId":"channel_list.1","viewport":{"channelRange":{"from":oneplay_number-1,"to":oneplay_number},"timeRange":{"from":datetime.fromtimestamp(timets-3600).strftime('%Y-%m-%dT%H:%M:%S') + '.000Z',"to":datetime.fromtimestamp(timets+3600).strftime('%Y-%m-%dT%H:%M:%S') + '.000Z'},"schema":"EpgViewportAbsolute"}},"requestedOutput":{"channelList":"none","datePicker":False,"channelSets":False}}}
-        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/epg.display', data = post, session = session)
+        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/' + api_version + '/epg.display', data = post, session = session)
         if 'err' not in data:
             for channel in data['schedule']:
                 if channel['channelId'] in channels_list and channel['channelId'] == channel_id:
                     for item in channel['items']:
-                        print(item)
                         if item['startAt'] == time and 'contentType' in item['actions'][0]['params'] or 'contentId' in item['actions'][0]['params']['payload']:
                             if item['actions'][0]['params']['contentType'] in ['show','movie']:
                                 id = item['actions'][0]['params']['payload']['deeplink']['epgItem']
@@ -166,7 +167,7 @@ def get_contentId(params):
                                 id = item['actions'][0]['params']['payload']['contentId']
                             return id
 
-def remote_favourite_menu(data):
+def remove_favourite_menu(data):
      return ('Odebrat z oblíbených Oneplay', 'RunPlugin(plugin://' + plugin_id + '?action=remove_favourite&type=' + data['favourite_type'] + '&id=' + data['favourite_id'] + ')')
 
 def add_favourite_menu(type, id, image, title):
@@ -207,9 +208,9 @@ class Item:
                     menus.append(('Přidat nahrávku', 'RunPlugin(plugin://' + plugin_id + '?action=add_recording&id=' + self.params['payload']['contentId'] + ')'))
                 elif 'deeplink' in self.params['payload'] and 'epgItem' in self.params['payload']['deeplink']:
                     menus.append(('Přidat nahrávku', 'RunPlugin(plugin://' + plugin_id + '?action=add_recording&id=' + self.params['payload']['deeplink']['epgItem'] + ')'))
-            if self.type in ['movie','epgitemxxx','match','highlight']:
+            if self.type in ['movie','match','highlight']:
                 if self.data is not None and 'favourite_id' in self.data:
-                    menus.append(remote_favourite_menu(self.data))
+                    menus.append(remove_favourite_menu(self.data))
                 else:
                     contentId = get_contentId(self.params)
                     menus.append(add_favourite_menu('item', contentId, self.data['cover'], self.title))
@@ -227,7 +228,7 @@ class Item:
                 elif self.type in ['show'] and 'deeplink' in self.params['payload'] and 'epgItem' in self.params['payload']['deeplink']:
                         menus.append(('Přidat nahrávku', 'RunPlugin(plugin://' + plugin_id + '?action=add_recording&id=' + self.params['payload']['deeplink']['epgItem'] + ')'))
                 if self.data is not None and 'favourite_id' in self.data:
-                    menus.append(remote_favourite_menu(self.data))
+                    menus.append(remove_favourite_menu(self.data))
                 else:
                     if self.type == 'show':
                         menus.append(add_favourite_menu('show', self.params['payload']['contentId'], self.data['cover'], self.title))
@@ -247,7 +248,7 @@ class Item:
         if self.type in ['category_item']:
             menus = []
             if self.data is not None and 'favourite_id' in self.data:
-                menus.append(remote_favourite_menu(self.data))
+                menus.append(remove_favourite_menu(self.data))
             else:
                 if 'criteria' in self.params['payload']:
                     criteria = self.params['payload']['criteria']['filterCriterias']
@@ -266,7 +267,7 @@ class Item:
         if self.type == 'season':
             menus = []
             if self.data is not None and 'favourite_id' in self.data:
-                menus.append(remote_favourite_menu(self.data))
+                menus.append(remove_favourite_menu(self.data))
             else:
                 menus.append(add_favourite_menu('season', self.params['payload']['criteria']['filterCriterias'] + '~' + self.params['payload']['carouselId'], 'None', self.label))
             if len(menus) > 0:
@@ -353,7 +354,7 @@ def page_category_display(label, params, id, show_filter):
     session = Session()
     api = API()
     post = {'payload' : params['payload']}
-    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/page.category.display', data = post, session = session) 
+    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/' + api_version + '/page.category.display', data = post, session = session) 
     if 'err' not in data and 'layout' in data and 'blocks' in data['layout']:
         for block in data['layout']['blocks']:
             if block['schema'] == 'BreadcrumbBlock':
@@ -371,7 +372,7 @@ def page_content_display(label, params):
     session = Session()
     api = API()
     post = {'payload' : params['payload']}
-    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/page.content.display', data = post, session = session)
+    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/' + api_version + '/page.content.display', data = post, session = session)
     if 'err' not in data:
         if data['tracking']['type'] in ['movie', 'epgitem']:
             params = None
@@ -390,7 +391,7 @@ def page_content_display(label, params):
                         if tab['label']['name'] == 'Celé díly':
                             if tab['isActive'] == False:
                                 post = {"payload":{"tabId":tab['id']}}
-                                data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/tab.display', data = post, session = session)
+                                data = api.call_api(url = 'https://http.cms.jyxo.cz/api/' + api_version + '/tab.display', data = post, session = session)
                                 for block in data['layout']['blocks']:
                                     CarouselBlock(label, block, params, None)
                                 switch_tab = True
@@ -420,7 +421,7 @@ def carousel_display(label, params):
     api = API()
     post = {'payload' : params['payload']}
     while get_page == True:
-        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/carousel.display', data = post, session = session)
+        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/' + api_version + '/carousel.display', data = post, session = session)
         if 'err' not in data:
             if data['carousel']['paging']['next'] == True and 'pageCount' in data['carousel']['paging']:
                 pageCount = data['carousel']['paging']['pageCount']
@@ -470,19 +471,14 @@ def carousel_display(label, params):
 
 def content_play(params):
     params = json.loads(params)
-    contentId = get_contentId(params)
-    if 'channel,' in contentId:
-        contentId = contentId.replace('channel.', '')
-        mode = 'start'
-    else:
-        mode = 'archive'
-    play_stream(contentId, mode)
+    play_stream(json.dumps(params['payload']), 'archive', True)
+
 
 def page_search_display(query):
     session = Session()
     api = API()    
     post = {"payload":{"query":query}}
-    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/page.search.display', data = post, session = session)  
+    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/' + api_version + '/page.search.display', data = post, session = session)  
     if 'err' not in data:
         if 'blocks' in data['layout']:
             for block in data['layout']['blocks']:
@@ -497,7 +493,7 @@ def list_categories(label):
     session = Session()
     api = API()
     post = {"payload":{"reason":"start"}}
-    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/app.init', data = post, session = session) 
+    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/' + api_version + '/app.init', data = post, session = session) 
     if 'err' in data or not 'menu' in data:
         xbmcgui.Dialog().notification('Oneplay','Problém při načtení kategorií', xbmcgui.NOTIFICATION_ERROR, 5000)
     else:

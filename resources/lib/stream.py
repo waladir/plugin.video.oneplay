@@ -6,6 +6,7 @@ import xbmcplugin
 import xbmcaddon
 
 from datetime import datetime
+import json
 import time
 import ssl
 from xml.dom import minidom
@@ -13,8 +14,8 @@ from urllib.request import urlopen, Request
 
 from resources.lib.session import Session
 from resources.lib.api import API
-from resources.lib.channels import Channels
 from resources.lib.epg import get_channel_epg
+from resources.lib.utils import api_version
 
 if len(sys.argv) > 1:
     _handle = int(sys.argv[1])
@@ -104,7 +105,7 @@ def get_list_item(type, url, drm, next_url, next_drm):
         playlist.add(next_url, next_list_item)
     xbmcplugin.setResolvedUrl(_handle, True, list_item)
 
-def get_stream_url(post, mode, next = False, reload_profile = False):
+def get_stream_url(post, mode, reload_profile = False):
     api = API()
     session = Session()
     if reload_profile == True:
@@ -114,66 +115,51 @@ def get_stream_url(post, mode, next = False, reload_profile = False):
     url_dash_drm = None
     url_hls = None
     drm = None
+    next_url_dash = None
+    next_url_dash_drm = None
+    next_url_hls = None
+    next_drm = None    
     skip_error = False
-    if next == False:
-        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/content.play', data = post, session = session)
-        if 'err' in data and reload_profile == False:
-            if len(data['err']) > 0 and data['err'] == 'Kdo se dívá?':
-                return get_stream_url(post, mode, next, True)
-            elif len(data['err']) > 0 and data['err'] == 'Potvrďte spuštění dalšího videa':
-                response = xbmcgui.Dialog().yesno('Potvrzení spuštění', 'Máte limitovaný počet přehrání. Opravdu chcete pořad přehrát?', nolabel = 'Ne', yeslabel = 'Ano')
-                if response:
-                    post['authorization'] = [{"schema":"UserConfirmAuthorization","type":"tasting"}]
-                    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/content.play', data = post, session = session)
-                    if 'err' not in data:
-                        skip_error = True
-            elif len(data['err']) > 0:
-                xbmcgui.Dialog().notification('Oneplay', data['err'], xbmcgui.NOTIFICATION_ERROR, 5000)
-            if skip_error == False:
-                return None, None, None, None
-    else:
-        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/content.playnext', data = post, session = session)
-        if 'err' in data or 'offer' not in data or 'channelUpdate' not in data['offer']:
-            if 'err' in data and len(data['err']) > 0:
-                if data['err'] == 'Kdo se dívá?' and reload_profile == False:
-                    return get_stream_url(post, mode, next, True)
-                elif data['err'] == 'Potvrďte spuštění dalšího videa':
-                    pass
+    if 'startMode' in post['payload'] and post['payload']['startMode'] == 'live':
+        post['payload']['startMode'] = 'start'
+    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/' + api_version + '/content.play', data = post, session = session)
+    if 'err' in data and reload_profile == False:
+        if len(data['err']) > 0 and data['err'] == 'Kdo se dívá?':
+            return get_stream_url(post, mode, True)
+        elif len(data['err']) > 0 and data['err'] == 'Potvrďte spuštění dalšího videa':
+            response = xbmcgui.Dialog().yesno('Potvrzení spuštění', 'Máte limitovaný počet přehrání. Opravdu chcete pořad přehrát?', nolabel = 'Ne', yeslabel = 'Ano')
+            if response:
+                post['authorization'] = [{"schema":"UserConfirmAuthorization","type":"tasting"}]
+                data = api.call_api(url = 'https://http.cms.jyxo.cz/api/' + api_version + '/content.play', data = post, session = session)
+                if 'err' not in data:
+                    skip_error = True
+        elif len(data['err']) > 0 and data['err'] == 'Zadejte kód rodičovského zámku':
+                addon = xbmcaddon.Addon()
+                if str(addon.getSetting('pin')) == '1621' or len(str(addon.getSetting('pin'))) == 0:
+                    pin = xbmcgui.Dialog().numeric(type = 0, heading = 'Zadejte PIN', bHiddenInput = True)
+                    if len(str(pin)) != 4:
+                        xbmcgui.Dialog().notification('Oneplay','Nezadaný-nesprávný PIN', xbmcgui.NOTIFICATION_ERROR, 5000)
+                        pin = '1621'
                 else:
-                    xbmcgui.Dialog().notification('Oneplay', data['err'], xbmcgui.NOTIFICATION_ERROR, 5000)
-            return None, None, None, None
-        data = data['offer']['channelUpdate']
-    if 'err' in data:
-        if data['err'] == 'Zadejte kód rodičovského zámku' and next == False:
-            addon = xbmcaddon.Addon()
-            if str(addon.getSetting('pin')) == '1621' or len(str(addon.getSetting('pin'))) == 0:
-                pin = xbmcgui.Dialog().numeric(type = 0, heading = 'Zadejte PIN', bHiddenInput = True)
-                if len(str(pin)) != 4:
-                    xbmcgui.Dialog().notification('Oneplay','Nezadaný-nesprávný PIN', xbmcgui.NOTIFICATION_ERROR, 5000)
-                    pin = '1621'
-            else:
-                pin = str(addon.getSetting('pin'))
-            post['authorization'] = [{"schema":"PinRequestAuthorization","pin":pin,"type":"parental"}]
-            data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/content.play', data = post, session = session)
-            if 'err' in data:
-                if len(data['err']) > 0:
-                    xbmcgui.Dialog().notification('Oneplay', data['err'], xbmcgui.NOTIFICATION_ERROR, 5000)
+                    pin = str(addon.getSetting('pin'))
+                post['authorization'] = [{"schema":"PinRequestAuthorization","pin":pin,"type":"parental"}]
+                data = api.call_api(url = 'https://http.cms.jyxo.cz/api/' + api_version + '/content.play', data = post, session = session)
+                if 'err' in data:
+                    if len(data['err']) > 0:
+                        xbmcgui.Dialog().notification('Oneplay', data['err'], xbmcgui.NOTIFICATION_ERROR, 5000)
+                    else:
+                        xbmcgui.Dialog().notification('Oneplay', 'Problém při přehrání', xbmcgui.NOTIFICATION_ERROR, 5000)                    
                 else:
-                    xbmcgui.Dialog().notification('Oneplay', 'Problém při přehrání', xbmcgui.NOTIFICATION_ERROR, 5000)                    
-        else:            
-            if len(data['err']) > 0:
-                xbmcgui.Dialog().notification('Oneplay', data['err'], xbmcgui.NOTIFICATION_ERROR, 5000)
-            else:
-                xbmcgui.Dialog().notification('Oneplay', 'Problém při přehrání', xbmcgui.NOTIFICATION_ERROR, 5000)                    
+                    skip_error = True
+        elif len(data['err']) > 0:
+            xbmcgui.Dialog().notification('Oneplay', data['err'], xbmcgui.NOTIFICATION_ERROR, 5000)
+        if skip_error == False:
+            return None, None, None, None, None, None, None, None
     else:
-        if mode == 'start' and 'liveControl' in data['playerControl'] and 'timeShift' in data['playerControl']['liveControl']['timeline'] and data['playerControl']['liveControl']['timeline']['timeShift']['available'] == False:
+        if 'liveControl' in data['playerControl'] and 'timeShift' in data['playerControl']['liveControl']['timeline'] and data['playerControl']['liveControl']['timeline']['timeShift']['available'] == False:
             post.update({'payload' : {'criteria' : post['payload']['criteria'], 'startMode' : 'live'}})
-            if next == False:
-                data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/content.play', data = post, session = session)
-            else:
-                data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/content.playnext', data = post, session = session)
-
-        if 'liveControl' in data['playerControl'] and 'mosaic' in data['playerControl']['liveControl'] and next == False:
+            data = api.call_api(url = 'https://http.cms.jyxo.cz/api/' + api_version + '/content.play', data = post, session = session)
+        if 'liveControl' in data['playerControl'] and 'mosaic' in data['playerControl']['liveControl']:
             md_titles = []
             md_ids = []
             for item in data['playerControl']['liveControl']['mosaic']['items']:
@@ -187,7 +173,7 @@ def get_stream_url(post, mode, next = False, reload_profile = False):
                 post = {"payload":{"criteria":{"schema":"MDPlaybackCriteria","contentId":id,"position":0}},"playbackCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","subtitle":{"formats":["vtt"],"locations":["InstreamTrackLocation","ExternalTrackLocation"]},"liveSpecificCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","multipleAudio":False}}}
             else:
                 post = {"payload":{"criteria":{"schema":"MDPlaybackCriteria","contentId":id,"position":0},"startMode":mode},"playbackCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","subtitle":{"formats":["vtt"],"locations":["InstreamTrackLocation","ExternalTrackLocation"]},"liveSpecificCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","multipleAudio":False}}}
-            data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/content.play', data = post, session = session)
+            data = api.call_api(url = 'https://http.cms.jyxo.cz/api/' + api_version + '/content.play', data = post, session = session)
             if 'err' in data or 'media' not in data:
                 if len(data['err']) > 0:
                     xbmcgui.Dialog().notification('Oneplay', data['err'], xbmcgui.NOTIFICATION_ERROR, 5000)
@@ -204,47 +190,51 @@ def get_stream_url(post, mode, next = False, reload_profile = False):
             if asset['protocol'] == 'hls':
                 if 'drm' not in asset:
                     url_hls = asset['src']
-    return url_hls, url_dash, url_dash_drm, drm
+    if mode != 'start' and data['media']['stream']['type'] == 'catchup' and 'playerControl' in data and 'nextVideo' in data['playerControl'] and 'playNextAction' in data['playerControl']['nextVideo'] and data['playerControl']['nextVideo']['playNextAction']['call'] == 'content.playnext':
+        post = {"payload":data['playerControl']['nextVideo']['playNextAction']['params']['payload'],"playbackCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","subtitle":{"formats":["vtt"],"locations":["InstreamTrackLocation","ExternalTrackLocation"]},"liveSpecificCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","multipleAudio":False}}}
+        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/' + api_version + '/content.playnext', data = post, session = session)
+        if 'err' in data or 'offer' not in data or 'channelUpdate' not in data['offer']:
+            if 'err' in data and len(data['err']) > 0:
+                if data['err'] == 'Kdo se dívá?' and reload_profile == False:
+                    return get_stream_url(post, mode, True)
+                elif data['err'] == 'Potvrďte spuštění dalšího videa':
+                    pass
+                else:
+                    xbmcgui.Dialog().notification('Oneplay', data['err'], xbmcgui.NOTIFICATION_ERROR, 5000)
+            return url_hls, url_dash, url_dash_drm, drm, None, None, None, None
+        data = data['offer']['channelUpdate']        
+        if 'media' in data:
+            for asset in data['media']['stream']['assets']:
+                if asset['protocol'] == 'dash':
+                    if 'drm' in asset:
+                        next_url_dash_drm = asset['src']
+                        next_drm = {'token' : asset['drm'][0]['drmAuthorization']['value'], 'licenceUrl' : asset['drm'][0]['licenseAcquisitionURL']}
+                    else:
+                        next_url_dash = asset['src']
+                if asset['protocol'] == 'hls':
+                    if 'drm' not in asset:
+                        next_url_hls = asset['src']     
+    return url_hls, url_dash, url_dash_drm, drm, next_url_hls, next_url_dash, next_url_dash_drm, next_drm
 
-def play_stream(id, mode):
+def play_stream(id, mode, direct = False):
     addon = xbmcaddon.Addon()
     api = API()
     session = Session()
     keepalive = None
-    next_url_dash = None
-    next_url_dash_drm = None
-    next_url_hls = None
-    next_drm = None
 
-    if mode == 'start':
-        channels = Channels()
-        channels_list = channels.get_channels_list('id')
-        channel = channels_list[id]
-        if channel['adult'] == True:
-            if str(addon.getSetting('pin')) == '1621' or len(str(addon.getSetting('pin'))) == 0:
-                pin = xbmcgui.Dialog().numeric(type = 0, heading = 'Zadejte PIN', bHiddenInput = True)
-                if len(str(pin)) != 4:
-                    xbmcgui.Dialog().notification('Oneplay','Nezadaný-nesprávný PIN', xbmcgui.NOTIFICATION_ERROR, 5000)
-                    pin = '1621'
-            else:
-                pin = str(addon.getSetting('pin'))
-            post = {"authorization":[{"schema":"PinRequestAuthorization","pin":pin,"type":"parental"}],"payload":{"criteria":{"schema":"ContentCriteria","contentId":"channel." + id},"startMode":"live"},"playbackCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","subtitle":{"formats":["vtt"],"locations":["InstreamTrackLocation","ExternalTrackLocation"]},"liveSpecificCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","multipleAudio":False}}}
-        else:
-            post = {"payload":{"criteria":{"schema":"ContentCriteria","contentId":"channel." + id},"startMode":mode},"playbackCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","subtitle":{"formats":["vtt"],"locations":["InstreamTrackLocation","ExternalTrackLocation"]},"liveSpecificCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","multipleAudio":False}}}
-    else:
-        post = {"payload":{"contentId":id}}
-        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/page.content.display', data = post, session = session)
+    id = json.loads(id)
+    if direct == False or direct == 'False':
+        post = {"payload":id}
+        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/' + api_version + '/page.content.display', data = post, session = session)
         if 'err' not in data:
             for block in data['layout']['blocks']:            
                 if block['schema'] == 'ContentHeaderBlock':
-                    if 'mainAction' in block and 'action' in block['mainAction'] and 'criteria' in block['mainAction']['action']['params']['payload'] and 'contentId' in block['mainAction']['action']['params']['payload']['criteria']:
-                        id = block['mainAction']['action']['params']['payload']['criteria']['contentId']
-        if 'epgitem' in id:
-            post = {"payload":{"criteria":{"schema":"ContentCriteria","contentId":id},"startMode":"start","timelineMode":"epg"},"playbackCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","subtitle":{"formats":["vtt"],"locations":["InstreamTrackLocation","ExternalTrackLocation"]},"liveSpecificCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","multipleAudio":False}}}
-            next_url_hls, next_url_dash, next_url_dash_drm, next_drm = get_stream_url(post, mode, True)
-        post = {"payload":{"criteria":{"schema":"ContentCriteria","contentId":id}},"playbackCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","subtitle":{"formats":["vtt"],"locations":["InstreamTrackLocation","ExternalTrackLocation"]},"liveSpecificCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","multipleAudio":False}}}
-
-    url_hls, url_dash, url_dash_drm, drm = get_stream_url(post, mode)
+                    if 'mainAction' in block and 'action' in block['mainAction'] and block['mainAction']['action']['call'] == 'content.play':
+                        payload = block['mainAction']['action']['params']['payload']
+    else:
+        payload = id
+    post = {"payload":payload,"playbackCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","subtitle":{"formats":["vtt"],"locations":["InstreamTrackLocation","ExternalTrackLocation"]},"liveSpecificCapabilities":{"protocols":["dash","hls"],"drm":["widevine","fairplay"],"altTransfer":"Unicast","multipleAudio":False}}}
+    url_hls, url_dash, url_dash_drm, drm, next_url_hls, next_url_dash, next_url_dash_drm, next_drm = get_stream_url(post, mode)
 
     if addon.getSetting('prefer_hls') == 'true' and url_hls is not None:
         url, keepalive = get_manifest_redirect(url_hls)

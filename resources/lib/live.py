@@ -5,6 +5,7 @@ import xbmcplugin
 import xbmcaddon
 
 from datetime import datetime
+import json
 
 from resources.lib.channels import Channels 
 from resources.lib.epg import get_live_epg, epg_listitem
@@ -34,6 +35,8 @@ def list_live(label):
             channel_number = ''
         if channels_list[num]['id'] in epg:
             epg_item = epg[channels_list[num]['id']]
+            id = epg_item['payload']
+            direct = False
             list_item = xbmcgui.ListItem(label = channel_number + channels_list[num]['name'] + ' | ' + get_label_color(epg_item['title'] + ' | ' + datetime.fromtimestamp(epg_item['startts']).strftime('%H:%M') + ' - ' + datetime.fromtimestamp(epg_item['endts']).strftime('%H:%M'), color))
             list_item = epg_listitem(list_item = list_item, epg = epg_item, icon = channels_list[num]['logo'])
             if channels_list[num]['id'] in epg_next:
@@ -45,18 +48,20 @@ def list_live(label):
                 else:
                     list_item.setInfo('video', {'plot': description})
             menus = []
-            menus.append(('Přidat nahrávku', 'RunPlugin(plugin://' + plugin_id + '?action=add_recording&id=' + str(epg_item['id']) + ')'))
+            menus.append(('Přidat nahrávku', 'RunPlugin(plugin://' + plugin_id + '?action=add_recording&id=' + str(epg_item['payload']['contentId']) + ')'))
             if epg_item['type'] == 'tvshow':
                 menus.append(('Zobrazit epizody', 'Container.Update(plugin://' + plugin_id + '?action=list_tv_episodes&id=' + str(epg_item['referenceid']) + '&label=' + epg_item['title'] + ')'))
             list_item.addContextMenuItems(menus)       
         else:
             epg_item = {}
+            id = {"criteria":{"schema":"ContentCriteria","contentId":"channel." + channels_list[num]['id']},"startMode":"start"}
+            direct = True
             list_item = xbmcgui.ListItem(label = channel_number + channels_list[num]['name'])
             list_item.setArt({'thumb': channels_list[num]['logo'], 'icon': channels_list[num]['logo']})    
             list_item.setInfo('video', {'mediatype':'movie', 'title': channels_list[num]['name']}) 
         list_item.setContentLookup(False)          
         list_item.setProperty('IsPlayable', 'true')
-        url = get_url(action = 'play_live', id = channels_list[num]['id'], mode = 'start', title = channels_list[num]['name'])
+        url = get_url(action = 'play_live', id = json.dumps(id), direct = direct, mode = 'start', title = channels_list[num]['name'])
         xbmcplugin.addDirectoryItem(_handle, url, list_item, False)
     xbmcplugin.endOfDirectory(_handle, cacheToDisc = False)
 

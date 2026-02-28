@@ -130,7 +130,7 @@ def router(paramstring):
             delete_search(params['query'])
 
         elif params['action'] == 'play_live':
-            play_stream(params['id'], params['mode'])
+            play_stream(params['id'], params['mode'], params['direct'])
         elif params['action'] == 'play_archive':
             play_stream(params['id'], 'archive')
 

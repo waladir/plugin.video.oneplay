@@ -12,11 +12,13 @@ except ImportError:
     from xbmc import translatePath
 from datetime import datetime
 from urllib.parse import urlencode
+import json
 
 plugin_id = 'plugin.video.oneplay'
 day_translation = {'1' : 'Pondělí', '2' : 'Úterý', '3' : 'Středa', '4' : 'Čtvrtek', '5' : 'Pátek', '6' : 'Sobota', '0' : 'Neděle'}  
 day_translation_short = {'1' : 'Po', '2' : 'Út', '3' : 'St', '4' : 'Čt', '5' : 'Pá', '6' : 'So', '0' : 'Ne'}  
 appVersion = 'R6.19'
+api_version = 'v1.8'
 
 _url = sys.argv[0]
 
@@ -93,3 +95,10 @@ def log_to_file(type, message):
             file.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ' ' + type + ' > ' + message + '\n')        
     except IOError:
         pass
+
+def is_json(string):
+  try:
+    json.loads(string)
+  except ValueError as e:
+    return False
+  return True    

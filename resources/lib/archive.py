@@ -7,6 +7,7 @@ import xbmcaddon
 
 from datetime import date, datetime, timedelta
 import time
+import json
 
 from resources.lib.utils import get_url, day_translation, day_translation_short, plugin_id
 from resources.lib.channels import Channels 
@@ -85,16 +86,16 @@ def list_program(id, day_min, label):
             list_item = xbmcgui.ListItem(label = day_translation_short[datetime.fromtimestamp(epg[key]['startts']).strftime('%w')] + ' ' + datetime.fromtimestamp(epg[key]['startts']).strftime('%d.%m. %H:%M') + ' - ' + datetime.fromtimestamp(epg[key]['endts']).strftime('%H:%M') + ' | ' + epg[key]['title'])
             list_item = epg_listitem(list_item = list_item, epg = epg[key], icon = None)
             menus = []
-            menus.append(('Přidat nahrávku', 'RunPlugin(plugin://' + plugin_id + '?action=add_recording&id=' + str(epg[key]['id']) + ')'))
+            menus.append(('Přidat nahrávku', 'RunPlugin(plugin://' + plugin_id + '?action=add_recording&id=' + str(epg[key]['payload']['contentId']) + ')'))
             if epg[key]['type'] == 'tvshow':
                 menus.append(('Zobrazit epizody', 'Container.Update(plugin://' + plugin_id + '?action=list_tv_episodes&id=' + str(epg[key]['referenceid']) + '&label=' + epg[key]['title'] + ')'))
             list_item.addContextMenuItems(menus)       
             list_item.setContentLookup(False)          
             list_item.setProperty('IsPlayable', 'true')
             if epg[key]['endts'] > int(time.mktime(datetime.now().timetuple()))-10:
-                 url = get_url(action = 'play_live', id = id, mode = 'start')
+                url = get_url(action = 'play_live', id = json.dumps(epg[key]['payload']), direct = False, mode = 'start')
             else:
-                url = get_url(action='play_archive', id = epg[key]['id'])
+                url = get_url(action='play_archive', id = json.dumps(epg[key]['payload']))
             xbmcplugin.addDirectoryItem(_handle, url, list_item, False)
 
     if int(day_min) > 0:

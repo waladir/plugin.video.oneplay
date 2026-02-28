@@ -15,7 +15,7 @@ import json
 from resources.lib.session import Session
 from resources.lib.channels import Channels
 from resources.lib.api import API
-from resources.lib.utils import get_kodi_version
+from resources.lib.utils import get_kodi_version, api_version
 
 from datetime import datetime
 
@@ -98,7 +98,7 @@ def get_epg_data(post, channel_id):
     channels_list = channels.get_channels_list('id')    
     api = API()
     epg = {}
-    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/epg.display', data = post, session = session)
+    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/' + api_version + '/epg.display', data = post, session = session)
     if 'err' not in data:
         for channel in data['schedule']:
             if channel['channelId'] in channels_list:
@@ -107,15 +107,12 @@ def get_epg_data(post, channel_id):
                         startts = int(datetime.fromisoformat(item['startAt']).timestamp())
                         endts = int(datetime.fromisoformat(item['endAt']).timestamp())
                         if 'contentType' in item['actions'][0]['params'] or 'contentId' in item['actions'][0]['params']['payload']:
-                            if item['actions'][0]['params']['contentType'] in ['show','movie']:
-                                id = item['actions'][0]['params']['payload']['deeplink']['epgItem']
-                            else:
-                                id = item['actions'][0]['params']['payload']['contentId']
+                            payload = item['actions'][0]['params']['payload']
                             if channel_id is None:
                                 key = channel['channelId'] + str(startts)
                             else:
                                 key = startts
-                            epg_item = {'id' : id, 'type' : item['actions'][0]['params']['contentType'], 'referenceid' : item['referenceId'], 'title' : item['title'], 'channel_id' : channel['channelId'], 'description' : item['description'], 'startts' : startts, 'endts' : endts, 'cover' : item['image'].replace('{WIDTH}', '480').replace('{HEIGHT}', '320'), 'poster' : item['image'].replace('{WIDTH}', '480').replace('{HEIGHT}', '320')}
+                            epg_item = {'payload' : payload, 'type' : item['actions'][0]['params']['contentType'], 'referenceid' : item['referenceId'], 'title' : item['title'], 'channel_id' : channel['channelId'], 'description' : item['description'], 'startts' : startts, 'endts' : endts, 'cover' : item['image'].replace('{WIDTH}', '480').replace('{HEIGHT}', '320'), 'poster' : item['image'].replace('{WIDTH}', '480').replace('{HEIGHT}', '320')}
                             epg.update({key : epg_item})
     return epg
 
@@ -124,7 +121,7 @@ def get_item_detail_from_api(id):
     api = API()
     item_detail = {}
     post = {"payload":{"contentId":id}}
-    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/v1.6/page.content.display', data = post, session = session)
+    data = api.call_api(url = 'https://http.cms.jyxo.cz/api/' + api_version + '/page.content.display', data = post, session = session)
     if 'err' not in data:
         for block in data['layout']['blocks']:
             if block['schema'] == 'OnAirContentInfoBlock' and block['template'] == 'fullInfo' and 'additionalContentData' in block and 'lists' in block['additionalContentData']:
