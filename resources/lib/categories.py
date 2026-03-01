@@ -8,7 +8,6 @@ import xbmcaddon
 import json 
 import time
 from datetime import datetime
-from urllib.parse import quote
 
 from resources.lib.session import Session
 from resources.lib.channels import Channels
@@ -90,7 +89,7 @@ def get_episodes(carouselId, id, season_title, limit = 1000):
         data = api.call_api(url = 'https://http.cms.jyxo.cz/api/' + api_version + '/carousel.display', data = post, session = session)
         if not 'err' in data and 'carousel' in data:
             for item in data['carousel']['tiles']:
-                if 'params' in item['action'] and ('contentId' in item['action']['params']['payload'] or 'contentId' in item['action']['params']['payload']['criteria']) and ('schema' not in item['action']['params'] or item['action']['params']['schema'] not in ['UserUpsellPreviewApiAction']) and 'call' in item['action']:
+                if 'params' in item['action'] and 'call' in item['action'] and item['action']['call'] == 'content.play':
                     cnt += 1
                     contentId = get_contentId(item['action']['params'])
                     episodeId = int(contentId.split('.')[1])
@@ -107,6 +106,28 @@ def get_episodes(carouselId, id, season_title, limit = 1000):
         else:
             get_page = False
     return episodes
+
+def get_episodes_count(carouselId, id):
+    session = Session()
+    api = API()
+    get_page = True
+    page = 1
+    cnt = 0
+    filterCriterias = id
+    while get_page == True:
+        post = {"payload":{"carouselId":carouselId,"paging":{"count":48,"position":48*(page-1)+1},"criteria":{"filterCriterias":filterCriterias,"sortOption":"DESC"}}}
+        data = api.call_api(url = 'https://http.cms.jyxo.cz/api/' + api_version + '/carousel.display', data = post, session = session)
+        if not 'err' in data and 'carousel' in data:
+            for item in data['carousel']['tiles']:
+                if 'params' in item['action'] and 'call' in item['action'] and item['action']['call'] == 'content.play':
+                    cnt += 1
+            if data['carousel']['paging']['next'] == True:
+                page = page + 1
+            else:
+                get_page = False
+        else:
+            get_page = False
+    return cnt
 
 def get_seasons(id):
     session = Session()
@@ -160,9 +181,10 @@ def get_contentId(params):
                 if channel['channelId'] in channels_list and channel['channelId'] == channel_id:
                     for item in channel['items']:
                         if item['startAt'] == time and 'contentType' in item['actions'][0]['params'] or 'contentId' in item['actions'][0]['params']['payload']:
-                            if item['actions'][0]['params']['contentType'] in ['show','movie']:
+                            id = None
+                            if item['actions'][0]['params']['contentType'] in ['show','movie'] and 'epgItem' in item['actions'][0]['params']['payload']['deeplink']:
                                 id = item['actions'][0]['params']['payload']['deeplink']['epgItem']
-                            else:
+                            elif 'contentId' in item['actions'][0]['params']['payload']:
                                 id = item['actions'][0]['params']['payload']['contentId']
                             return id
 
@@ -297,12 +319,25 @@ def CarouselBlock(label, block, params, id):
             if params['schema'] == 'PageContentDisplayApiAction' and 'criteria' in carousel and carousel['criteria'][0]['schema'] == 'CarouselGenericFilter':
                 carouselId = carousel['id']
                 for item in carousel['criteria'][0]['items']:
-                    title = item['label']
+                    if addon.getSetting('episodes_count') == 'true':
+                        episodes_count = get_episodes_count(carouselId, item['criteria'])
+                    else:
+                        episodes_count = -1
+                    if episodes_count > 0:
+                        if episodes_count == 1:
+                            title = item['label'] + ' (' + str(episodes_count) + ' díl)'
+                        elif episodes_count > 1 and episodes_count < 5:
+                            title = item['label'] + ' (' + str(episodes_count) + ' díly)'
+                        else:
+                            title = item['label'] + ' (' + str(episodes_count) + ' dílů)'
+                    else:
+                        title = item['label']
                     if addon.getSetting('episodes_order') == 'sestupně':
                         order = 'DESC'
                     else:
                         order = 'ASC'
-                    Item(label = label + ' / ' + item['label'], title = title, type = 'season', schema = carousel['criteria'][0]['schema'], call = 'carousel_display', params = {'payload' : {'carouselId' : carouselId, 'criteria' : {'filterCriterias' : item['criteria'], 'sortOption' : order}}}, tracking = None, data = None)
+                    if episodes_count != 0:
+                        Item(label = label + ' / ' + item['label'], title = title, type = 'season', schema = carousel['criteria'][0]['schema'], call = 'carousel_display', params = {'payload' : {'carouselId' : carouselId, 'criteria' : {'filterCriterias' : item['criteria'], 'sortOption' : order}}}, tracking = None, data = None)
             elif 'tiles' in carousel:
                 if id is None or id == carousel['tracking']['id'] or id == block['id']:
                     if paging == True and 'pageCount' not in carousel['paging']:

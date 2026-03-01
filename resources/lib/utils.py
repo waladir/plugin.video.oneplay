@@ -96,7 +96,7 @@ def log_to_file(type, message):
     except IOError:
         pass
 
-def is_json(string):
+def is_json_string(string):
   try:
     json.loads(string)
   except ValueError as e:

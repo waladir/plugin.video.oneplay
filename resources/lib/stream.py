@@ -15,7 +15,7 @@ from urllib.request import urlopen, Request
 from resources.lib.session import Session
 from resources.lib.api import API
 from resources.lib.epg import get_channel_epg
-from resources.lib.utils import api_version
+from resources.lib.utils import api_version, is_json_string
 
 if len(sys.argv) > 1:
     _handle = int(sys.argv[1])
@@ -29,7 +29,7 @@ def play_catchup(id, start_ts, end_ts):
         if epg[start_ts]['endts'] > int(time.mktime(datetime.now().timetuple()))-10:
             play_stream(id, 'start', True)
         else:
-            play_stream(json.dumps(epg[start_ts]['payload']), 'archive')
+            play_stream(epg[start_ts]['payload'], 'archive')
     else:
         play_stream(id, 'start', True)
 
@@ -222,8 +222,9 @@ def play_stream(id, mode, direct = False):
     api = API()
     session = Session()
     keepalive = None
-
-    id = json.loads(id)
+    if isinstance(id, (str, bytes)) and is_json_string(id):
+        id = json.loads(id)
+                
     if direct == False or direct == 'False':
         post = {"payload":id}
         data = api.call_api(url = 'https://http.cms.jyxo.cz/api/' + api_version + '/page.content.display', data = post, session = session)

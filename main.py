@@ -226,7 +226,7 @@ def router(paramstring):
                 play_catchup(id = params['id'], start_ts = params['catchup_start_ts'], end_ts = params['catchup_end_ts'])
             else:
                 import json 
-                id = json.dumps({"criteria":{"schema":"ContentCriteria","contentId":"channel." + params['id']},"startMode":"start"})
+                id = {"criteria":{"schema":"ContentCriteria","contentId":"channel." + params['id']},"startMode":"start"}
                 play_stream(id, 'start', True)
         elif params['action'] == 'iptv_sc_rec':
             iptv_sc_rec(params['channel'], params['startdatetime'])
