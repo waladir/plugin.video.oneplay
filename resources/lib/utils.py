@@ -97,8 +97,9 @@ def log_to_file(type, message):
         pass
 
 def is_json_string(string):
-  try:
-    json.loads(string)
-  except ValueError as e:
-    return False
-  return True    
+    try:
+        print('x' + string + 'y')
+        json.loads(string)
+    except ValueError as e:
+        return False
+    return True    

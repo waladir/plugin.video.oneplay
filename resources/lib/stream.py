@@ -224,7 +224,6 @@ def play_stream(id, mode, direct = False):
     keepalive = None
     if isinstance(id, (str, bytes)) and is_json_string(id):
         id = json.loads(id)
-                
     if direct == False or direct == 'False':
         post = {"payload":id}
         data = api.call_api(url = 'https://http.cms.jyxo.cz/api/' + api_version + '/page.content.display', data = post, session = session)

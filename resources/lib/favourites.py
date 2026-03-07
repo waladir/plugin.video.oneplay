@@ -145,7 +145,7 @@ def list_favourites_new(label):
             list_item.setProperty('IsPlayable', 'true')
             menus = [('Skrýt epizodu', 'RunPlugin(plugin://' + plugin_id + '?action=add_favourites_episodes_bl&id=' + item['id'] + ')')]
             list_item.addContextMenuItems(menus)       
-            url = get_url(action = 'play_archive', id = item['id'])
+            url = get_url(action = 'play_archive', id = json.dumps(item['payload']), direct = True)
             xbmcplugin.addDirectoryItem(_handle, url, list_item, False)
     xbmcplugin.endOfDirectory(_handle, cacheToDisc = False)  
 

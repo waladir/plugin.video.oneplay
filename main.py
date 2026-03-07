@@ -132,8 +132,10 @@ def router(paramstring):
         elif params['action'] == 'play_live':
             play_stream(params['id'], params['mode'], params['direct'])
         elif params['action'] == 'play_archive':
-            play_stream(params['id'], 'archive')
-
+            if 'direct' in params:
+                play_stream(params['id'], 'archive', params['direct'])
+            else:
+                play_stream(params['id'], 'archive')
         elif params['action'] == 'list_settings':
             list_settings(params['label'])
         elif params['action'] == 'addon_settings':
