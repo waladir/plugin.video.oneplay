@@ -16,7 +16,7 @@ from resources.lib.utils import appVersion
 
 class API:
     def __init__(self):
-        self.headers = {'User-Agent' : 'Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0', 'Accept-Encoding' : 'gzip', 'Accept' : '*/*', 'Content-type' : 'application/json;charset=UTF-8'} 
+        self.headers = {'User-Agent' : 'Mozilla/5.0 (X11; Linux x86_64; rv:144.0) Gecko/20100101 Firefox/144.0', 'Accept-Encoding' : 'gzip', 'Accept' : '*/*', 'Content-type' : 'application/json;charset=UTF-8'} 
 
     def call_api(self, url, data, session = None, sensitive = False):
         addon = xbmcaddon.Addon()
@@ -45,36 +45,26 @@ class API:
                 data = response.read()
             if len(data) > 0:
                 data = json.loads(data)
-            if 'result' not in data or 'status' not in data['result'] or data['result']['status'] != 'OkAsync':
+            if 'result' not in data or 'status' not in data['result'] or data['result']['status'] != 'Ok':
                 xbmc.log('Oneplay > Chyba při volání '+ str(url))
                 ws.close()
                 return { 'err' : 'Chyba při volání API' }  
-            response = ws.recv()
-            if response and len(response) > 0:
-                data = json.loads(response)
-                if 'response' in data and 'context' in data['response'] and 'requestId' in data['response']['context']:
-                    if requestId != data['response']['context']['requestId']:
-                        response = ws.recv()
-            if addon.getSetting('log_response') == 'true':
-                if len(str(response)) > 5000 and addon.getSetting('skip_long') == 'true':
-                    xbmc.log('Oneplay > odpověď obdržena (' + str(len(str(response))) + ')')
-                else:
-                    xbmc.log('Oneplay > ' + str(response))
-            if response and len(response) > 0:
-                data = json.loads(response)
-                if 'response' not in data or 'result' not in data['response'] or 'status' not in data['response']['result'] or data['response']['result']['status'] != 'Ok' or data['response']['context']['requestId'] != requestId:
+            else:
+                if addon.getSetting('log_response') == 'true':
+                    if len(str(data)) > 5000 and addon.getSetting('skip_long') == 'true':
+                        xbmc.log('Oneplay > odpověď obdržena (' + str(len(str(data))) + ')')
+                    else:
+                        xbmc.log('Oneplay > ' + str(data))
+                if 'result' not in data or 'status' not in data['result'] or data['result']['status'] != 'Ok' or data['context']['requestId'] != requestId:
                     xbmc.log('Oneplay > Chyba při volání '+ str(url))
                     ws.close()
-                    if 'response' in data and 'result' in data['response'] and 'message' in data['response']['result']:
-                        return { 'err' : data['response']['result']['message']}
+                    if 'result' in data and 'message' in data['result']:
+                        return { 'err' : data['result']['message']}
                     else:
                         return { 'err' : 'Chyba při volání API' }  
                 ws.close()
-                if 'data' in data['response']:
-                    return data['response']['data']
-                return []
-            else:
-                ws.close()
+                if 'data' in data:
+                    return data['data']
                 return []
         except HTTPError as e:
             xbmc.log('Oneplay > Chyba při volání '+ str(url) + ': ' + e.reason)

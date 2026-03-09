@@ -1,4 +1,4 @@
-﻿<addon id="plugin.video.oneplay" name="Oneplay" provider-name="waladir" version="1.9.4">
+﻿<addon id="plugin.video.oneplay" name="Oneplay" provider-name="waladir" version="1.9.5">
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
     <import addon="inputstream.adaptive" version="19.0.0"/>
@@ -38,6 +38,9 @@ Další informace a podporu najdete na fóru www.xbmc-kodi.cz (https://www.xbmc-
     <platform>all</platform>
     <source>https://github.com/waladir/plugin.video.oneplay</source>
     <news>
+v1.9.5 (9.3.2026)
+- změna volání API Oneplay z asynchronních websocketů na synchronní volání
+
 v1.9.4 (7.3.2026)
 - úprava kódování historie vyhledávání
 - oprava pouštění streamů z nových epizod oblíbených pořadů
@@ -53,9 +56,6 @@ v1.9.1 (28.2.2026)
 - přepracování přehrávání streamů
 - úprava zpracování EPG položek v kategoriích
 - úprava verze API    
-
-v1.9.0 (26.2.2026)
-- provizorní řešení problémů s položkami IPTV v kategoriích
     </news>
     <assets>
         <icon>icon.jpg</icon>

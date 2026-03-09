@@ -17,7 +17,7 @@ import json
 plugin_id = 'plugin.video.oneplay'
 day_translation = {'1' : 'Pondělí', '2' : 'Úterý', '3' : 'Středa', '4' : 'Čtvrtek', '5' : 'Pátek', '6' : 'Sobota', '0' : 'Neděle'}  
 day_translation_short = {'1' : 'Po', '2' : 'Út', '3' : 'St', '4' : 'Čt', '5' : 'Pá', '6' : 'So', '0' : 'Ne'}  
-appVersion = 'R6.19'
+appVersion = 'R8.14'
 api_version = 'v1.8'
 
 _url = sys.argv[0]
@@ -98,7 +98,6 @@ def log_to_file(type, message):
 
 def is_json_string(string):
     try:
-        print('x' + string + 'y')
         json.loads(string)
     except ValueError as e:
         return False

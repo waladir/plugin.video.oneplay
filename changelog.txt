@@ -1,3 +1,6 @@
+v1.9.5 (9.3.2026)
+- změna volání API Oneplay z asynchronních websocketů na synchronní volání
+
 v1.9.4 (7.3.2026)
 - úprava kódování historie vyhledávání
 - oprava pouštění streamů z nových epizod oblíbených pořadů
@@ -13,6 +16,3 @@ v1.9.1 (28.2.2026)
 - přepracování přehrávání streamů
 - úprava zpracování EPG položek v kategoriích
 - úprava verze API    
-
-v1.9.0 (26.2.2026)
-- provizorní řešení problémů s položkami IPTV v kategoriích
