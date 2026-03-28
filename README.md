@@ -7,7 +7,7 @@ VOD, živé vysílání, archiv, nahrávky, vytváření playlistu a EPG pro IPT
 </p>
 <p>
 v2.0.0 (28.3.2026)<br>
-- komplnetně přepracovaný doplněk<br>
+- kompletně přepracovaný doplněk<br>
 
 v1.9.6 (9.3.2026)<br>
 - zpracování synchronních i asynchronních volání API<br><br>
