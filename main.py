@@ -17,7 +17,7 @@ from resources.lib.stream import play_stream, play_catchup
 from resources.lib.channels import Channels, manage_channels, list_channels_list_backups, list_channels_edit, edit_channel, delete_channel, change_channels_numbers
 from resources.lib.channels import list_channels_groups, add_channel_group, edit_channel_group, edit_channel_group_list_channels, edit_channel_group_add_channel, edit_channel_group_add_all_channels, edit_channel_group_delete_channel, select_channel_group, delete_channel_group
 from resources.lib.recordings import list_recordings, delete_recording, list_planning_recordings, list_rec_days, future_program, add_recording
-from resources.lib.categories import list_categories, page_category_display, page_content_display, carousel_display, content_play
+from resources.lib.categories import list_categories, page_category_display, carousel_display, parse_carousel, list_filters, list_show, list_season
 from resources.lib.search import list_search, delete_search, program_search
 from resources.lib.profiles import list_profiles, set_active_profile, reset_profiles
 from resources.lib.profiles import list_accounts, set_active_account, reset_accounts
@@ -30,215 +30,176 @@ if len(sys.argv) > 1:
 
 def main_menu():
     addon = xbmcaddon.Addon()
-    icons_dir = os.path.join(addon.getAddonInfo('path'), 'resources','images')
-
-    list_item = xbmcgui.ListItem(label='Živé vysílání')
-    url = get_url(action='list_live', page = 1, label = 'Živé vysílání')  
-    list_item.setArt({ 'thumb' : os.path.join(icons_dir , 'livetv.png'), 'icon' : os.path.join(icons_dir , 'livetv.png') })
-    xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
-
-    list_item = xbmcgui.ListItem(label='Archiv')
-    url = get_url(action='list_archive', label = 'Archiv')  
-    list_item.setArt({ 'thumb' : os.path.join(icons_dir , 'archive.png'), 'icon' : os.path.join(icons_dir , 'archive.png') })
-    xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
-
-    list_item = xbmcgui.ListItem(label='Kategorie')
-    url = get_url(action='list_categories', label = 'Kategorie')  
-    list_item.setArt({ 'thumb' : os.path.join(icons_dir , 'categories.png'), 'icon' : os.path.join(icons_dir , 'categories.png') })
-    xbmcplugin.addDirectoryItem(_handle, url, list_item, True)    
-
-    list_item = xbmcgui.ListItem(label = 'Oblíbené')
-    url = get_url(action='list_favourites', label = 'Oblíbené')  
-    list_item.setArt({ 'thumb' : os.path.join(icons_dir , 'favourites.png'), 'icon' : os.path.join(icons_dir , 'favourites.png') })
-    xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
-
-    list_item = xbmcgui.ListItem(label = 'Nejnovější epizody Oblíbených')
-    url = get_url(action='list_favourites_new', label = 'Oblíbené')  
-    list_item.setArt({ 'thumb' : os.path.join(icons_dir , 'favourites.png'), 'icon' : os.path.join(icons_dir , 'favourites.png') })
-    xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
-
-    list_item = xbmcgui.ListItem(label='Nahrávky')
-    url = get_url(action='list_recordings', label = 'Nahrávky')  
-    list_item.setArt({ 'thumb' : os.path.join(icons_dir , 'recordings.png'), 'icon' : os.path.join(icons_dir , 'recordings.png') })
-    xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
-
-    list_item = xbmcgui.ListItem(label='Vyhledávání')
-    url = get_url(action='list_search', label = 'Vyhledávání')  
-    list_item.setArt({ 'thumb' : os.path.join(icons_dir , 'search.png'), 'icon' : os.path.join(icons_dir , 'search.png') })
-    xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
-
+    icons_dir = os.path.join(addon.getAddonInfo('path'), 'resources', 'images')
+    menu_items = [
+        ('Živé vysílání', 'list_live', 'livetv.png'),
+        ('Archiv', 'list_archive', 'archive.png'),
+        ('Kategorie', 'list_categories', 'categories.png'),
+        ('Oblíbené', 'list_favourites', 'favourites.png'),
+        ('Nejnovější epizody Oblíbených', 'list_favourites_new', 'favourites.png'),
+        ('Nahrávky', 'list_recordings', 'recordings.png'),
+        ('Vyhledávání', 'list_search', 'search.png'),
+    ]
     if addon.getSetting('hide_settings') != 'true':
-        list_item = xbmcgui.ListItem(label='Nastavení Oneplay')
-        url = get_url(action='list_settings', label = 'Nastavení Oneplay')  
-        list_item.setArt({ 'thumb' : os.path.join(icons_dir , 'settings.png'), 'icon' : os.path.join(icons_dir , 'settings.png') })
+        menu_items.append(('Nastavení Oneplay', 'list_settings', 'settings.png'))
+    for label, action, icon in menu_items:
+        url = get_url(action=action, label=label)
+        list_item = xbmcgui.ListItem(label=label)
+        icon_path = os.path.join(icons_dir, icon)
+        list_item.setArt({'thumb': icon_path, 'icon': icon_path})
         xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
-
-    xbmcplugin.endOfDirectory(_handle, cacheToDisc = False)
+    xbmcplugin.endOfDirectory(_handle, cacheToDisc=False)
 
 def router(paramstring):
     params = dict(parse_qsl(paramstring))
     check_settings() 
-    if params:
-        if params['action'] == 'list_live':
-            list_live(params['label'])
-
-        elif params['action'] == 'list_archive':
-            list_archive(params['label'])
-        elif params['action'] == 'list_archive_days':
-            list_archive_days(params['id'], params['label'])
-        elif params['action'] == 'list_program':
-            list_program(params['id'], params['day_min'], params['label'])
-
-        elif params['action'] == 'list_categories':
-            list_categories(params['label'])
-        elif params['action'] == 'page_category_display':
-            if 'id' not in params:
-                params['id'] = None
-            if 'show_filter' not in params:
-                params['show_filter'] = False
-            page_category_display(params['label'], params['params'], params['id'], params['show_filter'])
-        elif params['action'] == 'page_content_display':
-            page_content_display(params['label'], params['params'])
-        elif params['action'] == 'carousel_display':
-            carousel_display(params['label'], params['params'])
-        elif params['action'] == 'content_play':
-            content_play(params['params'])            
-        elif params['action'] == 'epg_display':
-            list_live('Živé vysílání')
-        elif params['action'] == 'list_tv_episodes':
-            import json
-            page_content_display(params['label'], params = json.dumps({'schema': 'PageContentDisplayApiAction', 'payload': {'contentId': params['id']}, 'contentType': 'show'}))
-
-        elif params['action'] == 'list_recordings':
-            list_recordings(params['label'])
-        elif params['action'] == 'delete_recording':
-            delete_recording(params['id'])
-        elif params['action'] == 'list_planning_recordings':
-            list_planning_recordings(params['label'])
-        elif params['action'] == 'list_rec_days':
-            list_rec_days(params['id'], params['label'])
-        elif params['action'] == 'future_program':
-            future_program(params['id'], params['day'], params['label'])
-        elif params['action'] == 'add_recording':
-            add_recording(params['id'])
-
-        elif params['action'] == 'list_search':
-            list_search(params['label'])
-        elif params['action'] == 'program_search':
-            program_search(params['query'], params['label'])
-        elif params['action'] == 'delete_search':
-            delete_search(params['query'])
-
-        elif params['action'] == 'play_live':
-            play_stream(params['id'], params['mode'], params['direct'])
-        elif params['action'] == 'play_archive':
-            if 'direct' in params:
-                play_stream(params['id'], 'archive', params['direct'])
-            else:
-                play_stream(params['id'], 'archive')
-        elif params['action'] == 'list_settings':
-            list_settings(params['label'])
-        elif params['action'] == 'addon_settings':
-            xbmcaddon.Addon().openSettings()
-        elif params['action'] == 'reset_session':
-            session = Session()
-            session.remove_session()
-        elif params['action'] == 'list_profiles':
-            list_profiles(params['label'])                      
-        elif params['action'] == 'set_active_profile':
-            set_active_profile(params['id'])                      
-        elif params['action'] == 'reset_profiles':
-            reset_profiles()    
-        elif params['action'] == 'list_accounts':
-            list_accounts(params['label'])                      
-        elif params['action'] == 'set_active_account':
-            set_active_account(params['name'])                      
-        elif params['action'] == 'reset_accounts':
-            reset_accounts()                         
-            session = Session()
-            session.remove_session()
-            xbmc.executebuiltin('Container.Refresh')
-        elif params['action'] == 'manage_channels':
-            manage_channels(params['label'])
-        elif params['action'] == 'reset_channels_list':
-            channels = Channels()
-            channels.reset_channels()   
-        elif params['action'] == 'restore_channels':
-            channels = Channels()
-            channels.restore_channels(params['backup'])        
-        elif params['action'] == 'list_channels_list_backups':
-            list_channels_list_backups(params['label'])
-
-        elif params['action'] == 'list_channels_edit':
-            list_channels_edit(params['label'])
-        elif params['action'] == 'edit_channel':
-            edit_channel(params['id'])
-        elif params['action'] == 'delete_channel':
-            delete_channel(params['id'])
-        elif params['action'] == 'change_channels_numbers':
-            change_channels_numbers(params['from_number'], params['direction'])
-
-        elif params['action'] == 'list_channels_groups':
-            list_channels_groups(params['label'])
-        elif params['action'] == 'add_channel_group':
-            add_channel_group(params['label'])
-        elif params['action'] == 'edit_channel_group':
-            edit_channel_group(params['group'], params['label'])
-        elif params['action'] == 'delete_channel_group':
-            delete_channel_group(params['group'])
-        elif params['action'] == 'select_channel_group':
-            select_channel_group(params['group'])
-
-        elif params['action'] == 'edit_channel_group_list_channels':
-            edit_channel_group_list_channels(params['group'], params['label'])
-        elif params['action'] == 'edit_channel_group_add_channel':
-            edit_channel_group_add_channel(params['group'], params['channel'])
-        elif params['action'] == 'edit_channel_group_add_all_channels':
-            edit_channel_group_add_all_channels(params['group'])
-        elif params['action'] == 'edit_channel_group_delete_channel':
-            edit_channel_group_delete_channel(params['group'], params['channel'])
-
-        elif params['action'] == 'list_favourites':
-            list_favourites(params['label'])
-        elif params['action'] == 'list_favourites_new':
-            list_favourites_new(params['label'])
-        elif params['action'] == 'add_favourite':
-            add_favourite(params['type'], params['id'], params['image'], params['title'])
-        elif params['action'] == 'remove_favourite':
-            remove_favourite(params['type'], params['id'])
-        elif params['action'] == 'add_favourites_episodes_bl':
-            add_favourites_episodes_bl(params['id'])
-            
-        elif params['action'] == 'generate_playlist':
-            if 'output_file' in params:
-                generate_playlist(params['output_file'])
-                xbmcplugin.addDirectoryItem(_handle, '1', xbmcgui.ListItem())
-                xbmcplugin.endOfDirectory(_handle, succeeded = True)
-            else:
-                generate_playlist()
-        elif params['action'] == 'generate_epg':
-            if 'output_file' in params:
-                generate_epg(params['output_file'], False)
-                xbmcplugin.addDirectoryItem(_handle, '1', xbmcgui.ListItem())
-                xbmcplugin.endOfDirectory(_handle, succeeded = True)
-            else:
-                generate_epg(show_progress = True)
-        elif params['action'] == 'iptsc_play_stream':
-            if 'catchup_start_ts' in params and 'catchup_end_ts' in params:
-                play_catchup(id = params['id'], start_ts = params['catchup_start_ts'], end_ts = params['catchup_end_ts'])
-            else:
-                import json 
-                id = {"criteria":{"schema":"ContentCriteria","contentId":"channel." + params['id']},"startMode":"start"}
-                play_stream(id, 'start', True)
-        elif params['action'] == 'iptv_sc_rec':
-            iptv_sc_rec(params['channel'], params['startdatetime'])
-
-        elif params['action'] == 'remove_cache':
-            remove_db()            
-        else:
-            raise ValueError('Neznámý parametr: {0}!'.format(paramstring))
-    else:
+    if not params:
         main_menu()
+        return
+    action = params.get('action')
+
+    if action == 'list_live':
+        list_live(params.get('label'))
+    elif action == 'list_archive':
+        list_archive(params.get('label'))
+    elif action == 'list_archive_days':
+        list_archive_days(params.get('id'), params.get('label'))
+    elif action == 'list_program':
+        list_program(params.get('id'), params.get('day_min'), params.get('label'))
+    elif action == 'future_program':
+        future_program(params.get('id'), params.get('day'), params.get('label'))
+
+    elif action == 'list_categories':
+        list_categories(params.get('label'))
+    elif action == 'page.category.display':
+        page_category_display(params.get('label'), params.get('params'))
+    elif action == 'parse_carousel':
+        parse_carousel(params.get('label'), params.get('params'), params.get('carousel_id'))  
+    elif action == 'carousel.display':
+        carousel_display(params.get('label'), params.get('payload'), params.get('page'))  
+    elif action == 'list_filters':
+        list_filters(params.get('label'), params.get('params'))  
+    elif action == 'list_show':
+        list_show(params.get('label'), params.get('id'))            
+    elif action == 'list_season':
+        list_season(params.get('label'), params.get('carouselId'), params.get('criteria'))            
+
+    elif action == 'list_favourites':
+        list_favourites(params.get('label'))
+    elif action == 'list_favourites_new':
+        list_favourites_new(params.get('label'))
+    elif action == 'add_favourite':
+        add_favourite(params.get('type'), params.get('id'), params.get('image'), params.get('title'))
+    elif action == 'remove_favourite':
+        remove_favourite(params.get('type'), params.get('id'))
+    elif action == 'add_favourites_episodes_bl':
+        add_favourites_episodes_bl(params.get('id'))
+
+    elif action == 'list_recordings':
+        list_recordings(params.get('label'))
+    elif action == 'list_planning_recordings':
+        list_planning_recordings(params.get('label'))
+    elif action == 'delete_recording':
+        delete_recording(params.get('id'))
+    elif action == 'add_recording':
+        add_recording(params.get('id'))
+    elif action == 'list_rec_days':
+        list_rec_days(params.get('id'), params.get('label'))
+    elif action == 'list_search':
+        list_search(params.get('label'))
+    elif action == 'program_search':
+        program_search(params.get('query'), params.get('label'))
+    elif action == 'delete_search':
+        delete_search(params.get('query'))
+
+    elif action == 'play_live':
+        play_stream(params.get('id'), params.get('mode'), params.get('direct'))
+    elif action == 'play_archive':
+        play_stream(params.get('id'), 'archive', params.get('direct'))
+
+    elif action == 'list_profiles':
+        list_profiles(params.get('label'))                      
+    elif action == 'set_active_profile':
+        set_active_profile(params.get('id'))                      
+    elif action == 'reset_profiles':
+        reset_profiles()    
+    elif action == 'list_accounts':
+        list_accounts(params.get('label'))                      
+    elif action == 'set_active_account':
+        set_active_account(params.get('name'))                      
+    elif action == 'reset_accounts':
+        reset_accounts()                         
+        Session().remove_session()
+        xbmc.executebuiltin('Container.Refresh')
+
+    elif action == 'manage_channels':
+        manage_channels(params.get('label'))
+    elif action == 'reset_channels_list':
+        Channels().reset_channels()   
+    elif action == 'restore_channels':
+        Channels().restore_channels(params.get('backup'))        
+    elif action == 'list_channels_list_backups':
+        list_channels_list_backups(params.get('label'))
+    elif action == 'list_channels_edit':
+        list_channels_edit(params.get('label'))
+    elif action == 'edit_channel':
+        edit_channel(params.get('id'))
+    elif action == 'delete_channel':
+        delete_channel(params.get('id'))
+    elif action == 'change_channels_numbers':
+        change_channels_numbers(params.get('from_number'), params.get('direction'))
+    elif action == 'list_channels_groups':
+        list_channels_groups(params.get('label'))
+    elif action == 'add_channel_group':
+        add_channel_group()
+    elif action == 'edit_channel_group':
+        edit_channel_group(params.get('group'), params.get('label'))
+    elif action == 'delete_channel_group':
+        delete_channel_group(params.get('group'))
+    elif action == 'select_channel_group':
+        select_channel_group(params.get('group'))
+    elif action == 'edit_channel_group_list_channels':
+        edit_channel_group_list_channels(params.get('group'), params.get('label'))
+    elif action == 'edit_channel_group_add_channel':
+        edit_channel_group_add_channel(params.get('group'), params.get('channel'))
+    elif action == 'edit_channel_group_add_all_channels':
+        edit_channel_group_add_all_channels(params.get('group'))
+    elif action == 'edit_channel_group_delete_channel':
+        edit_channel_group_delete_channel(params.get('group'), params.get('channel'))
+
+    elif action == 'generate_playlist':
+        generate_playlist(params.get('output_file'))
+        if 'output_file' in params:
+            xbmcplugin.addDirectoryItem(_handle, '1', xbmcgui.ListItem())
+            xbmcplugin.endOfDirectory(_handle, succeeded=True)
+    elif action == 'generate_epg':
+        if 'output_file' in params:
+            generate_epg(params.get('output_file'), False)
+            xbmcplugin.addDirectoryItem(_handle, '1', xbmcgui.ListItem())
+            xbmcplugin.endOfDirectory(_handle, succeeded=True)
+        else:
+            generate_epg(show_progress=True)
+    elif action == 'remove_cache':
+        remove_db()
+
+    elif action == 'iptsc_play_stream':
+        if 'catchup_start_ts' in params and 'catchup_end_ts' in params:
+            play_catchup(id=params.get('id'), start_ts=params.get('catchup_start_ts'), end_ts=params.get('catchup_end_ts'))
+        else:
+            import json 
+            stream_id = {"criteria":{"schema":"ContentCriteria","contentId":"channel." + params.get('id')},"startMode":"start"}
+            play_stream(stream_id, 'start', True)
+    elif action == 'iptv_sc_rec':
+        iptv_sc_rec(params.get('channel'), params.get('startdatetime'))
+
+    elif action == 'list_settings':
+        list_settings(params.get('label'))
+    elif action == 'addon_settings':
+        xbmcaddon.Addon().openSettings()
+    elif action == 'reset_session':
+        Session().remove_session()
+    else:
+        xbmc.log(f"Oneplay Router: Neznámá akce {action}")
 
 if __name__ == '__main__':
     router(sys.argv[2][1:])

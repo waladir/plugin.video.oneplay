@@ -11,58 +11,63 @@ from resources.lib.channels import Channels
 from resources.lib.epg import get_live_epg, epg_listitem
 from resources.lib.utils import get_url, get_color, get_label_color, plugin_id, get_kodi_version
 
-if len(sys.argv) > 1:
-    _handle = int(sys.argv[1])
-
 def list_live(label):
+    """Live TV - seznam kanálů""" 
+    _handle = int(sys.argv[1]) if len(sys.argv) > 1 else -1
     addon = xbmcaddon.Addon()
     color = get_color()
     xbmcplugin.setPluginCategory(_handle, label)
     if addon.getSetting('default_tv_view') == 'false':
         xbmcplugin.setContent(_handle, 'tvshows')
-    channels = Channels()
-    channels_list = channels.get_channels_list('channel_number')
-    epg, epg_next = get_live_epg()
+    channel_numbers = addon.getSetting('channel_numbers')        
     kodi_version = get_kodi_version()
-    cnt = 0
-    for num in sorted(channels_list.keys()):
-        cnt += 1
-        if addon.getSetting('channel_numbers') == 'číslo kanálu':
-            channel_number = str(num) + '. '
-        elif addon.getSetting('channel_numbers') == 'pořadové číslo':
-            channel_number = str(cnt) + '. '
+
+    channels_list = Channels().get_channels_list('channel_number')
+    epg, epg_next = get_live_epg()
+    fmt_time = lambda ts: datetime.fromtimestamp(ts).strftime('%H:%M')
+
+    for cnt, num in enumerate(sorted(channels_list.keys()), 1):
+        channel = channels_list[num]
+        channel_id = channel['id']
+        if channel_numbers == 'číslo kanálu':
+            channel_number = f"{num}. "
+        elif channel_numbers == 'pořadové číslo':
+            channel_number = f"{cnt}. "
         else:
-            channel_number = ''
-        if channels_list[num]['id'] in epg:
-            epg_item = epg[channels_list[num]['id']]
-            id = epg_item['payload']
-            direct = False
-            list_item = xbmcgui.ListItem(label = channel_number + channels_list[num]['name'] + ' | ' + get_label_color(epg_item['title'] + ' | ' + datetime.fromtimestamp(epg_item['startts']).strftime('%H:%M') + ' - ' + datetime.fromtimestamp(epg_item['endts']).strftime('%H:%M'), color))
-            list_item = epg_listitem(list_item = list_item, epg = epg_item, icon = channels_list[num]['logo'])
-            if channels_list[num]['id'] in epg_next:
-                epg_next_item = epg_next[channels_list[num]['id']]
-                description = epg_item['description'] + '\n\n[COLOR=darkgray]Následuje:\n' + epg_next_item['title'] + ' | ' + datetime.fromtimestamp(epg_next_item['startts']).strftime('%H:%M') + ' - ' + datetime.fromtimestamp(epg_next_item['endts']).strftime('%H:%M') +  '[/COLOR]'
-                if kodi_version >= 20:
-                    infotag = list_item.getVideoInfoTag()
-                    infotag.setPlot(description)
-                else:
-                    list_item.setInfo('video', {'plot': description})
-            menus = []
-            menus.append(('Přidat nahrávku', 'RunPlugin(plugin://' + plugin_id + '?action=add_recording&id=' + str(epg_item['payload']['contentId']) + ')'))
-            if epg_item['type'] == 'tvshow':
-                menus.append(('Zobrazit epizody', 'Container.Update(plugin://' + plugin_id + '?action=list_tv_episodes&id=' + str(epg_item['referenceid']) + '&label=' + epg_item['title'] + ')'))
-            list_item.addContextMenuItems(menus)       
-        else:
-            epg_item = {}
-            id = {"criteria":{"schema":"ContentCriteria","contentId":"channel." + channels_list[num]['id']},"startMode":"start"}
-            direct = True
-            list_item = xbmcgui.ListItem(label = channel_number + channels_list[num]['name'])
-            list_item.setArt({'thumb': channels_list[num]['logo'], 'icon': channels_list[num]['logo']})    
-            list_item.setInfo('video', {'mediatype':'movie', 'title': channels_list[num]['name']}) 
-        list_item.setContentLookup(False)          
+            channel_number = ""
+        list_item = xbmcgui.ListItem(label=f"{channel_number}{channel['name']}")
         list_item.setProperty('IsPlayable', 'true')
-        url = get_url(action = 'play_live', id = json.dumps(id), direct = direct, mode = 'start', title = channels_list[num]['name'])
+        list_item.setContentLookup(False)
+        icon = channel['logo']
+        direct = True
+        id = {"criteria": {"schema": "ContentCriteria", "contentId": f"channel.{channel_id}"}, "startMode": "start"}
+        if channel_id in epg:
+            item = epg[channel_id]
+            id = item['payload']
+            direct = False
+            time_range = f"{fmt_time(item['startts'])} - {fmt_time(item['endts'])}"
+            label_text = f"{item['title']} | {time_range}"
+            list_item.setLabel(f"{channel_number}{channel['name']} | {get_label_color(label_text, color)}")            
+            list_item = epg_listitem(list_item=list_item, epg=item, icon=icon)
+            plot = item.get('description', '')
+            if channel_id in epg_next:
+                nxt = epg_next[channel_id]
+                nxt_range = f"{fmt_time(nxt['startts'])} - {fmt_time(nxt['endts'])}"
+                plot += f"\n\n[COLOR=darkgray]Následuje:\n{nxt['title']} | {nxt_range}[/COLOR]"
+            if kodi_version >= 20:
+                infotag = list_item.getVideoInfoTag()
+                infotag.setPlot(plot)
+                infotag.setTitle(item['title'])
+            else:
+                list_item.setInfo('video', {'plot': plot, 'title': item['title']})
+            menus = [( 'Přidat nahrávku', f'RunPlugin(plugin://{plugin_id}?action=add_recording&id={item["payload"]["contentId"]})' )]
+            list_item.addContextMenuItems(menus)
+        else: # pokud se nepodaří načíst data ke kanálu v EPG
+            list_item.setArt({'thumb': icon, 'icon': icon})
+            if kodi_version >= 20:
+                list_item.getVideoInfoTag().setTitle(channel['name'])
+            else:
+                list_item.setInfo('video', {'mediatype': 'movie', 'title': channel['name']})
+        url = get_url(action='play_live', id=json.dumps(id), direct=direct, mode='start', title=channel['name'])
         xbmcplugin.addDirectoryItem(_handle, url, list_item, False)
-    xbmcplugin.endOfDirectory(_handle, cacheToDisc = False)
-
-
+    xbmcplugin.endOfDirectory(_handle, cacheToDisc=True)

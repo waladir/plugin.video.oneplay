@@ -1,35 +1,41 @@
 # -*- coding: utf-8 -*-
-import xbmcaddon
 import xbmc
-
-from datetime import datetime, timezone
+import xbmcaddon
 import time
-
 from resources.lib.iptvsc import generate_epg
 
-tz_offset = int(datetime.now(timezone.utc).astimezone().utcoffset().total_seconds() / 3600)
-
+monitor = xbmc.Monitor()
 addon = xbmcaddon.Addon()
 
-time.sleep(60)
-if not addon.getSetting('epg_interval'):
-    interval = 12*60*60
-else:
-    interval = int(addon.getSetting('epg_interval'))*60*60
-next = time.time() + 10 + int(addon.getSetting('epg_offset'))*60
+# čekání minutu po startu Kodi, kvůli dokončení inicializace
+if monitor.waitForAbort(60):
+    exit()
 
-while not xbmc.Monitor().abortRequested():
-    if xbmc.Monitor().waitForAbort(3):
+def get_interval():
+    """Vrací interval v sekundách"""
+    setting = addon.getSetting('epg_interval')
+    hours = int(setting) if setting else 12
+    return hours * 3600
+
+# iniciální hodnota pro další spuštění
+offset_seconds = int(addon.getSetting('epg_offset') or 0) * 60
+next_run = time.time() + 10 + offset_seconds
+
+while not monitor.abortRequested():
+    current_time = time.time()
+    if next_run < current_time:
+        if monitor.waitForAbort(3):
+            break
+        user = addon.getSetting('username')
+        pwd = addon.getSetting('password')
+        autogen = addon.getSetting('autogen') == 'true'
+        if user and pwd and autogen:
+            try:
+                generate_epg(show_progress=False)
+            except Exception as e:
+                xbmc.log(f"Oneplay (service)> {e}")
+        next_run = time.time() + get_interval()
+    if monitor.waitForAbort(5):
         break
-    if(next < time.time()):
-        time.sleep(3)
-        if addon.getSetting('username') and len(addon.getSetting('username')) > 0 and addon.getSetting('password') and len(addon.getSetting('password')) > 0:
-            if addon.getSetting('autogen') == 'true':
-                generate_epg(show_progress = False)
-        if not addon.getSetting('epg_interval'):
-            interval = 12*60*60
-        else:
-            interval = int(addon.getSetting('epg_interval'))*60*60      
-        next = time.time() + float(interval)
-    time.sleep(1)
+
 addon = None

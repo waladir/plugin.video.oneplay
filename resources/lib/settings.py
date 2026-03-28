@@ -12,73 +12,69 @@ except ImportError:
 from resources.lib.utils import get_url
 
 def list_settings(label):
-    _handle = int(sys.argv[1])
-    xbmcplugin.setPluginCategory(_handle, label)
-
-    list_item = xbmcgui.ListItem(label='Kanály')
-    url = get_url(action='manage_channels', label = 'Kanály')  
-    xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
-
-    list_item = xbmcgui.ListItem(label = 'Profily')
-    url = get_url(action='list_profiles', label = 'Profily')  
-    xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
-
-    list_item = xbmcgui.ListItem(label = 'Účty')
-    url = get_url(action='list_accounts', label = 'Účty')  
-    xbmcplugin.addDirectoryItem(_handle, url, list_item, True)    
-
-    list_item = xbmcgui.ListItem(label='Nastavení doplňku')
-    url = get_url(action='addon_settings', label = 'Nastavení doplňku')  
-    xbmcplugin.addDirectoryItem(_handle, url, list_item, False)
-    xbmcplugin.endOfDirectory(_handle)
+    """Menu Nastavení Oneplay"""
+    handle = int(sys.argv[1])
+    xbmcplugin.setPluginCategory(handle, label)
+    menu_items = [
+        ('Kanály', 'manage_channels', True),
+        ('Profily', 'list_profiles', True),
+        ('Účty', 'list_accounts', True),
+        ('Nastavení doplňku', 'addon_settings', False)
+    ]
+    for item_label, action, is_folder in menu_items:
+        list_item = xbmcgui.ListItem(label=item_label)
+        url = get_url(action=action, label=item_label)
+        xbmcplugin.addDirectoryItem(handle, url, list_item, is_folder)
+    xbmcplugin.endOfDirectory(handle)
 
 class Settings:
     def __init__(self):
-        self.is_settings_ok = self.check_settings()
-           
-    def check_settings(self):
-        addon = xbmcaddon.Addon()
-        if not addon.getSetting('username') or not addon.getSetting('password'):
-            xbmcgui.Dialog().notification('Oneplay', 'V nastavení je nutné mít vyplněné přihlašovací údaje', xbmcgui.NOTIFICATION_ERROR, 5000)            
+        self.addon = xbmcaddon.Addon()
+        self.addon_userdata_dir = translatePath(path = self.addon.getAddonInfo('profile'))
+        if not os.path.exists(self.addon_userdata_dir):
+            os.makedirs(self.addon_userdata_dir)
+
+    @property
+    def is_settings_ok(self):
+        """Kontroluje nastavení doplňku"""
+        if not self.addon.getSetting('username') or not self.addon.getSetting('password'):
+            xbmcgui.Dialog().notification('Oneplay', 'V nastavení je nutné mít vyplněné přihlašovací údaje', xbmcgui.NOTIFICATION_ERROR, 3000)
             return False
-        else:
-            return True
+        return True
 
-    def save_json_data(self, file, data):
-        addon = xbmcaddon.Addon()
-        addon_userdata_dir = translatePath(addon.getAddonInfo('profile'))
-        if self.is_settings_ok:
-            filename = os.path.join(addon_userdata_dir, file['filename'])
-            try:
-                with open(filename, "w") as f:
-                    f.write('%s\n' % data)
-            except IOError:
-                xbmcgui.Dialog().notification('Oneplay', 'Chyba uložení ' + file['description'], xbmcgui.NOTIFICATION_ERROR, 5000)
+    def _get_path(self, filename):
+        """Sestaví cestu k souboru"""
+        return os.path.join(self.addon_userdata_dir, filename)
 
-    def load_json_data(self, file):
-        data = None
-        if self.is_settings_ok:
-            addon = xbmcaddon.Addon()
-            addon_userdata_dir = translatePath(addon.getAddonInfo('profile'))
-            filename = os.path.join(addon_userdata_dir, file['filename'])
-            try:
-                with open(filename, "r") as f:
-                    for row in f:
-                        data = row[:-1]
-            except IOError:
-                pass
-            except IOError:
-                xbmcgui.Dialog().notification('Oneplay', 'Chyba při načtení ' + file['description'], xbmcgui.NOTIFICATION_ERROR, 5000)
-        return data    
+    def save_json_data(self, file_info, data):
+        """Uloží json data do souboru"""
+        if not self.is_settings_ok:
+            return
+        filename = self._get_path(file_info['filename'])
+        try:
+            with open(filename, 'w', encoding='utf-8') as f:
+                f.write('%s\n' % data)
+        except (IOError, OSError) as e:
+            xbmcgui.Dialog().notification('Oneplay', f"Chyba uložení {file_info.get('description', '')}", xbmcgui.NOTIFICATION_ERROR, 3000)
 
-    def reset_json_data(self, file):
-        if self.is_settings_ok:
-            addon = xbmcaddon.Addon()
-            addon_userdata_dir = translatePath(addon.getAddonInfo('profile'))
-            filename = os.path.join(addon_userdata_dir, file['filename'])
-            try:
+    def load_json_data(self, file_info):
+        """Načte data ze souboru. Vrací None, pokud soubor neexistuje nebo nejde načíst"""
+        if not self.is_settings_ok:
+            return None
+        filename = self._get_path(file_info['filename'])
+        if not os.path.exists(filename):
+            return None
+        try:
+            with open(filename, 'r', encoding='utf-8') as f:
+                return f.read().strip()
+        except (IOError, OSError):
+            return None
+
+    def reset_json_data(self, file_info):
+        """Smaže soubor s json daty"""
+        filename = self._get_path(file_info['filename'])
+        try:
+            if os.path.exists(filename):
                 os.remove(filename)
-            except IOError:
-                pass
-            except IOError:
-                xbmcgui.Dialog().notification('Oneplay', 'Chyba při resetu ' + file['description'], xbmcgui.NOTIFICATION_ERROR, 5000)
+        except (IOError, OSError):
+            pass

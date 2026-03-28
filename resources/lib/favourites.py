@@ -1,182 +1,203 @@
 # -*- coding: utf-8 -*-
 import sys
-import os
 import xbmc
 import xbmcgui
 import xbmcplugin
 import xbmcaddon
 
-try:
-    from xbmcvfs import translatePath
-except ImportError:
-    from xbmc import translatePath
-
-import codecs
 import json
-
-from resources.lib.epg import epg_listitem
-from resources.lib.categories import Item, get_seasons, get_episodes
+from resources.lib.settings import Settings
+from resources.lib.api import API
+from resources.lib.epg import epg_listitem, get_item_detail
+from resources.lib.session import Session
 from resources.lib.utils import get_url, plugin_id, get_color, get_label_color
 
 if len(sys.argv) > 1:
     _handle = int(sys.argv[1])
 
-def add_favourite(type, id, image, title):  
-    addon = xbmcaddon.Addon()
-    addon_userdata_dir = translatePath(addon.getAddonInfo('profile'))
-    filename = os.path.join(addon_userdata_dir, 'favourites.txt')
+FAVOURITES_FILE = {'filename' : 'favourites.txt', 'description' : 'oblíbených'}    
+EPISODES_BL_FILE = {'filename': 'favourites_episodes_bl.txt', 'description': 'skrytých epizod oblíbených'}
+
+def save_favourites(favourites):
+    """Uloží oblíbené"""
+    try:
+        json_data = json.dumps(favourites)
+        Settings().save_json_data(FAVOURITES_FILE, json_data)
+        return True
+    except (TypeError, ValueError):
+        return False
+
+def add_favourite(type, id, image, title):
+    """Přidá položku do oblíbených"""
     favourites = get_favourites()
-    if type not in favourites or id not in favourites[type]:
-        if type not in favourites:
-            favourites.update({ type : {id : {'image' : image, 'title' : title}}})
-        else:
-            favourites[type].update({id : {'image' : image, 'title' : title}})
-        try:
-            with codecs.open(filename, 'w', encoding='utf-8') as file:
-                file.write('%s\n' % json.dumps(favourites))        
-        except IOError as error:
-            xbmcgui.Dialog().notification('Oneplay', 'Chyba při uložení oblíbených pořadů', xbmcgui.NOTIFICATION_ERROR, 5000)            
-        xbmcgui.Dialog().notification('Oneplay', 'Pořad byl přidaný do oblíbených', xbmcgui.NOTIFICATION_INFO, 5000)
-    else:
+    type_group = favourites.setdefault(type, {})
+    if id in type_group:
         xbmcgui.Dialog().notification('Oneplay', 'Pořad je již v oblíbených', xbmcgui.NOTIFICATION_ERROR, 5000)
+        return
+    type_group[id] = {'image': image, 'title': title}
+    if save_favourites(favourites):
+        xbmcgui.Dialog().notification('Oneplay', 'Pořad byl přidaný do oblíbených', xbmcgui.NOTIFICATION_INFO, 5000)
 
 def remove_favourite(type, id):
-    addon = xbmcaddon.Addon()
-    addon_userdata_dir = translatePath(addon.getAddonInfo('profile'))
-    filename = os.path.join(addon_userdata_dir, 'favourites.txt')
+    """Odebere položku z oblíbených"""
     favourites = get_favourites()
-    del favourites[type][id]
-    try:
-        with codecs.open(filename, 'w', encoding='utf-8') as file:
-            file.write('%s\n' % json.dumps(favourites))        
-    except IOError:
-        xbmcgui.Dialog().notification('Oneplay', 'Chyba při uložení oblíbených pořadů', xbmcgui.NOTIFICATION_ERROR, 5000)            
-    xbmc.executebuiltin('Container.Refresh')
+    
+    if type in favourites and id in favourites[type]:
+        del favourites[type][id]
+        if not favourites[type]:
+            del favourites[type]
+        if save_favourites(favourites):
+            xbmc.executebuiltin('Container.Refresh')
 
 def get_favourites():
-    addon = xbmcaddon.Addon()
-    addon_userdata_dir = translatePath(addon.getAddonInfo('profile'))
-    filename = os.path.join(addon_userdata_dir, 'favourites.txt')
-    data = None
+    """Načte oblíbené ze souboru"""
+    favourites = Settings().load_json_data(FAVOURITES_FILE)
     try:
-        with codecs.open(filename, 'r', encoding='utf-8') as file:
-            for row in file:
-                data = row[:-1]
-    except IOError as error:
-        if error.errno != 2:
-            xbmcgui.Dialog().notification('Oneplay', 'Chyba při načtení oblíbených pořadů', xbmcgui.NOTIFICATION_ERROR, 5000)
-            sys.exit()
-    if data is not None:
-        favourites = json.loads(data)
-    else:
-        favourites = {}
-    return favourites
+        return json.loads(favourites) if favourites else {}
+    except (json.JSONDecodeError, TypeError):
+        return {}
 
 def list_favourites(label):
+    """V7pid obl9bených"""
     xbmcplugin.setPluginCategory(_handle, label)
     xbmcplugin.setContent(_handle, 'movies')
-    types = ['category', 'show', 'season', 'item']
     favourites = get_favourites()
+    types = ['category', 'show', 'season', 'item']
     for type in types:
-            if type in favourites.keys():
-                for id in favourites[type]:
-                    item = favourites[type][id]
-                    if type == 'show':
-                        Item(label = item['title'], title = item['title'], type = type, schema = 'ApiAppAction', call = 'page_content_display', params = {'schema': 'PageContentDisplayApiAction', 'payload': {'contentId': id}, 'contentType': 'show'}, tracking = None, data = {'title' : item['title'], 'cover' : item['image'], 'favourite_type' : type, 'favourite_id' : id})
-                    elif type == 'item':
-                        Item(label = item['title'], title = item['title'], type = type, schema = 'ApiAppAction', call = 'page_content_display', params = {'schema': 'PageContentDisplayApiAction', 'payload': {'contentId': id}, 'contentType': id.split('.')[0]}, tracking = None, data = {'title' : item['title'], 'cover' : item['image'], 'favourite_type' : type, 'favourite_id' : id})
-                    elif type == 'season':
-                        split_id = id.split('~')
-                        item_id = split_id[0]
-                        caruselId = split_id[1]
-                        Item(label = item['title'], title = item['title'], type = type, schema = 'CarouselGenericFilter', call = 'carousel_display', params = {'payload': {'carouselId': caruselId, 'criteria': {'filterCriterias': item_id, 'sortOption': 'DESC'}}}, tracking = None, data = {'favourite_type' : type, 'favourite_id' : id})
-                    elif type == 'category':
-                        split_id = id.split('~')
-                        item_id = split_id[0]
-                        caruselId = split_id[1]
-                        criteria = split_id[2]
-                        if criteria == 'None':
-                            Item(label = item['title'], title = item['title'], type = 'category_item', schema = 'CarouselBlock', call = 'page_category_display', params = {'schema': 'PageCategoryDisplayApiAction', 'payload': {'categoryId': item_id}}, tracking = {'id': caruselId, 'title': item['title'], 'recommended': False, 'recoGroupId': ''}, data = {'favourite_type' : type, 'favourite_id' : id})                            
-                        else:
-                            Item(label = item['title'], title = item['title'], type = 'category_item', schema = 'ApiAppAction', call = 'page_category_display', params = {'schema': 'PageCategoryDisplayApiAction', 'payload': {'categoryId': item_id, 'criteria': {'filterCriterias': criteria}}}, tracking = {'id': caruselId, 'title': item['title'], 'recommended': False, 'recoGroupId': ''}, data = {'favourite_type' : type, 'favourite_id' : id})
-    xbmcplugin.endOfDirectory(_handle)        
+        if type not in favourites:
+            continue
+        for id, item in favourites[type].items():
+            title = item.get('title', 'Bez názvu')
+            image = item.get('image')
+            list_item = xbmcgui.ListItem(label=title)
+            list_item.setArt({'thumb': image, 'icon': image, 'poster': image})
+            menu = [('Odstranit z oblíbených Oneplay',  f"RunPlugin(plugin://{plugin_id}?action=remove_favourite&type={type}&id={id})")]
+            list_item.addContextMenuItems(menu)
+            is_folder = True
+            url = ""
+            if type == 'show':
+                payload = {'contentId': id}
+                data = get_item_detail(payload, item={'title': title, 'image': {'image': image}})
+                data['type'] = type
+                list_item = epg_listitem(list_item, data, None)
+                url = get_url(action='list_show', id=json.dumps(payload), label=title)
+            elif type == 'item':
+                if 'criteria' in id:
+                    continue
+                payload = {'contentId': id}
+                data = get_item_detail(payload, item={'title': title, 'image': {'image': image}})
+                data['type'] = 'movie'
+                list_item.setContentLookup(False)          
+                list_item.setProperty('IsPlayable', 'true')
+                url = get_url(action='play_archive', id=json.dumps(payload), direct=False, mode='start', title=title)
+                is_folder = False
+            elif type == 'season':
+                item_id, carusel_id = id.split('~')[:2]
+                url = get_url(action='list_season', carouselId=carusel_id, criteria=item_id, label=title)
+            elif type == 'category':
+                parts = id.split('~')
+                item_id, carusel_id = parts[0], parts[1]
+                criteria = parts[2] if len(parts) > 2 else 'None'
+                payload = {'categoryId': item_id}
+                if criteria != 'None':
+                    payload['criteria'] = {'filterCriterias': criteria}
+                url = get_url(action='page.category.display', params=json.dumps({'payload': payload}), label=label)
+            xbmcplugin.addDirectoryItem(_handle, url, list_item, is_folder)
+    xbmcplugin.endOfDirectory(_handle)
 
 def list_favourites_new(label):
-    addon = xbmcaddon.Addon()
-    color = get_color()
+    """Načte nejnovější epizody oblíbených"""
     xbmcplugin.setPluginCategory(_handle, label)
     xbmcplugin.setContent(_handle, 'movies')
+    addon = xbmcaddon.Addon()
+    color = get_color()
     limit = int(addon.getSetting('favourites_new_count'))
-    types = ['show', 'season']
-    seasons = []
+    sort_desc = addon.getSetting('episodes_order') == 'sestupně'
+    api = API()
+    session = Session()
     favourites = get_favourites()
     blacklist = get_favourites_episodes_bl()
-    for type in types:
-            if type in favourites.keys():
-                for id in favourites[type]:
-                    item = favourites[type][id]
-                    if type == 'show':
-                        seasons_items = get_seasons(id)
-                        for season in seasons_items:
-                            seasons.append({'title' : item['title'] + ' / ' + season['title'], 'id': season['id'], 'carouselId': season['carouselId']})
-                    if type == 'season':
-                        split_id = id.split('~')
-                        id = split_id[0]
-                        caruselId = split_id[1]
-                        season_item = {'title' : item['title'], 'id' : id, 'carouselId' : caruselId}
-                        if season_item not in seasons:
-                            seasons.append(season_item)
-    episodes = {}
-    if addon.getSetting('episodes_order') == 'sestupně':
-        reverse = True
-    else:
-        reverse = False
-    for season in seasons:
-        episodes.update(get_episodes(season['carouselId'], season['id'], season['title'], limit))
-
-    for episodeId in sorted(episodes.keys(), reverse = reverse):
-        item = episodes[episodeId]
-        if item['id'] not in blacklist:
-            if '\n' not in item['title']:
-                item['title'] = item['title'] + '\n' + get_label_color(item['showtitle'], color)
-            list_item = xbmcgui.ListItem(label = item['title'])            
-            list_item = epg_listitem(list_item, item, None)
-            list_item.setContentLookup(False)          
-            list_item.setProperty('IsPlayable', 'true')
-            menus = [('Skrýt epizodu', 'RunPlugin(plugin://' + plugin_id + '?action=add_favourites_episodes_bl&id=' + item['id'] + ')')]
-            list_item.addContextMenuItems(menus)       
-            url = get_url(action = 'play_archive', id = json.dumps(item['payload']), direct = True)
-            xbmcplugin.addDirectoryItem(_handle, url, list_item, False)
-    xbmcplugin.endOfDirectory(_handle, cacheToDisc = False)  
-
-def add_favourites_episodes_bl(id):  
-    addon = xbmcaddon.Addon()
-    addon_userdata_dir = translatePath(addon.getAddonInfo('profile'))
-    filename = os.path.join(addon_userdata_dir, 'favourites_episodes_bl.txt')
-    blacklist = get_favourites_episodes_bl()
-    blacklist.append(id)
-    try:
-        with codecs.open(filename, 'w', encoding='utf-8') as file:
-            file.write('%s\n' % json.dumps(blacklist))        
-    except IOError as error:
-        xbmcgui.Dialog().notification('Oneplay', 'Chyba při uložení skrytých epizod oblíbených pořadů', xbmcgui.NOTIFICATION_ERROR, 5000)            
-    xbmc.executebuiltin('Container.Refresh')
+    seasons = []
     
+    # vygenerování seznamu sezón. Pokud je jedná o typ show, použije se první sezóna
+    for type in ['show', 'season']:
+        if type not in favourites:
+            continue
+        for f_id, item in favourites[type].items():
+            if type == 'show':
+                data = api.page_content_display(post={'payload': {'contentId': f_id}}, session=session)
+                data_seasons = data.get('seasons', [])
+                if data_seasons:
+                    s = data_seasons[0]
+                    seasons.append({'title': f"{item['title']} / {s['label']}", 'id': s['criteria'], 'carouselId': s['carouselId']})
+            elif type == 'season':
+                parts = f_id.split('~')
+                if len(parts) >= 2:
+                    seasons.append({'title': item['title'], 'id': parts[0], 'carouselId': parts[1]})
+    
+    # pro seznony nacte prvnich x epizod
+    episodes = {}
+    for season in seasons:
+            page = 0
+            cnt = 0
+            has_next = True
+            while has_next and cnt < limit:
+                page += 1
+                payload = {'carouselId': season['carouselId'], 'criteria': {'filterCriterias': season['id'], 'sortOption': 'DESC'}, 'paging': {"count": 12, "position": 12 * (page - 1) + 1}}
+                carousel = api.carousel_display({'payload': payload}, session, silent=True)
+                tiles = carousel.get('tiles', [])
+                has_next = carousel.get('paging', {}).get('next', False)
+                if not tiles: break
+                for tile in tiles:
+                    # přeskakují se nepřehratelné epizody
+                    if tile.get('action', {}).get('call') != 'content.play':
+                        continue
+                    params = tile.get('action', {}).get('params', {})
+                    item_payload = params.get('payload', {})
+                    content_id = item_payload.get('criteria', {}).get('contentId') or tile.get('tracking', {}).get('id')
+                    if content_id and content_id not in blacklist:
+                        cnt += 1
+                        try:
+                            sort_key = int(content_id.split('.')[1])
+                        except (IndexError, ValueError):
+                            sort_key = len(episodes)
+                        if cnt <= limit:
+                            item_data = get_item_detail(item_payload, item=tile, download_data=False)
+                            episodes[sort_key] = {'id': content_id, 'payload': item_payload, 'type': item_data['type'], 'showtitle': season['title'], 'title': item_data['title'], 'cover': item_data['cover'], 'description': item_data.get('description', '')}
+                        else:
+                            break
+
+    for episode_id in sorted(episodes.keys(), reverse=sort_desc):
+        item = episodes[episode_id]
+        title = item['title']
+        if '\n' not in title:
+            title += '\n' + get_label_color(item['showtitle'], color)
+        list_item = xbmcgui.ListItem(label=title)
+        list_item = epg_listitem(list_item, item, None)
+        list_item.setProperty('IsPlayable', 'true')
+        list_item.setContentLookup(False)
+        list_item.addContextMenuItems([('Skrýt epizodu', f"RunPlugin(plugin://{plugin_id}?action=add_favourites_episodes_bl&id={item['id']})")])
+        url = get_url(action='play_archive', id=json.dumps(item['payload']), direct=True)
+        xbmcplugin.addDirectoryItem(_handle, url, list_item, False)
+    xbmcplugin.endOfDirectory(_handle, cacheToDisc=False)
+
 def get_favourites_episodes_bl():
-    addon = xbmcaddon.Addon()
-    addon_userdata_dir = translatePath(addon.getAddonInfo('profile'))
-    filename = os.path.join(addon_userdata_dir, 'favourites_episodes_bl.txt')
-    data = None
+    """Načte blacklist epizod"""
+    data = Settings().load_json_data(EPISODES_BL_FILE)
     try:
-        with codecs.open(filename, 'r', encoding='utf-8') as file:
-            for row in file:
-                data = row[:-1]
-    except IOError as error:
-        if error.errno != 2:
-            xbmcgui.Dialog().notification('Oneplay', 'Chyba při čtení skrytých epizod oblíbených pořadů', xbmcgui.NOTIFICATION_ERROR, 5000)
-            sys.exit()
-    if data is not None:
-        blacklist = json.loads(data)
-    else:
-        blacklist = []
-    return blacklist
+        return json.loads(data) if data else []
+    except (json.JSONDecodeError, TypeError):
+        return []
+
+def add_favourites_episodes_bl(id):
+    """Přidá id epizody na blacklist"""
+    blacklist = get_favourites_episodes_bl()
+    if id not in blacklist:
+        blacklist.append(id)
+        try:
+            json_data = json.dumps(blacklist)
+            Settings().save_json_data(EPISODES_BL_FILE, json_data)
+            xbmc.executebuiltin('Container.Refresh')
+        except (TypeError, ValueError):
+            xbmcgui.Dialog().notification('Oneplay', 'Chyba při uložení skrytých epizod oblíbených pořadů', xbmcgui.NOTIFICATION_ERROR, 3000)
+

@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-
 import xbmc
 from resources.lib.utils import plugin_id, parsedatetime
 
-path = xbmc.getInfoLabel('ListItem.FileNameAndPath')
 channel = xbmc.getInfoLabel('ListItem.ChannelName')
-startdatetime = parsedatetime(xbmc.getInfoLabel('ListItem.Date'), xbmc.getInfoLabel('ListItem.StartDate'))
-xbmc.executebuiltin('RunPlugin("plugin://' + plugin_id +'?action=iptv_sc_rec&channel=' + str(channel) + '&startdatetime=' + startdatetime + '")')
+date = xbmc.getInfoLabel('ListItem.Date')
+start_time = xbmc.getInfoLabel('ListItem.StartDate')
+startdatetime = parsedatetime(date, start_time)
+if channel and startdatetime:
+    xbmc.executebuiltin(f"RunPlugin(plugin://{plugin_id}?action=iptv_sc_rec&channel={channel}&startdatetime={startdatetime})")

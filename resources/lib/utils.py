@@ -21,20 +21,22 @@ appVersion = 'R8.14'
 api_version = 'v1.8'
 
 _url = sys.argv[0]
+addon = xbmcaddon.Addon()
 
 def check_settings():
-    addon = xbmcaddon.Addon()
+    """Kontroluje jestli jsou vyplněné přihlašovací údaje v nastavení doplňku"""    
     if not addon.getSetting('deviceid'):
         addon.setSetting('deviceid', str(uuid.uuid4()))
-
     if not addon.getSetting('username') or not addon.getSetting('password') or not addon.getSetting('deviceid'):
         xbmcgui.Dialog().notification('Oneplay', 'V nastavení je nutné mít vyplněné všechny přihlašovací údaje', xbmcgui.NOTIFICATION_ERROR, 10000)
         sys.exit()
 
 def get_url(**kwargs):
+    """Formátování URL pro listitem"""
     return '{0}?{1}'.format(_url, urlencode(kwargs))
 
 def get_kodi_version():
+    """Vrací major verzi Kodi"""
     return int(xbmc.getInfoLabel('System.BuildVersion').split('.')[0])
 
 # kod od listenera
@@ -71,32 +73,35 @@ def parsetime(txt):
     return '%02d:%02d' % (h, m)
 
 def replace_by_html_entity(string):
+    """Nahrazuje problémové znaky html entitami """ 
     return string.replace('&','&amp;').replace('<','&lt;').replace('>','&gt;').replace("'","&apos;").replace('"',"&quot;")
 
 def get_color():
-    addon = xbmcaddon.Addon()
+    """Vrací barvu z nastavení"""
     settings_color = addon.getSetting('label_color_live')
-    if len(settings_color) >2 and settings_color.find(']') > 1:
+    if len(settings_color) > 2 and settings_color.find(']') > 1:
         color = settings_color[1:settings_color.find(']')].replace('COLOR ','')
         return color
     else:
         return ''
 
 def get_label_color(label, color):
-    return '[COLOR ' + color + ']' + label + '[/COLOR]'    
-
+    """Nastaví barvu labelu""" 
+    return f"[COLOR {color}]{label}[/COLOR]" if color else label
 
 def log_to_file(type, message):
-    addon = xbmcaddon.Addon()
+    """Logování do samostatného souboru""" 
     addon_userdata_dir = translatePath(addon.getAddonInfo('profile'))
     filename = os.path.join(addon_userdata_dir, 'log.txt')
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     try:
-        with open(filename, 'a') as file:
-            file.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ' ' + type + ' > ' + message + '\n')        
+        with open(filename, 'a', encoding='utf-8') as f:
+            f.write(f"{timestamp} {type} > {message}\n")
     except IOError:
         pass
 
 def is_json_string(string):
+    """Vrací True pokud má string json formát""" 
     try:
         json.loads(string)
     except ValueError as e:

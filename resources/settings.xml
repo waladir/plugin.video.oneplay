@@ -14,7 +14,7 @@
                 <setting label="Obecné zobrazení seznamů v TV" type="bool" id="default_tv_view" default="false"/>
                 <setting label="Řazení epizod" type="select" id="episodes_order" values="sestupně|vzestupně" default="sestupně"/>
                 <setting label="Počítání epizod (zpomaluje načítání v kategoriích)" type="bool" id="episodes_count" default="false"/>
-                <setting label="Počet nejnovějších epizod oblíbených" type="slider" id="favourites_new_count" range="5,5,20" default="5" option="int"/>
+                <setting label="Počet nejnovějších epizod oblíbených" type="slider" id="favourites_new_count" range="1,1,12" default="5" option="int"/>
                 <setting label="Historie vyhledávání" type="number" id="search_history" default="10"/>
                 <setting label="Čísla kanálů" type="select" id="channel_numbers" values="nezobrazovat|číslo kanálu|pořadové číslo" default="nezobrazovat"/>
                 <setting label="Stahovat detaily pořadů" type="bool" id="item_details" default="true"/>
