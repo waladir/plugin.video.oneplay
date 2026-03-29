@@ -1,3 +1,7 @@
+v2.0.1 (28.3.2026)
+- upravení "cesty" v kategoriích
+- oprava spouštění pořadů v kategoriích s odkazem na EPG
+
 v2.0.0 (28.3.2026)
 - kompletně přepracovaný doplněk
 
@@ -10,7 +14,3 @@ v1.9.5 (9.3.2026)
 v1.9.4 (7.3.2026)
 - úprava kódování historie vyhledávání
 - oprava pouštění streamů z nových epizod oblíbených pořadů
-
-v1.9.3 (1.3.2026)
-- optimalizace přehrávání
-- přidaná možnost zapnout počítání epizod v kategoriích

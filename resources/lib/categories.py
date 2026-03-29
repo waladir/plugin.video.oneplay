@@ -6,10 +6,11 @@ import xbmcgui
 import xbmcaddon
 
 import json 
+from datetime import datetime
 
 from resources.lib.session import Session
 from resources.lib.api import API
-from resources.lib.epg import get_item_detail, epg_listitem, get_live_epg
+from resources.lib.epg import get_item_detail, epg_listitem, get_channel_epg, get_live_epg
 from resources.lib.utils import get_url, plugin_id
 
 if len(sys.argv) > 1:
@@ -41,13 +42,21 @@ def parse_tiles(label, carousel, page):
                 # link na zive vysilani, pouzije se channel
                 if 'channel.' in contentId: 
                     channel_id = contentId.replace('channel.', '')
-                    contentType = 'channel'
-                    if not epg:
-                        epg, _ = get_live_epg()
-                    # zmena payloadu z kanalu na epgitem
-                    if channel_id in epg:
-                        id = {"contentId": epg[channel_id]['payload']['contentId']}
-                        tile['action']['params']['payload'] = {"contentId": epg.get(channel_id).get('payload').get('contentId')}         
+                    time = params.get('payload', {}).get('criteria', {}).get('time')
+                    if time:
+                        contentType = 'episode'
+                        timets = int(datetime.fromisoformat(time).timestamp())                        
+                        epg = get_channel_epg(channel_id, timets-7200, timets+7200)
+                        if timets in epg:
+                            tile['action']['params']['payload'] = {"contentId": epg[timets].get('payload', {}).get('contentId')}
+                    else:
+                        contentType = 'channel'
+                        if not epg:
+                            epg, _ = get_live_epg()
+                        # zmena payloadu z kanalu na epgitem
+                        if channel_id in epg:
+                            id = {"contentId": epg[channel_id]['payload']['contentId']}
+                            tile['action']['params']['payload'] = {"contentId": epg.get(channel_id).get('payload').get('contentId')}         
                 # epizoda
                 elif 'episode.' in contentId:
                     contentType = 'episode'
@@ -59,9 +68,9 @@ def parse_tiles(label, carousel, page):
             contentId = payload.get('contentId') or payload.get('deeplink', {}).get('epgItem')
             menu = []
             if contentId:
-                label = 'Smazat nahrávku' if is_recording else 'Přidat nahrávku'
+                menu_label = 'Smazat nahrávku' if is_recording else 'Přidat nahrávku'
                 action = 'delete_recording' if is_recording else 'add_recording'
-                menu.append([label, f"RunPlugin(plugin://{plugin_id}?action={action}&id={contentId})"])
+                menu.append([menu_label, f"RunPlugin(plugin://{plugin_id}?action={action}&id={contentId})"])
             if contentType in ['show']:
                 url = get_url(action='list_show', id=json.dumps(data.get('payload') or id), label=f"{label} / {tile['title']}")
                 menu.append(['Přidat do oblíbených Oneplay', f"RunPlugin(plugin://{plugin_id}?action=add_favourite&type=show&id={contentId}&image={data.get('cover')}&title={data.get('title', tile.get('title'))})"])
