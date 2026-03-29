@@ -1,3 +1,6 @@
+v2.0.2 (28.3.2026)
+- oprava plnění dat položek EPG v kategoriích
+
 v2.0.1 (28.3.2026)
 - upravení "cesty" v kategoriích
 - oprava spouštění pořadů v kategoriích s odkazem na EPG
@@ -10,7 +13,3 @@ v1.9.6 (9.3.2026)
 
 v1.9.5 (9.3.2026)
 - změna volání API Oneplay z asynchronních websocketů na synchronní volání
-
-v1.9.4 (7.3.2026)
-- úprava kódování historie vyhledávání
-- oprava pouštění streamů z nových epizod oblíbených pořadů

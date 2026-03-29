@@ -209,8 +209,8 @@ class API:
                 action = block.get('mainAction', {}).get('action', {})
                 if action.get('call') == 'content.play':
                     payload = action.get('params', {}).get('payload')
-            if not meta and schema == 'OnAirContentInfoBlock': # metadata pro TV porady
-                    meta = block
+            if not meta: # pokud se blok neobsahuje přimo metadata (např. TV pořady), pokusí se je načíst z bloku
+                meta = block
         # nacitani sezon a epizod                    
         # skontroluje se, ze je aktivni zalozka cele dily a pokud ne, aktivuje se
         for block in data.get('layout', {}).get('blocks', []):

@@ -184,8 +184,7 @@ def get_item_detail(id, item, download_data=True):
     addon = xbmcaddon.Addon()
     if download_data == True and addon.getSetting('item_details') == 'true':
         db = None
-#        try:
-        if 1==1:
+        try:
             contentId = id.get('contentId')
             db = open_db()
             cursor = db.execute('SELECT description, original, "cast", directors, year, country, genres FROM items WHERE id = ?', (contentId,))
@@ -212,9 +211,9 @@ def get_item_detail(id, item, download_data=True):
                     db.execute('INSERT OR REPLACE INTO items (id, description, original, "cast", directors, year, country, genres) VALUES(?, ?, ?, ?, ?, ?, ?, ?)',(contentId, item_data['plot'], item_data['original_title'], json.dumps(item_data['cast']),json.dumps(item_data['director']), item_data['year'], item_data['country'], json.dumps(item_data['genre'])))
                     db.commit()
                     item_detail.update({'payload': payload, 'description': item_data['plot'] or item_detail.get('description', ''), 'original': item_data['original_title'], 'cast': item_data['cast'], 'directors': item_data['director'], 'year': item_data['year'], 'country': item_data['country'], 'genres': item_data['genre']})
-        # except Exception as e:
-        #     xbmc.log(f"Oneplay > Chyba get_item_detail: {str(e)}")
-        # finally:
+        except Exception as e:
+            xbmc.log(f"Oneplay > Chyba get_item_detail: {str(e)}")
+        finally:
             if db: close_db(db)
     return item_detail
 
