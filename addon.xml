@@ -38,6 +38,9 @@ Další informace a podporu najdete na fóru www.xbmc-kodi.cz (https://www.xbmc-
     <platform>all</platform>
     <source>https://github.com/waladir/plugin.video.oneplay</source>
     <news>
+v2.1.1 (31.3.2026)
+- úprava struktury nastavení
+
 v2.1.0 (31.3.2026)
 - kešování EPG dat
 - skrytí upsell/preview položek v kategoriích
@@ -53,9 +56,6 @@ v2.0.1 (28.3.2026)
 
 v2.0.0 (28.3.2026)
 - kompletně přepracovaný doplněk
-
-v1.9.6 (9.3.2026)
-- zpracování synchronních i asynchronních volání API
     </news>
     <assets>
         <icon>icon.jpg</icon>
