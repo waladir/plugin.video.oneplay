@@ -11,8 +11,8 @@ except ImportError:
 
 import sqlite3
 import json
+from datetime import datetime, timedelta
 import time
-from datetime import datetime, timezone
 
 from resources.lib.session import Session
 from resources.lib.channels import Channels
@@ -69,69 +69,110 @@ def close_db(db):
     if db:
         db.close()
 
-def format_ts(ts):
-    """Převede timestamp na ISO formát s UTC nulou, který API vyžaduje"""
-    dt = datetime.fromtimestamp(ts, tz=timezone.utc)
-    return f"{dt.strftime('%Y-%m-%dT%H:%M:%S')}.000Z"
+def clean_epg_cache(days):
+    """Čístí EPG keš"""
+    addon = xbmcaddon.Addon()
+    profile_dir = translatePath(addon.getAddonInfo('profile'))
+    cache_dir = os.path.join(profile_dir, 'epg_cache')
+    os.makedirs(cache_dir, exist_ok=True)
+    limit_date = (datetime.now() - timedelta(days=days)).date()
+    for filename in os.listdir(cache_dir):
+        if filename.startswith("epg_cache_") and filename.endswith(".txt"):
+            try:
+                parts = filename[:-4].split('_')
+                date_str = parts[-1]
+                file_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+                if file_date < limit_date:
+                    os.remove(os.path.join(cache_dir, filename))
+            except (ValueError, IndexError):
+                continue
 
 def get_live_epg():
-    """Získá aktuální a následující pořady pro všechny kanály"""
-    now_ts = int(time.time())
-    post = {"payload": {"criteria": {"channelSetId": "channel_list.1", "viewport": {"channelRange": {"from": 0, "to": 200}, "timeRange": {"from": format_ts(now_ts - 7200), "to": format_ts(now_ts + 21600)}, "schema": "EpgViewportAbsolute"}}, "requestedOutput": {"channelList": "none", "datePicker": False, "channelSets": False}}}
-    epg_data = get_epg_data(post, None)
+    """Z EPG dat vrací aktualní a následující pořad pro všechny kanály"""
+    ts = int(time.time())    
     epg_now, epg_next = {}, {}
-    for item in sorted(epg_data.values(), key=lambda x: x['startts']):
-        channel = item['channel_id']
-        start, end = item['startts'], item['endts']
-        if start <= now_ts < end:
-            epg_now[channel] = item
-        elif start >= now_ts and channel not in epg_next:
-            epg_next[channel] = item
-    return epg_now, epg_next
+    epg_data = get_epg(ts)
+    for channel_id in epg_data.keys():
+        for item in sorted(epg_data[channel_id].values(), key=lambda x: x['startts']):
+            start, end = item['startts'], item['endts']
+            if start <= ts < end:
+                epg_now[channel_id] = item
+            elif start >= ts and channel_id not in epg_next:
+                epg_next[channel_id] = item
+    return epg_now, epg_next    
 
-def get_channel_epg(channel_id, from_ts, to_ts):
-    """Vrací EPG pro kanál a časový rozsah"""
+def get_epg(ts, filter_channel_id=None):
+    """Vrací EPG data s podporou kešování"""
+    dt = datetime.fromtimestamp(ts)
+    day = dt.strftime('%Y-%m-%d')
+    prev_day = (dt - timedelta(days=1)).strftime('%Y-%m-%d')
+    next_day = (dt + timedelta(days=1)).strftime('%Y-%m-%d')
+
+    addon = xbmcaddon.Addon()
+    profile_dir = translatePath(addon.getAddonInfo('profile'))
+    cache_dir = os.path.join(profile_dir, 'epg_cache')
+    os.makedirs(cache_dir, exist_ok=True)
+
     channels_list = Channels().get_channels_list('id')
-    oneplay_number = channels_list.get(channel_id, {}).get('channel_number', 0)
-    time_range = {"from": format_ts(from_ts), "to": format_ts(to_ts)}
-    post = {"payload": {"criteria": {"channelSetId": "channel_list.1", "viewport": {"channelRange": {"from": max(0, oneplay_number - 1), "to": oneplay_number}, "timeRange": time_range, "schema": "EpgViewportAbsolute"}},"requestedOutput": {"channelList": "none", "datePicker": False, "channelSets": False}}}
-    epg = get_epg_data(post, channel_id)
-    if not epg: # pokud se nenajde EPG pro kanal, protoze obcas muze dojit k posunu cislovani kanalu na strane Oneplay a po odfiltrovani podle channel_id se nic nevrati, provede se nove volani, ktere nacte EPG pro vsechny kanaly
-        post['payload']['criteria']['viewport']['channelRange']['from'] = 0
-        post['payload']['criteria']['viewport']['channelRange']['to'] = 200
-        epg = get_epg_data(post, channel_id)
-    return epg
-
-def get_day_epg(from_ts, to_ts):
-    """Stažení EPG dat pro všechny kanály za daný časový rozsah"""
-    post = {"payload":{"criteria":{"channelSetId":"channel_list.1","viewport":{"channelRange":{"from":0,"to":200},"timeRange":{"from":datetime.fromtimestamp(from_ts).strftime('%Y-%m-%dT%H:%M:%S') + '.000Z',"to":datetime.fromtimestamp(to_ts).strftime('%Y-%m-%dT%H:%M:%S') + '.000Z'},"schema":"EpgViewportAbsolute"}},"requestedOutput":{"channelList":"none","datePicker":False,"channelSets":False}}}
-    return get_epg_data(post, None)
-
-def get_epg_data(post, filter_channel_id):
-    """Stažení EPG dat z API s možností filtrování na konkrétní kanál"""
-    api = API()
-    channels_list = Channels().get_channels_list('id')
+    channel_ids = [filter_channel_id] if filter_channel_id else channels_list.keys()
     epg = {}
+    reload_data = False
+    
+    for channel_id in channel_ids:
+        filename = os.path.join(cache_dir, f"epg_cache_{channel_id}_{day}.txt")
+        if not os.path.exists(filename): # pokud soubor pro kanal a den neexistuje, provede se nacteni dat z API
+            reload_data = True
+            break
+        try:
+            with open(filename, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                epg[channel_id] = data
+        except (IOError, json.JSONDecodeError):
+            reload_data = True
+            break
+
+    # pokud se podarilo nacist nakesovana data, vrati EPG data, pokud je fitrovani na kanal, tak pak EPG kanalu
+    if not reload_data:
+        return epg.get(filter_channel_id, epg) if filter_channel_id else epg
+    
+    clean_epg_cache(days=8) # procisteni starsich EPG dat 
+    api = API()
+    post = {"payload":{"criteria":{"channelSetId":"channel_list.1","viewport":{"channelRange":{"from":0,"to":200},"timeRange":{"from": f"{prev_day}T23:00:00.000Z","to": f"{next_day}T02:00:00.000Z"},"schema":"EpgViewportAbsolute"}},"requestedOutput":{"channelList":"none","datePicker":False,"channelSets":False}}}
     response = api.call_api('epg.display', data=post, session=Session())
     if response.get('result', {}).get('status') != 'Ok':
         return {}
-    data = response['result'].get('data', {})
-    for channel in data.get('schedule', []):
+    epg = {}
+    channel_ids = set(channels_list.keys())
+    schedule = response.get('result', {}).get('data', {}).get('schedule', [])
+    for channel in schedule:
         channel_id = channel['channelId']
-        if channel_id not in channels_list or (filter_channel_id and channel_id != filter_channel_id):
+        if channel_id not in channel_ids: # pokud neni kanal s EPG v seznamu kanalu, EPG se pro nej ukladat nebude
             continue
+        channel_ids.remove(channel_id)
+        epg_data = {}
         for item in channel.get('items', []):
             try:
                 startts = int(datetime.fromisoformat(item['startAt'].replace('Z', '+00:00')).timestamp())
                 endts = int(datetime.fromisoformat(item['endAt'].replace('Z', '+00:00')).timestamp())
-                params = item.get('actions', [{}])[0].get('params', {})
                 img = item.get('image', '').replace('{WIDTH}', '480').replace('{HEIGHT}', '320')
+                actions = item.get('actions', [{}])[0]
+                params = actions.get('params', {})
                 epg_item = {'payload': params.get('payload', {}), 'type': params.get('contentType'), 'referenceid': item.get('referenceId'), 'title': item.get('title'), 'channel_id': channel_id, 'description': item.get('description', ''), 'startts': startts, 'endts': endts, 'cover': img, 'poster': img}
-                key = f"{channel_id}_{startts}" if filter_channel_id is None else startts
-                epg[key] = epg_item
+                epg_data[startts] = epg_item
             except (ValueError, KeyError, IndexError):
                 continue
-    return epg
+        epg[channel_id] = epg_data
+        cache_path = os.path.join(cache_dir, f"epg_cache_{channel_id}_{day}.txt")
+        with open(cache_path, 'w', encoding='utf-8') as f:
+            json.dump(epg_data, f)
+
+    # Ošetření kanálů, které v API chyběly (vytvoření prázdné cache)
+    for channel_id in channel_ids:
+        cache_path = os.path.join(cache_dir, f"epg_cache_{channel_id}_{day}.txt")
+        with open(cache_path, 'w', encoding='utf-8') as f:
+            json.dump({}, f)
+
+    return epg.get(filter_channel_id, {}) if filter_channel_id else epg
 
 def get_item_detail(id, item, download_data=True):
     """formátuje titulek pořadu s dotažením a doplňuje metadata"""

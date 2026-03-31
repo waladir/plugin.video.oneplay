@@ -5,11 +5,14 @@ import xbmcplugin
 import xbmcaddon
 
 from datetime import datetime
+import time
 import json
 
 from resources.lib.channels import Channels 
-from resources.lib.epg import get_live_epg, epg_listitem
+from resources.lib.epg import epg_listitem, get_live_epg
 from resources.lib.utils import get_url, get_color, get_label_color, plugin_id, get_kodi_version
+
+
 
 def list_live(label):
     """Live TV - seznam kanálů""" 
@@ -25,7 +28,6 @@ def list_live(label):
     channels_list = Channels().get_channels_list('channel_number')
     epg, epg_next = get_live_epg()
     fmt_time = lambda ts: datetime.fromtimestamp(ts).strftime('%H:%M')
-
     for cnt, num in enumerate(sorted(channels_list.keys()), 1):
         channel = channels_list[num]
         channel_id = channel['id']

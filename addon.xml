@@ -1,4 +1,4 @@
-﻿<addon id="plugin.video.oneplay" name="Oneplay" provider-name="waladir" version="2.0.2">
+﻿<addon id="plugin.video.oneplay" name="Oneplay" provider-name="waladir" version="2.1.0">
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
     <import addon="inputstream.adaptive" version="19.0.0"/>
@@ -38,6 +38,12 @@ Další informace a podporu najdete na fóru www.xbmc-kodi.cz (https://www.xbmc-
     <platform>all</platform>
     <source>https://github.com/waladir/plugin.video.oneplay</source>
     <news>
+v2.1.0 (31.3.2026)
+- kešování EPG dat
+- skrytí upsell/preview položek v kategoriích
+- oprava víceřádkových názvů v oblíbených
+- úprava struktury nastavení
+
 v2.0.2 (28.3.2026)
 - oprava plnění dat položek EPG v kategoriích
 
@@ -50,9 +56,6 @@ v2.0.0 (28.3.2026)
 
 v1.9.6 (9.3.2026)
 - zpracování synchronních i asynchronních volání API
-
-v1.9.5 (9.3.2026)
-- změna volání API Oneplay z asynchronních websocketů na synchronní volání
     </news>
     <assets>
         <icon>icon.jpg</icon>

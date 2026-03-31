@@ -10,7 +10,7 @@ import time
 
 from resources.lib.channels import Channels
 from resources.lib.utils import plugin_id, replace_by_html_entity
-from resources.lib.epg import get_day_epg, get_channel_epg
+from resources.lib.epg import get_epg
 from resources.lib.recordings import add_recording
 
 def save_file_test():
@@ -111,7 +111,8 @@ def generate_epg(output_file='', show_progress=True):
             handle.write(text.encode('utf-8'))
         except (TypeError, AttributeError):
             handle.write(text)
-    try:
+    # try:
+    if 1==1:
         f = xbmcvfs.File(output_file, 'w')
         safe_write(f, '<?xml version="1.0" encoding="UTF-8"?>\n')
         safe_write(f, '<tv generator-info-name="EPG grabber">\n')
@@ -140,30 +141,31 @@ def generate_epg(output_file='', show_progress=True):
                 percent = int((idx / max(1, total_days)) * 100)
                 dialog.update(percent, message=f"Zpracovávám den: {date_str}")
             day_ts = int(time.mktime(current_day_dt.timetuple()))
-            epg_data = get_day_epg(day_ts, day_ts + 86399)
-            day_buffer = []
-            for ts in sorted(epg_data.keys()):
-                item = epg_data[ts]
-                ch_info = channels_list_by_id.get(item['channel_id'])
-                if ch_info:
-                    ch_name = replace_by_html_entity(ch_info['name'])
-                    start = datetime.fromtimestamp(item['startts']).strftime('%Y%m%d%H%M%S')
-                    stop = datetime.fromtimestamp(item['endts']).strftime('%Y%m%d%H%M%S')
-                    title = replace_by_html_entity(item['title'])
-                    desc = replace_by_html_entity(item.get('description', ''))
-                    icon = item.get('poster') or ''
-                    day_buffer.append(f'  <programme start="{start} {formatted_tz}" stop="{stop} {formatted_tz}" channel="{ch_name}">\n')
-                    day_buffer.append(f'    <title lang="cs">{title}</title>\n')
-                    if desc:
-                        day_buffer.append(f'    <desc lang="cs">{desc}</desc>\n')
-                    if icon:
-                        day_buffer.append(f'    <icon src="{icon}"/>\n')
-                    day_buffer.append('  </programme>\n')
-                    if len(day_buffer) > 250:
-                        safe_write(f, "".join(day_buffer))
-                        day_buffer = []
-            if day_buffer:
-                safe_write(f, "".join(day_buffer))
+            epg_data = get_epg(day_ts)
+            for channel_id in epg_data:
+                day_buffer = []
+                for ts in sorted(epg_data[channel_id].keys()):
+                    item = epg_data[channel_id][ts]
+                    ch_info = channels_list_by_id.get(item['channel_id'])
+                    if ch_info:
+                        ch_name = replace_by_html_entity(ch_info['name'])
+                        start = datetime.fromtimestamp(item['startts']).strftime('%Y%m%d%H%M%S')
+                        stop = datetime.fromtimestamp(item['endts']).strftime('%Y%m%d%H%M%S')
+                        title = replace_by_html_entity(item['title'])
+                        desc = replace_by_html_entity(item.get('description', ''))
+                        icon = item.get('poster') or ''
+                        day_buffer.append(f'  <programme start="{start} {formatted_tz}" stop="{stop} {formatted_tz}" channel="{ch_name}">\n')
+                        day_buffer.append(f'    <title lang="cs">{title}</title>\n')
+                        if desc:
+                            day_buffer.append(f'    <desc lang="cs">{desc}</desc>\n')
+                        if icon:
+                            day_buffer.append(f'    <icon src="{icon}"/>\n')
+                        day_buffer.append('  </programme>\n')
+                        if len(day_buffer) > 250:
+                            safe_write(f, "".join(day_buffer))
+                            day_buffer = []
+                if day_buffer:
+                    safe_write(f, "".join(day_buffer))
         safe_write(f, '</tv>\n')
         f.close()
         if show_progress:
@@ -171,17 +173,17 @@ def generate_epg(output_file='', show_progress=True):
             xbmcgui.Dialog().notification('Oneplay', 'EPG bylo uložené', xbmcgui.NOTIFICATION_INFO, 3000)
         elif addon.getSetting('epg_info') == 'true':
             xbmcgui.Dialog().notification('Oneplay', 'EPG bylo uložené', xbmcgui.NOTIFICATION_INFO, 3000)
-    except Exception:
-        if f: f.close()
-        if dialog: dialog.close()
-        xbmcgui.Dialog().notification('Oneplay', 'Chyba při generování EPG!', xbmcgui.NOTIFICATION_ERROR, 3000)
+    # except Exception:
+    #     if f: f.close()
+    #     if dialog: dialog.close()
+    #     xbmcgui.Dialog().notification('Oneplay', 'Chyba při generování EPG!', xbmcgui.NOTIFICATION_ERROR, 3000)
 
 def iptv_sc_rec(channelName, startdatetime):
     """Zpracování nahrávek z IPTV SC"""
     channels = Channels()
     channels_list = channels.get_channels_list('name', visible_filter = False)
     from_ts = int(time.mktime(time.strptime(startdatetime, '%d.%m.%Y %H:%M')))
-    epg = get_channel_epg(channel_id = channels_list[channelName]['id'], from_ts = from_ts  - 7200, to_ts = from_ts + 60*60*12)
+    epg = get_epg(from_ts, channels_list[channelName]['id'])
     if len(epg) > 0 and from_ts in epg:
         add_recording(epg[from_ts]['id'])
     else:

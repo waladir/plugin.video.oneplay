@@ -10,7 +10,7 @@ import json
 
 from resources.lib.utils import get_url, day_translation, day_translation_short, plugin_id
 from resources.lib.channels import Channels 
-from resources.lib.epg import get_channel_epg, epg_listitem
+from resources.lib.epg import epg_listitem, get_epg
 
 if len(sys.argv) > 1:
     _handle = int(sys.argv[1])
@@ -68,12 +68,9 @@ def list_program(id, day_min, label):
         xbmcplugin.setContent(_handle, 'tvshows')
     day_min = int(day_min)
     now_ts = int(datetime.now().timestamp())
-    dt_today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-    today_start_ts = int(dt_today.timestamp())
-    from_ts = today_start_ts - (day_min * 86400)
-    to_ts = now_ts if day_min == 0 else from_ts + 60*60*24
-    limit_ts = now_ts - 60*60*24*7
-    epg = get_channel_epg(id, from_ts, to_ts)
+    ts = now_ts - (day_min * 86400)
+    den = datetime.fromtimestamp(ts).strftime('%Y-%m-%d')
+    epg = get_epg(ts, id)
 
     if day_min < 7:
         day = date.today() - timedelta(days=day_min + 1)
@@ -86,7 +83,8 @@ def list_program(id, day_min, label):
 
     for start_ts in sorted(epg.keys()):
         item_data = epg[start_ts]
-        if item_data['endts'] > limit_ts:
+        # odfiltrovani polozek, ktere zacinaji nebo konci mimo zvoleny den, jsou v budoucnu, nebo uz nejsou dostupne pro prehrani
+        if (datetime.fromtimestamp(item_data['startts']).strftime('%Y-%m-%d') == den or datetime.fromtimestamp(item_data['endts']).strftime('%Y-%m-%d') == den) and item_data['startts'] < now_ts and item_data['endts'] > now_ts - 7*60*60*24:
             dt_start = datetime.fromtimestamp(item_data['startts'])
             dt_end = datetime.fromtimestamp(item_data['endts'])
             item_label = (f"{day_translation_short[dt_start.strftime('%w')]} {dt_start.strftime('%d.%m. %H:%M')} - {dt_end.strftime('%H:%M')} | {item_data['title']}")

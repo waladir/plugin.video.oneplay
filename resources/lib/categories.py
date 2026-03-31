@@ -10,7 +10,7 @@ from datetime import datetime
 
 from resources.lib.session import Session
 from resources.lib.api import API
-from resources.lib.epg import get_item_detail, epg_listitem, get_channel_epg, get_live_epg
+from resources.lib.epg import get_item_detail, epg_listitem, get_epg, get_live_epg
 from resources.lib.utils import get_url, plugin_id
 
 if len(sys.argv) > 1:
@@ -32,7 +32,7 @@ def parse_tiles(label, carousel, page):
         xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
     for tile in carousel.get('tiles', []):
         params = tile.get('action', {}).get('params', {})
-        if params.get('schema') in ['ContentPlayApiAction', 'PageContentDisplayApiAction']: # prehratelna polozka
+        if params.get('schema') in ['ContentPlayApiAction', 'PageContentDisplayApiAction'] and tile.get('tracking', {}).get('upsell', False) == False and params.get('action', {}).get('call') not in ['user.upsell.preview']: # prehratelna polozka
             contentType = params.get('contentType')
             id = params.get('payload')            
             if not contentType: # osetreni pripadu bez contentType
@@ -46,7 +46,7 @@ def parse_tiles(label, carousel, page):
                     if time:
                         contentType = 'episode'
                         timets = int(datetime.fromisoformat(time).timestamp())                        
-                        epg = get_channel_epg(channel_id, timets-7200, timets+7200)
+                        epg = get_epg(timets, channel_id)
                         if timets in epg:
                             tile['action']['params']['payload'] = {"contentId": epg[timets].get('payload', {}).get('contentId')}
                     else:
@@ -73,7 +73,7 @@ def parse_tiles(label, carousel, page):
                 menu.append([menu_label, f"RunPlugin(plugin://{plugin_id}?action={action}&id={contentId})"])
             if contentType in ['show']:
                 url = get_url(action='list_show', id=json.dumps(data.get('payload') or id), label=f"{label} / {tile['title']}")
-                menu.append(['Přidat do oblíbených Oneplay', f"RunPlugin(plugin://{plugin_id}?action=add_favourite&type=show&id={contentId}&image={data.get('cover')}&title={data.get('title', tile.get('title'))})"])
+                menu.append(['Přidat do oblíbených Oneplay', f"RunPlugin(plugin://{plugin_id}?action=add_favourite&type=show&id={contentId}&image={data.get('cover')}&title={tile.get('title')})"])
                 list_item.addContextMenuItems(menu)
                 xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
             elif contentType in ['movie', 'epgitem', 'channel', 'episode']:
@@ -83,10 +83,10 @@ def parse_tiles(label, carousel, page):
                 list_item.setProperty('IsPlayable', 'true')
                 # direct se pouzije, pokud payload je vraceny z API page_content_display (pri prehrani se uz nebude zbytecne volat nebo se jedna o epizodu
                 url = get_url(action='play_archive', id=json.dumps(id), direct=is_direct, mode='start', title=tile['title'])
-                menu.append(['Přidat do oblíbených Oneplay', f"RunPlugin(plugin://{plugin_id}?action=add_favourite&type=item&id={contentId}&image={data.get('cover')}&title={data.get('title', tile.get('title'))})"])
+                menu.append(['Přidat do oblíbených Oneplay', f"RunPlugin(plugin://{plugin_id}?action=add_favourite&type=item&id={contentId}&image={data.get('cover')}&title={tile.get('title')})"])
                 list_item.addContextMenuItems(menu)
                 xbmcplugin.addDirectoryItem(_handle, url, list_item, False)
-            elif contentType in ['competition']:
+            elif contentType in ['competition', 'team']:
                 continue
             else:
                 xbmcgui.Dialog().notification('Oneplay',f"Neznámý contentType: {contentType}", xbmcgui.NOTIFICATION_INFO, 3000)

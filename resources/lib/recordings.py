@@ -12,7 +12,7 @@ import json
 from resources.lib.session import Session
 from resources.lib.channels import Channels
 from resources.lib.categories import page_category_display
-from resources.lib.epg import epg_listitem, get_channel_epg
+from resources.lib.epg import epg_listitem, get_epg
 from resources.lib.api import API
 from resources.lib.utils import get_url, plugin_id, day_translation, day_translation_short
 
@@ -76,15 +76,13 @@ def future_program(id, day, label):
     icons_dir = os.path.join(addon.getAddonInfo('path'), 'resources', 'images')
     label = label.replace('Nahrávky / Plánování /', '')
     xbmcplugin.setPluginCategory(_handle, label); xbmcplugin.setContent(_handle, 'episodes')
-    now = datetime.now()
-    today_start = datetime.combine(now.date(), datetime.min.time())
-    start_of_target_day = today_start + timedelta(days=day)
-    from_ts = int(now.timestamp()) if day == 0 else int(start_of_target_day.timestamp())
-    to_ts = int((start_of_target_day + timedelta(days=1)).timestamp()) - 1
-    epg = get_channel_epg(id, from_ts, to_ts)
+    now_ts = int(datetime.now().timestamp())
+    ts = now_ts + (day * 86400)
+    epg = get_epg(ts, id)
+    den = datetime.fromtimestamp(ts).strftime('%Y-%m-%d')
     base_label = label.rsplit(' / ', 1)[0]
     if day > 0:
-        dt = now.date() + timedelta(days=day - 1)
+        dt = date.today() + timedelta(days=day - 1)
         d_lbl = f"{day_translation_short[dt.strftime('%w')]} {dt.strftime('%d.%m.')}"
         list_item = xbmcgui.ListItem(label='Předchozí den')
         list_item.setArt({'thumb': os.path.join(icons_dir, 'previous_arrow.png'), 'icon': os.path.join(icons_dir, 'previous_arrow.png')})
@@ -92,15 +90,16 @@ def future_program(id, day, label):
     for key in sorted(epg.keys()):
         item = epg[key]
         start, end = item['startts'], item['endts']
-        st_dt = datetime.fromtimestamp(start)
-        t_str = f"{day_translation_short[st_dt.strftime('%w')]} {st_dt.strftime('%d.%m. %H:%M')} - {datetime.fromtimestamp(end).strftime('%H:%M')}"
-        list_item = xbmcgui.ListItem(label=f"{t_str} | {item['title']}")
-        list_item = epg_listitem(list_item, item, '')
-        list_item.setProperty('IsPlayable', 'false')
-        list_item.addContextMenuItems([('Přidat nahrávku', f"RunPlugin(plugin://{plugin_id}?action=add_recording&id={item['payload']['contentId']})")])
-        xbmcplugin.addDirectoryItem(_handle, get_url(action='add_recording', id=item['payload']['contentId']), list_item, False)
+        if (datetime.fromtimestamp(start).strftime('%Y-%m-%d') == den or datetime.fromtimestamp(end).strftime('%Y-%m-%d') == den):
+            st_dt = datetime.fromtimestamp(start)
+            t_str = f"{day_translation_short[st_dt.strftime('%w')]} {st_dt.strftime('%d.%m. %H:%M')} - {datetime.fromtimestamp(end).strftime('%H:%M')}"
+            list_item = xbmcgui.ListItem(label=f"{t_str} | {item['title']}")
+            list_item = epg_listitem(list_item, item, '')
+            list_item.setProperty('IsPlayable', 'false')
+            list_item.addContextMenuItems([('Přidat nahrávku', f"RunPlugin(plugin://{plugin_id}?action=add_recording&id={item['payload']['contentId']})")])
+            xbmcplugin.addDirectoryItem(_handle, get_url(action='add_recording', id=item['payload']['contentId']), list_item, False)
     if day < 7:
-        dt = now.date() + timedelta(days=day + 1)
+        dt = date.today() + timedelta(days=day + 1)
         d_lbl = f"{day_translation_short[dt.strftime('%w')]} {dt.strftime('%d.%m.')}"
         list_item = xbmcgui.ListItem(label='Následující den')
         list_item.setArt({'thumb': os.path.join(icons_dir, 'next_arrow.png'), 'icon': os.path.join(icons_dir, 'next_arrow.png')})

@@ -14,13 +14,13 @@ from urllib.parse import urlencode
 
 from resources.lib.session import Session
 from resources.lib.api import API
-from resources.lib.epg import get_channel_epg
+from resources.lib.epg import get_epg
 from resources.lib.utils import is_json_string
 
 def play_catchup(id, start_ts, end_ts):
     """Ošetřuje spuštění catchupu"""
     start_ts, end_ts = int(start_ts), int(end_ts)
-    epg = get_channel_epg(channel_id=id, from_ts=start_ts - 7200, to_ts=end_ts + 60*60*12)
+    epg = get_epg(start_ts, id)
     id = {"criteria": {"schema": "ContentCriteria", "contentId": "channel." + id}, "startMode": "start"}
     item = epg.get(start_ts)
     if item: # pokud se najde pořad v EPG, pustí se catchup, jinak jako fallback živé vysílání
