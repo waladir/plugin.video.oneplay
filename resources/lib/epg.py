@@ -81,7 +81,7 @@ def clean_epg_cache(days):
             try:
                 parts = filename[:-4].split('_')
                 date_str = parts[-1]
-                file_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+                file_date = datetime.fromtimestamp(time.mktime(time.strptime(date_str, "%Y-%m-%d"))).date()
                 if file_date < limit_date:
                     os.remove(os.path.join(cache_dir, filename))
             except (ValueError, IndexError):
@@ -135,7 +135,7 @@ def get_epg(ts, filter_channel_id=None):
     if not reload_data:
         return epg.get(filter_channel_id, epg) if filter_channel_id else epg
     
-    clean_epg_cache(days=8) # procisteni starsich EPG dat 
+    clean_epg_cache(days=31) # procisteni starsich EPG dat 
     api = API()
     post = {"payload":{"criteria":{"channelSetId":"channel_list.1","viewport":{"channelRange":{"from":0,"to":200},"timeRange":{"from": f"{prev_day}T23:00:00.000Z","to": f"{next_day}T02:00:00.000Z"},"schema":"EpgViewportAbsolute"}},"requestedOutput":{"channelList":"none","datePicker":False,"channelSets":False}}}
     response = api.call_api('epg.display', data=post, session=Session())

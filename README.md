@@ -6,6 +6,11 @@ VOD, živé vysílání, archiv, nahrávky, vytváření playlistu a EPG pro IPT
 <a href="https://www.xbmc-kodi.cz/prispevek-oneplay">Vlákno na fóru XBMC-Kodi.cz</a><br><br>
 </p>
 <p>
+v2.1.2 (1.4.2026)<br>
+- výměna funkce na parsování datumu, která na některých konfiguracích může padat na chybu<br>
+- změna retence EPG keše na 31 dní<br>
+- ošetření chyb při načítání detailu pořadů<br><br>
+
 v2.1.1 (31.3.2026)<br>
 - úprava struktury nastavení<br><br>
 
@@ -21,7 +26,4 @@ v2.0.2 (28.3.2026)<br>
 v2.0.1 (28.3.2026)<br>
 - upravení "cesty" v kategoriích<br>
 - oprava spouštění pořadů v kategoriích s odkazem na EPG<br><br>
-
-v2.0.0 (28.3.2026)<br>
-- kompletně přepracovaný doplněk<br>
 </p>

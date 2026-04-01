@@ -91,12 +91,13 @@ class API:
         xbmcgui.Dialog().notification('Oneplay', message, xbmcgui.NOTIFICATION_ERROR, 3000)
         sys.exit()
 
-    def _check_response(self, response, error_msg):
+    def _check_response(self, response, error_msg, fatal = True):
         """Kontrola chyb"""
         if response.get('result', {}).get('status') != 'Ok':
             error_detail = response.get('result', {}).get('message', 'Neznámá chyba')
-            xbmcgui.Dialog().notification('Oneplay', error_msg, xbmcgui.NOTIFICATION_ERROR, 2000)
-            self.error_handling(error_detail)
+            if fatal:
+                xbmcgui.Dialog().notification('Oneplay', error_msg, xbmcgui.NOTIFICATION_ERROR, 2000)
+                self.error_handling(error_detail)
         return response['result']['data']
 
     def user_login_step(self, username, password):
@@ -200,7 +201,7 @@ class API:
         seasons = []
         episodes = []
         response = self.call_api('page.content.display', post, session)
-        data = self._check_response(response, "Chyba načtení dat o pořadu")
+        data = self._check_response(response, "Chyba načtení dat o pořadu", fatal=False)
         payload = None
         meta = data.get('metadata', {})
         for block in data.get('layout', {}).get('blocks', []):
