@@ -22,7 +22,9 @@ def play_catchup(id, start_ts, end_ts):
     start_ts, end_ts = int(start_ts), int(end_ts)
     epg = get_epg(start_ts, id)
     id = {"criteria": {"schema": "ContentCriteria", "contentId": "channel." + id}, "startMode": "start"}
-    item = epg.get(start_ts)
+    item = epg.get(str(start_ts))
+    if not item: # pokud se nepodari najit jako string, zkusi se integer (asi neni potreba)
+        item = epg.get(start_ts)
     if item: # pokud se najde pořad v EPG, pustí se catchup, jinak jako fallback živé vysílání
         if item['endts'] > (time.time() - 10):
             play_stream(id, 'start', True)

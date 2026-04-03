@@ -9,7 +9,8 @@ VOD, živé vysílání, archiv, nahrávky, vytváření playlistu a EPG pro IPT
 v2.1.3 (3.4.2026)<br>
 - oprava labelu ve vyhledávání<br>
 - ošetření pořadů bez sezón<br>
-- potlačení chyby, pokud se nepodaří načíst následující pořad<br><br>
+- potlačení chyby, pokud se nepodaří načíst následující pořad<br>
+- oprava catchupu z IPTV SC<br><br>
 
 v2.1.2 (1.4.2026)<br>
 - výměna funkce na parsování datumu, která na některých konfiguracích může padat na chybu<br>
