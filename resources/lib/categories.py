@@ -31,6 +31,7 @@ def parse_tiles(label, carousel, page):
         url = get_url(action='carousel.display', payload=json.dumps(payload), page=page-1, label=label)
         xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
     for tile in carousel.get('tiles', []):
+        print(json.dumps(tile,indent=4))
         params = tile.get('action', {}).get('params', {})
         if params.get('schema') in ['ContentPlayApiAction', 'PageContentDisplayApiAction'] and tile.get('tracking', {}).get('upsell', False) == False and params.get('action', {}).get('call') not in ['user.upsell.preview']: # prehratelna polozka
             contentType = params.get('contentType')
@@ -72,7 +73,7 @@ def parse_tiles(label, carousel, page):
                 action = 'delete_recording' if is_recording else 'add_recording'
                 menu.append([menu_label, f"RunPlugin(plugin://{plugin_id}?action={action}&id={contentId})"])
             if contentType in ['show']:
-                url = get_url(action='list_show', id=json.dumps(data.get('payload') or id), label=f"{label} / {tile['title']}")
+                url = get_url(action='list_show', id=json.dumps(data.get('payload') or id), label=f"{label} / {tile['title']}" if label else tile['title'])
                 menu.append(['Přidat do oblíbených Oneplay', f"RunPlugin(plugin://{plugin_id}?action=add_favourite&type=show&id={contentId}&image={data.get('cover')}&title={tile.get('title')})"])
                 list_item.addContextMenuItems(menu)
                 xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
@@ -86,7 +87,7 @@ def parse_tiles(label, carousel, page):
                 menu.append(['Přidat do oblíbených Oneplay', f"RunPlugin(plugin://{plugin_id}?action=add_favourite&type=item&id={contentId}&image={data.get('cover')}&title={tile.get('title')})"])
                 list_item.addContextMenuItems(menu)
                 xbmcplugin.addDirectoryItem(_handle, url, list_item, False)
-            elif contentType in ['competition', 'team']:
+            elif contentType in ['competition', 'team', 'collection']:
                 continue
             else:
                 xbmcgui.Dialog().notification('Oneplay',f"Neznámý contentType: {contentType}", xbmcgui.NOTIFICATION_INFO, 3000)
@@ -227,17 +228,6 @@ def list_filters(label, params):
                         get_item(label=item.get('title', ''), title=item.get('title', ''), schema=action.get('schema'), call=action.get('call'), params=action.get('params'))
     xbmcplugin.endOfDirectory(_handle, cacheToDisc=False)
 
-def list_episodes(label, id):
-    """Vypíše seznam epizid"""
-    xbmcplugin.setPluginCategory(_handle, label)
-    xbmcplugin.setContent(_handle, 'movies')    
-    addon = xbmcaddon.Addon()
-    id = json.loads(id)
-    api = API()
-    session = Session()
-    data = api.page_content_display(post={"payload": id}, session=session) 
-
-
 def list_show(label, id):
     """Vypíše seznam sezón"""
     xbmcplugin.setPluginCategory(_handle, label)
@@ -247,31 +237,43 @@ def list_show(label, id):
     id = json.loads(id)
     api = API()
     session = Session()
-    data = api.page_content_display(post={"payload": id}, session=session) 
-    for season in data.get('seasons', []):
-        if is_episodes_count == 'true':
-            episodes_count = get_episodes_count(season['carouselId'], season['criteria'])
-        else:
-            episodes_count = -1
-        if episodes_count > 0:
-            season_label = season['label'] 
-            if episodes_count == 1:
-                title = f"{season_label} ({episodes_count} díl)"
-            elif episodes_count > 1 and episodes_count < 5:
-                title = f"{season_label} ({episodes_count} díly)"
-            elif episodes_count == 9999:
-                title = f"{season_label} (20+ dílů)"
+    data = api.page_content_display(post={"payload": id}, session=session)
+    if not data.get('seasons', []) and data.get('episodes', []): # osetreni, pokud se vraci primo epizody bez sezon
+        for episode in data.get('episodes', []):
+            if episode.get('action',{}).get('call') == 'content.play':
+                params = episode.get('action', {}).get('params', {})
+                data = get_item_detail(id, item=episode, download_data=False)
+                list_item = xbmcgui.ListItem(label=episode.get('title'))
+                list_item = epg_listitem(list_item, data, None)
+                list_item.setContentLookup(False)          
+                list_item.setProperty('IsPlayable', 'true')
+                url = get_url(action='play_archive', id=json.dumps(params.get('payload', {})), direct=True, mode='start', title=episode['title'])
+                xbmcplugin.addDirectoryItem(_handle, url, list_item, False)
+    else:
+        for season in data.get('seasons', []):
+            if is_episodes_count == 'true':
+                episodes_count = get_episodes_count(season['carouselId'], season['criteria'])
             else:
-                title = f"{season_label} ({episodes_count} dílů)"
-        else:
-            title = season['label']
-        if episodes_count != 0:            
-            list_item = xbmcgui.ListItem(label=title)
-            url = get_url(action='list_season', carouselId=season['carouselId'], criteria=season['criteria'], label=f"{label} / {season['label']}")
-            menu = []
-            menu.append(['Přidat do oblíbených Oneplay', f"RunPlugin(plugin://{plugin_id}?action=add_favourite&type=season&id={season['criteria']}~{season['carouselId']}&image=None&title={label} / {season['label']})"])
-            list_item.addContextMenuItems(menu)
-            xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
+                episodes_count = -1
+            if episodes_count > 0:
+                season_label = season['label'] 
+                if episodes_count == 1:
+                    title = f"{season_label} ({episodes_count} díl)"
+                elif episodes_count > 1 and episodes_count < 5:
+                    title = f"{season_label} ({episodes_count} díly)"
+                elif episodes_count == 9999:
+                    title = f"{season_label} (20+ dílů)"
+                else:
+                    title = f"{season_label} ({episodes_count} dílů)"
+            else:
+                title = season['label']
+            if episodes_count != 0:            
+                list_item = xbmcgui.ListItem(label=title)
+                url = get_url(action='list_season', carouselId=season['carouselId'], criteria=season['criteria'], label=f"{label} / {season['label']}")
+                menu = []
+                menu.append(['Přidat do oblíbených Oneplay', f"RunPlugin(plugin://{plugin_id}?action=add_favourite&type=season&id={season['criteria']}~{season['carouselId']}&image=None&title={label} / {season['label']})"])
+                list_item.addContextMenuItems(menu)
+                xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
     xbmcplugin.endOfDirectory(_handle, cacheToDisc = False) 
 
 def list_season(label, carouselId, criteria):

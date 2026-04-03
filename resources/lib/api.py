@@ -98,7 +98,7 @@ class API:
             if fatal:
                 xbmcgui.Dialog().notification('Oneplay', error_msg, xbmcgui.NOTIFICATION_ERROR, 2000)
                 self.error_handling(error_detail)
-        return response['result']['data']
+        return response.get('result', {}).get('data')
 
     def user_login_step(self, username, password):
         """Přihlášení s podporou výběru účtu (ShowAccountChooserStep)"""
@@ -192,8 +192,9 @@ class API:
             post['authorization'] = [{"schema": "PinRequestAuthorization", "pin": str(pin), "type": "parental"}]
             return self.content_play(post, session)
         else:
-            xbmcgui.Dialog().notification('Oneplay', 'Chyba při přehrání', xbmcgui.NOTIFICATION_ERROR, 2000)
-            xbmcgui.Dialog().notification('Oneplay', message, xbmcgui.NOTIFICATION_ERROR, 3000)
+            if not is_next:
+                xbmcgui.Dialog().notification('Oneplay', 'Chyba při přehrání', xbmcgui.NOTIFICATION_ERROR, 2000)
+                xbmcgui.Dialog().notification('Oneplay', message, xbmcgui.NOTIFICATION_ERROR, 3000)
             return None        
 
     def page_content_display(self, post, session):
