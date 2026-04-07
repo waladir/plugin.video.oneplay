@@ -21,8 +21,8 @@ class API:
         self.APIURL = 'https://http.cms.jyxo.cz/api/'
         self.UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0) Gecko/20100101 Firefox/148.0'
         self.HEADERS = {'User-Agent' : self.UA, 'Accept-Encoding' : 'gzip', 'Accept' : '*/*', 'Content-type' : 'application/json;charset=UTF-8'} 
-        self.APPVERSION = 'R8.14'
-        self.APIVERSION = 'v1.8'
+        self.APPVERSION = 'R9.18'
+        self.APIVERSION = 'v1.9'
 
     def call_api(self, api, data, session=None, sensitive=False):
         """Volání API Oneplay včetně ošetření logování"""
@@ -66,7 +66,7 @@ class API:
                         ws_data = json.loads(ws_resp)
                     final_data = ws_data.get('response')
             elif status == 'Ok': # synchronni volani
-                final_data = data.get('response')
+                final_data = data
             if addon.getSetting('log_response') == 'true':
                 if len(str(final_data)) > 5000 and addon.getSetting('skip_long') == 'true':
                     xbmc.log(f"Oneplay > odpověď obdržena ({len(str(final_data))})")
@@ -93,6 +93,8 @@ class API:
 
     def _check_response(self, response, error_msg, fatal = True):
         """Kontrola chyb"""
+        print('xxxxxxxxxxxxxx')
+        print(response)
         if response.get('result', {}).get('status') != 'Ok':
             error_detail = response.get('result', {}).get('message', 'Neznámá chyba')
             if fatal:
