@@ -34,7 +34,7 @@ def set_active_profile(profile_id):
     profiles = get_profiles()
     for profile in profiles:
         profile['active'] = (profile['id'] == profile_id)
-    Settings.save_json_data(file_info=PROFILES_FILE, data=profiles)
+    Settings().save_json_data(file_info=PROFILES_FILE, data=json.dumps(profiles))
     xbmc.executebuiltin('Container.Refresh')
 
 def get_profiles(active=False, session=None):
@@ -50,7 +50,7 @@ def get_profiles(active=False, session=None):
         profiles = []
         for i, profile in enumerate(data.get('availableProfiles', {}).get('profiles', [])):
             profiles.append({'id': profile['profile']['id'], 'name': profile['profile']['name'], 'image': profile['profile']['avatarUrl'], 'active': (i == 0)})
-        settings.save_json_data(file_info=PROFILES_FILE, data=profiles)
+        settings.save_json_data(file_info=PROFILES_FILE, data=json.dumps(profiles))
     if active:
         return next((profile for profile in profiles if profile.get('active', False)), None)
     return profiles

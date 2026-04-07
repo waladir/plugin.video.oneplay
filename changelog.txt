@@ -1,3 +1,6 @@
+v2.1.5 (7.4.2026)
+- změna API pro načtení profilů
+
 v2.1.4 (7.4.2026)
 - update verze API oneplay
 - oprava synchronních API
@@ -14,10 +17,4 @@ v2.1.2 (1.4.2026)
 - ošetření chyb při načítání detailu pořadů
 
 v2.1.1 (31.3.2026)
-- úprava struktury nastavení
-
-v2.1.0 (31.3.2026)
-- kešování EPG dat
-- skrytí upsell/preview položek v kategoriích
-- oprava víceřádkových názvů v oblíbených
 - úprava struktury nastavení

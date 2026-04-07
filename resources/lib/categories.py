@@ -31,7 +31,6 @@ def parse_tiles(label, carousel, page):
         url = get_url(action='carousel.display', payload=json.dumps(payload), page=page-1, label=label)
         xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
     for tile in carousel.get('tiles', []):
-        print(json.dumps(tile,indent=4))
         params = tile.get('action', {}).get('params', {})
         if params.get('schema') in ['ContentPlayApiAction', 'PageContentDisplayApiAction'] and tile.get('tracking', {}).get('upsell', False) == False and params.get('action', {}).get('call') not in ['user.upsell.preview']: # prehratelna polozka
             contentType = params.get('contentType')

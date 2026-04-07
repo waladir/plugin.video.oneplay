@@ -140,7 +140,7 @@ class API:
 
     def user_profiles_display(self, session):
         """Načtení  profilů"""
-        return self._check_response(self.call_api('user.profiles.display', data=None, session=session), 'Chyba při načtení profilů')
+        return self._check_response(self.call_api('user.profiles.display', data={"payload": {"mode": "change"}}, session=session), 'Chyba při načtení profilů')
         
     def user_profile_select(self, profileId, profile_pin, session, is_retry=False):
         """Výběr profilu"""
