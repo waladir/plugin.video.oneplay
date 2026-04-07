@@ -55,7 +55,7 @@ class API:
             status = data.get('result', {}).get('status')
             if status not in ['OkAsync', 'Ok']:
                 xbmc.log(f"Oneplay > Chyba při volání {url}")
-                return {'result' : {'status' : 'Error', 'message' : 'Chyba při volání API'}}
+                return {'result': {'status': 'Error', 'message': data.get('result', {}).get('message', 'Chyba při volání API')}}  
             final_data = {}
             if status == 'OkAsync': # asychronní odpověď z websocketu
                 ws_resp = ws.recv()

@@ -32,7 +32,11 @@ class Session:
         device_name = addon.getSetting('deviceid')
         api.user_device_change(id=deviceId, name=device_name, session=self)
         data = api.setting_display(screen='devices', session=self)
-        devices = data.get('screen', {}).get('userDevices', {}).get('devices', [])
+        devices = {}
+        for block in data.get('screen', {}).get('blocks', []):
+            if block['schema'] == 'SettingUserDevicesBlock':
+                devices = block.get('devices', {}).get('devices')
+
         for device in devices:
             if device['id'] != deviceId and device['name'] == device_name:
                 api.user_device_remove(id=device['id'], session=self)

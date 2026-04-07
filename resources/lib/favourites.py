@@ -167,6 +167,7 @@ def list_favourites_new(label):
                         else:
                             break
 
+    
     for episode_id in sorted(episodes.keys(), reverse=sort_desc):
         item = episodes[episode_id]
         title = item['title']

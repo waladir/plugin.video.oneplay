@@ -1,3 +1,7 @@
+v2.1.6 (7.4.2026)
+- úprava API pro načtení zařízení
+- úprava propagace chyb pro synchronní volání
+
 v2.1.5 (7.4.2026)
 - změna API pro načtení profilů
 
@@ -15,6 +19,3 @@ v2.1.2 (1.4.2026)
 - výměna funkce na parsování datumu, která na některých konfiguracích může padat na chybu
 - změna retence EPG keše na 31 dní
 - ošetření chyb při načítání detailu pořadů
-
-v2.1.1 (31.3.2026)
-- úprava struktury nastavení
