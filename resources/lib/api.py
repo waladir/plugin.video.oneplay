@@ -93,8 +93,6 @@ class API:
 
     def _check_response(self, response, error_msg, fatal = True):
         """Kontrola chyb"""
-        print('xxxxxxxxxxxxxx')
-        print(response)
         if response.get('result', {}).get('status') != 'Ok':
             error_detail = response.get('result', {}).get('message', 'Neznámá chyba')
             if fatal:
