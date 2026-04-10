@@ -46,7 +46,11 @@ def list_live(label):
         if channel_id in epg:
             item = epg[channel_id]
             id = item['payload']
-            direct = False
+            if 'deeplink' not in item['payload']:
+                id = {"criteria": {"schema": "ContentCriteria", "contentId": f"channel.{channel_id}"}, "startMode": "start"}
+                direct = True
+            else:
+                direct = False
             time_range = f"{fmt_time(item['startts'])} - {fmt_time(item['endts'])}"
             label_text = f"{item['title']} | {time_range}"
             list_item.setLabel(f"{channel_number}{channel['name']} | {get_label_color(label_text, color)}")            

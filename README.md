@@ -6,6 +6,11 @@ VOD, živé vysílání, archiv, nahrávky, vytváření playlistu a EPG pro IPT
 <a href="https://www.xbmc-kodi.cz/prispevek-oneplay">Vlákno na fóru XBMC-Kodi.cz</a><br><br>
 </p>
 <p>
+v2.1.7 (10.4.2026)<br>
+- ošetření pořadů s rodičovským PINem<br>
+- úprava řazení a zobrazování Nejnovějších epizod Oblíbených<br>
+- oprava multidimenze u živého vysílání<br><br>
+
 v2.1.6 (7.4.2026)<br>
 - úprava API pro načtení zařízení<br>
 - úprava propagace chyb pro synchronní volání<br><br>
@@ -22,9 +27,4 @@ v2.1.3 (3.4.2026)<br>
 - ošetření pořadů bez sezón<br>
 - potlačení chyby, pokud se nepodaří načíst následující pořad<br>
 - oprava catchupu z IPTV SC<br><br>
-
-v2.1.2 (1.4.2026)<br>
-- výměna funkce na parsování datumu, která na některých konfiguracích může padat na chybu<br>
-- změna retence EPG keše na 31 dní<br>
-- ošetření chyb při načítání detailu pořadů<br><br>
 </p>

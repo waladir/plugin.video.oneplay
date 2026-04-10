@@ -127,50 +127,54 @@ def list_favourites_new(label):
             if type == 'show':
                 data = api.page_content_display(post={'payload': {'contentId': f_id}}, session=session)
                 data_seasons = data.get('seasons', [])
-                if data_seasons:
-                    s = data_seasons[0]
-                    seasons.append({'title': f"{item['title']} / {s['label']}", 'id': s['criteria'], 'carouselId': s['carouselId']})
+                for s in data_seasons:
+                    seasons.append({'title': f"{item['title']} / {s['label']}", 'id': s['criteria'], 'carouselId': s['carouselId'], 'show': f_id})
             elif type == 'season':
                 parts = f_id.split('~')
                 if len(parts) >= 2:
-                    seasons.append({'title': item['title'], 'id': parts[0], 'carouselId': parts[1]})
+                    seasons.append({'title': item['title'], 'id': parts[0], 'carouselId': parts[1], 'show': parts[1].split(';')[0]})
     
     # pro seznony nacte prvnich x epizod
     episodes = {}
+    show = ''
     for season in seasons:
-            page = 0
+        if show != season['show']:
+            show = season['show']
             cnt = 0
-            has_next = True
-            while has_next and cnt < limit:
-                page += 1
-                payload = {'carouselId': season['carouselId'], 'criteria': {'filterCriterias': season['id'], 'sortOption': 'DESC'}, 'paging': {"count": 12, "position": 12 * (page - 1) + 1}}
-                carousel = api.carousel_display({'payload': payload}, session, silent=True)
-                tiles = carousel.get('tiles', [])
-                has_next = carousel.get('paging', {}).get('next', False)
-                if not tiles: break
-                for tile in tiles:
-                    # přeskakují se nepřehratelné epizody
-                    if tile.get('action', {}).get('call') != 'content.play':
-                        continue
-                    params = tile.get('action', {}).get('params', {})
-                    item_payload = params.get('payload', {})
-                    content_id = item_payload.get('criteria', {}).get('contentId') or tile.get('tracking', {}).get('id')
-                    if content_id and content_id not in blacklist:
-                        cnt += 1
+        page = 0
+        has_next = True
+        while has_next and cnt < limit:
+            page += 1
+            payload = {'carouselId': season['carouselId'], 'criteria': {'filterCriterias': season['id'], 'sortOption': 'DESC'}, 'paging': {"count": 12, "position": 12 * (page - 1) + 1}}
+            carousel = api.carousel_display({'payload': payload}, session, silent=True)
+            tiles = carousel.get('tiles', [])
+            has_next = carousel.get('paging', {}).get('next', False)
+            if not tiles: break
+            for tile in tiles:
+                # přeskakují se nepřehratelné epizody
+                if tile.get('action', {}).get('call') != 'content.play':
+                    continue
+                params = tile.get('action', {}).get('params', {})
+                item_payload = params.get('payload', {})
+                content_id = item_payload.get('criteria', {}).get('contentId') or tile.get('tracking', {}).get('id')
+                if content_id and content_id not in blacklist:
+                    cnt += 1
+                    if cnt <= limit:
+                        item_data = get_item_detail(item_payload, item=tile, download_data=False)
                         try:
-                            sort_key = int(content_id.split('.')[1])
+                            season_num = season['title'].split('/')[-1].split()[0].strip('.').zfill(3) # cislo sezony
+                            episode_num = item_data['title'].split('.')[0].zfill(5) # cislo epizody
+                            sort_key = f"{season['id']}_{season_num}_{episode_num}"
                         except (IndexError, ValueError):
                             sort_key = len(episodes)
-                        if cnt <= limit:
-                            item_data = get_item_detail(item_payload, item=tile, download_data=False)
-                            episodes[sort_key] = {'id': content_id, 'payload': item_payload, 'type': item_data['type'], 'showtitle': season['title'], 'title': item_data['title'], 'cover': item_data['cover'], 'description': item_data.get('description', '')}
-                        else:
-                            break
-
+                        episodes[sort_key] = {'id': content_id, 'payload': item_payload, 'type': item_data['type'], 'showtitle': season['title'], 'title': item_data['title'], 'cover': item_data['cover'], 'description': item_data.get('description', '')}
+                    else:
+                        break
     
     for episode_id in sorted(episodes.keys(), reverse=sort_desc):
         item = episodes[episode_id]
         title = item['title']
+        title = title.replace('Dříve než v TV', item['showtitle']) # pokud nazev obsahuje Driver nez v TV (vyplnuje se pri parsovani dat v get_item_detail), nahradi se obsahem showtitle, ktery obsahuje nazev poradu a sezony
         if '\n' not in title:
             title += '\n' + get_label_color(item['showtitle'], color)
         list_item = xbmcgui.ListItem(label=title)

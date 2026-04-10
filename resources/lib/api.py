@@ -202,7 +202,18 @@ class API:
         seasons = []
         episodes = []
         response = self.call_api('page.content.display', post, session)
-        data = self._check_response(response, "Chyba načtení dat o pořadu", fatal=False)
+        if response.get('result', {}).get('message', '') == 'Zadejte kód rodičovského zámku':
+            addon = xbmcaddon.Addon()
+            pin = addon.getSetting('pin')
+            if pin in ('1621', ''): # pokud neni PIN nastaveny, nebo ma vychozi hodnotu, zobrazi se dotaz 
+                pin = xbmcgui.Dialog().numeric(type=0, heading='Zadejte PIN', bHiddenInput=True)
+                if len(str(pin)) != 4:
+                    xbmcgui.Dialog().notification('Oneplay', 'Nesprávný PIN', xbmcgui.NOTIFICATION_ERROR, 5000)
+                    pin = '1621'
+            post['authorization'] = [{"schema": "PinRequestAuthorization", "pin": str(pin), "type": "parental"}]
+            return self.page_content_display(post, session)
+        else:
+            data = self._check_response(response, "Chyba načtení dat o pořadu", fatal=False)
         payload = None
         meta = data.get('metadata', {})
         for block in data.get('layout', {}).get('blocks', []):

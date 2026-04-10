@@ -144,10 +144,7 @@ def get_stream_url(post, mode):
         response = xbmcgui.Dialog().select('Multidimenze - výběr streamu', md_titles)
         if response < 0:
             return (None,) * 8
-        selected_id = items[response]['play']['params']['payload']['criteria']['contentId']
-        md_criteria = {"schema": "MDPlaybackCriteria", "contentId": selected_id, "position": 0}
-        if mode != 'archive':
-            md_criteria["startMode"] = mode
+        md_criteria = items[response]['play']['params']['payload']['criteria']
         post = {"payload": {"criteria": md_criteria}, "playbackCapabilities": {"protocols": ["dash", "hls"], "drm": ["widevine", "fairplay"], "altTransfer": "Unicast", "multipleAudio": False}}
         data = api.content_play(post=post, session=session)
         if not data or 'media' not in data:
