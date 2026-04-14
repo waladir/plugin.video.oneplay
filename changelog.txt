@@ -1,3 +1,7 @@
+v2.1.9 (14.4.2026)
+- oprava keepalive pro některé kanály
+- vynucení přepsání EPG cache při nenalezení pořadu nebo generování EPG pro IPTV SC
+
 v2.1.8 (12.4.2026)
 - úprava režimu u živého vysílání MD
 
@@ -12,7 +16,3 @@ v2.1.6 (7.4.2026)
 
 v2.1.5 (7.4.2026)
 - změna API pro načtení profilů
-
-v2.1.4 (7.4.2026)
-- update verze API oneplay
-- oprava synchronních API

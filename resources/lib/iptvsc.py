@@ -111,8 +111,7 @@ def generate_epg(output_file='', show_progress=True):
             handle.write(text.encode('utf-8'))
         except (TypeError, AttributeError):
             handle.write(text)
-    # try:
-    if 1==1:
+    try:
         f = xbmcvfs.File(output_file, 'w')
         safe_write(f, '<?xml version="1.0" encoding="UTF-8"?>\n')
         safe_write(f, '<tv generator-info-name="EPG grabber">\n')
@@ -141,7 +140,7 @@ def generate_epg(output_file='', show_progress=True):
                 percent = int((idx / max(1, total_days)) * 100)
                 dialog.update(percent, message=f"Zpracovávám den: {date_str}")
             day_ts = int(time.mktime(current_day_dt.timetuple()))
-            epg_data = get_epg(day_ts)
+            epg_data = get_epg(ts=day_ts, filter_channel_id=None, reset_cache=True)
             for channel_id in epg_data:
                 day_buffer = []
                 for ts in sorted(epg_data[channel_id].keys()):
@@ -173,10 +172,10 @@ def generate_epg(output_file='', show_progress=True):
             xbmcgui.Dialog().notification('Oneplay', 'EPG bylo uložené', xbmcgui.NOTIFICATION_INFO, 3000)
         elif addon.getSetting('epg_info') == 'true':
             xbmcgui.Dialog().notification('Oneplay', 'EPG bylo uložené', xbmcgui.NOTIFICATION_INFO, 3000)
-    # except Exception:
-    #     if f: f.close()
-    #     if dialog: dialog.close()
-    #     xbmcgui.Dialog().notification('Oneplay', 'Chyba při generování EPG!', xbmcgui.NOTIFICATION_ERROR, 3000)
+    except Exception:
+        if f: f.close()
+        if dialog: dialog.close()
+        xbmcgui.Dialog().notification('Oneplay', 'Chyba při generování EPG!', xbmcgui.NOTIFICATION_ERROR, 3000)
 
 def iptv_sc_rec(channelName, startdatetime):
     """Zpracování nahrávek z IPTV SC"""

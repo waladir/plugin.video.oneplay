@@ -55,7 +55,10 @@ def get_keepalive_url(manifest, content):
             # Namespace pro DASH (častý u MPD) - případně upravte dle API
             ns = {'dash': 'urn:mpeg:dash:schema:mpd:2011'}
             # Hledáme video set s nejnižším bandwidth
-            for ad_set in root.findall('.//AdaptationSet[@contentType="video"]', ns) or root.findall('.//AdaptationSet'):
+            video_sets = root.findall('.//*[local-name()="AdaptationSet"][@contentType="video"]')
+            if not video_sets:
+                video_sets = root.findall('.//*[local-name()="AdaptationSet"]')
+            for ad_set in video_sets:
                 if ad_set.get('contentType') == 'video':
                     min_bw = ad_set.get('minBandwidth', '0')
                     seg_temp = ad_set.find('.//SegmentTemplate', ns)
@@ -161,7 +164,6 @@ def get_stream_url(post, mode):
         offer_data = next_data.get('offer', {}).get('channelUpdate') if next_data else None
         if offer_data and 'media' in offer_data:
             next_url_hls, next_url_dash, next_url_dash_drm, next_drm = parse_media(offer_data)
-
     return url_hls, url_dash, url_dash_drm, drm, next_url_hls, next_url_dash, next_url_dash_drm, next_drm
 
 def play_stream(id, mode, direct=False):
@@ -178,7 +180,13 @@ def play_stream(id, mode, direct=False):
     else:
         payload = id
     if not payload:
-        xbmcgui.Dialog().notification('Oneplay', 'Pořad nelze přehrát', xbmcgui.NOTIFICATION_ERROR, 3000)
+        if id.get('deeplink', {}).get('time'): # pokud API navrati payload a id obsahuje odkaz casovy udaj (potencialne doslo ke zmenene v programu), vyvola nove nacteni EPG pro den a prepsani cache
+            ts = int(time.mktime(time.strptime(id['deeplink']['time'][:-6], '%Y-%m-%dT%H:%M:%S')))
+            get_epg(ts=ts, filter_channel_id=None, reset_cache=True)
+            xbmc.executebuiltin('Container.Refresh')
+            xbmcgui.Dialog().notification('Oneplay', 'Pořad nelze přehrát, zkuste to znovu', xbmcgui.NOTIFICATION_ERROR, 3000)
+        else:
+            xbmcgui.Dialog().notification('Oneplay', 'Pořad nelze přehrát', xbmcgui.NOTIFICATION_ERROR, 3000)
         return
 
     post = {"payload": payload, "playbackCapabilities": {"protocols": ["dash", "hls"], "drm": ["widevine", "fairplay"], "altTransfer": "Unicast", "subtitle": {"formats": ["vtt"], "locations": ["InstreamTrackLocation", "ExternalTrackLocation"]}, "liveSpecificCapabilities": {"protocols": ["dash", "hls"], "drm": ["widevine", "fairplay"], "altTransfer": "Unicast", "multipleAudio": False}}}

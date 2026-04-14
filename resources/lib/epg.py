@@ -101,7 +101,7 @@ def get_live_epg():
                 epg_next[channel_id] = item
     return epg_now, epg_next    
 
-def get_epg(ts, filter_channel_id=None):
+def get_epg(ts, filter_channel_id=None, reset_cache=False):
     """Vrací EPG data s podporou kešování"""
     dt = datetime.fromtimestamp(ts)
     day = dt.strftime('%Y-%m-%d')
@@ -118,22 +118,23 @@ def get_epg(ts, filter_channel_id=None):
     epg = {}
     reload_data = False
     
-    for channel_id in channel_ids:
-        filename = os.path.join(cache_dir, f"epg_cache_{channel_id}_{day}.txt")
-        if not os.path.exists(filename): # pokud soubor pro kanal a den neexistuje, provede se nacteni dat z API
-            reload_data = True
-            break
-        try:
-            with open(filename, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                epg[channel_id] = data
-        except (IOError, json.JSONDecodeError):
-            reload_data = True
-            break
+    if reset_cache == False: # True, pokud se ma vynechat kes a data necist vzdy z API
+        for channel_id in channel_ids:
+            filename = os.path.join(cache_dir, f"epg_cache_{channel_id}_{day}.txt")
+            if not os.path.exists(filename): # pokud soubor pro kanal a den neexistuje, provede se nacteni dat z API
+                reload_data = True
+                break
+            try:
+                with open(filename, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    epg[channel_id] = data
+            except (IOError, json.JSONDecodeError):
+                reload_data = True
+                break
 
-    # pokud se podarilo nacist nakesovana data, vrati EPG data, pokud je fitrovani na kanal, tak pak EPG kanalu
-    if not reload_data:
-        return epg.get(filter_channel_id, epg) if filter_channel_id else epg
+        # pokud se podarilo nacist nakesovana data, vrati EPG data, pokud je fitrovani na kanal, tak pak EPG kanalu
+        if not reload_data:
+            return epg.get(filter_channel_id, epg) if filter_channel_id else epg
     
     clean_epg_cache(days=31) # procisteni starsich EPG dat 
     api = API()
