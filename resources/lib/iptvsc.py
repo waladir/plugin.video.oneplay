@@ -183,7 +183,9 @@ def iptv_sc_rec(channelName, startdatetime):
     channels_list = channels.get_channels_list('name', visible_filter = False)
     from_ts = int(time.mktime(time.strptime(startdatetime, '%d.%m.%Y %H:%M')))
     epg = get_epg(from_ts, channels_list[channelName]['id'])
-    if len(epg) > 0 and from_ts in epg:
-        add_recording(epg[from_ts]['id'])
+    if len(epg) > 0 and str(from_ts) in epg:
+        payload = epg[str(from_ts)]['payload']
+        contentId = payload.get('contentId', '')
+        add_recording(contentId)
     else:
         xbmcgui.Dialog().notification('Oneplay', 'Pořad v Oneplay nenalezen! Používáte EPG z doplňku Oneplay?', xbmcgui.NOTIFICATION_ERROR, 5000)

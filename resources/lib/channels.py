@@ -293,7 +293,7 @@ class Channels:
                 imagesq = None
                 if len(channel['logo']) > 1:
                     if image is None:  
-                        image = logo_url.replace('{WIDTH}', '480').replace('{HEIGHT}', '320')
+                        image = logo_url.replace('{WIDTH}', '390').replace('{HEIGHT}', '288')
                     if imagesq is None:  
                         imagesq = logo_url.replace('{WIDTH}', '256').replace('{HEIGHT}', '256')
                 if use_picons_server is True:
