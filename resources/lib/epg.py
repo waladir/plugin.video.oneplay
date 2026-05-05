@@ -283,7 +283,7 @@ def epg_listitem(list_item, epg, icon):
         if epg.get('poster'):
             if icon == '':
                 icon = epg['poster']
-            list_item.setArt({'poster': epg['poster'], 'icon': icon})
+            list_item.setArt({'thumb': epg['poster'], 'poster': epg['poster'], 'icon': icon})
         else:
             if icon == '':
                 icon = epg['cover']
