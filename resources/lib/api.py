@@ -21,8 +21,8 @@ class API:
         self.APIURL = 'https://http.cms.jyxo.cz/api/'
         self.UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0) Gecko/20100101 Firefox/148.0'
         self.HEADERS = {'User-Agent' : self.UA, 'Accept-Encoding' : 'gzip', 'Accept' : '*/*', 'Content-type' : 'application/json;charset=UTF-8'} 
-        self.APPVERSION = 'R9.18'
-        self.APIVERSION = 'v1.9'
+        self.APPVERSION = 'R11.33'
+        self.APIVERSION = 'v1.11'
 
     def call_api(self, api, data, session=None, sensitive=False):
         """Volání API Oneplay včetně ošetření logování"""

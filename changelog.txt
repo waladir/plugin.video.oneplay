@@ -1,3 +1,6 @@
+v2.2.2 (11.6.2026)
+- úprava verze API a aplikace
+
 v2.2.1 (5.5.2026)
 - přidání thumbnailu do metadat pořadů
 
@@ -12,7 +15,3 @@ v2.1.9 (14.4.2026)
 v2.1.8 (12.4.2026)
 - úprava režimu u živého vysílání MD
 
-v2.1.7 (10.4.2026)
-- ošetření pořadů s rodičovským PINem 
-- úprava řazení a zobrazování Nejnovějších epizod Oblíbených
-- oprava multidimenze u živého vysílání
