@@ -109,12 +109,13 @@ class API:
             auth_token = data['step']['authToken']
             accounts_map = {}
             accounts_list = []
-            for acc in data['step'].get('accounts', []):
-                if acc.get('extId') or acc.get('isActive'):
-                    suffix = acc.get('extId') or acc.get('accountProvider', 'Unknown')
-                    display_name = f"{acc['name']}|{suffix}"
-                    accounts_map[display_name] = acc['accountId']
-                    accounts_list.append(display_name)
+            for group in data['step'].get('groups', []):
+                for acc in group.get('accounts', []):
+                    if acc.get('extId') or acc.get('isActive'):
+                        suffix = acc.get('extId') or acc.get('accountProvider', 'Unknown')
+                        display_name = f"{acc['name']}|{suffix}"
+                        accounts_map[display_name] = acc['accountId']
+                        accounts_list.append(display_name)
             selected_name = get_account_id(accounts_list)
             account_id = accounts_map.get(selected_name)
             if not account_id:

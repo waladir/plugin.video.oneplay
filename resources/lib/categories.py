@@ -188,8 +188,8 @@ def page_search_display(query):
     data = api.page_search_display(query, session)
     if 'blocks' in data['layout']:
         for block in data['layout']['blocks']:
-            if block['schema'] == 'CarouselBlock':
-                carousel = block['carousels'][0]
+            if block['schema'] == 'TabBlock' and 'layout' in block and 'blocks' in block['layout'] and 'carousels' in block['layout']['blocks'][0]:
+                carousel = block['layout']['blocks'][0]['carousels'][0]
                 parse_tiles(None, carousel, 1)
         xbmcplugin.endOfDirectory(_handle, cacheToDisc = False)              
     else:                
