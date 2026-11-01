@@ -1,9 +1,12 @@
+v2.3.4 (1.11.2026)
+- úprava zobrazení kontextového menu v PVR
+
 v2.3.3 (15.10.2026)
 - úprava hlavičky
 - logování požadavků
 - rozšíření výsledků vyhledávání
 - přidání typu obsahu podcast
-- vytvožení nové sessiony po změně profilu
+- vytvoření nové sessiony po změně profilu
 
 v2.3.2 (1.10.2026)
 - oprava překlepu

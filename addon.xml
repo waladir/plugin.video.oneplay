@@ -1,4 +1,4 @@
-﻿<addon id="plugin.video.oneplay" name="Oneplay" provider-name="waladir" version="2.3.3">
+﻿<addon id="plugin.video.oneplay" name="Oneplay" provider-name="waladir" version="2.3.4">
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
     <import addon="inputstream.adaptive" version="19.0.0"/>
@@ -15,17 +15,17 @@
       <item library="iptvsc_play.py">
           <label>Živě od začátku (Oneplay)</label>
           <visible>
-            Window.IsActive(MyPVRGuide.xml) | Window.IsActive(MyPVRChannels.xml)
+            Window.IsActive(TVGuide) | Window.IsActive(TVChannels)
           </visible>
-      </item> 
+      </item>
       <item library="iptvsc_rec.py">
           <label>Nahrát v Oneplay</label>
           <visible>
-            Window.IsActive(MyPVRGuide.xml)
+            Window.IsActive(TVGuide)
           </visible>
-      </item> 
-    </menu>         
-  </extension>  
+      </item>
+    </menu>        
+  </extension>
   <extension point="xbmc.addon.metadata">
     <summary lang="en_GB">Oneplay</summary>
     <summary lang="cs_CZ">Oneplay</summary>
@@ -44,12 +44,15 @@ Další informace a podporu najdete na fóru www.xbmc-kodi.cz (https://www.xbmc-
     <platform>all</platform>
     <source>https://github.com/waladir/plugin.video.oneplay</source>
     <news>
+v2.3.4 (1.11.2026)
+- úprava zobrazení kontextového menu v PVR
+
 v2.3.3 (15.10.2026)
 - úprava hlavičky
 - logování požadavků
 - rozšíření výsledků vyhledávání
 - přidání typu obsahu podcast
-- vytvožení nové sessiony po změně profilu
+- vytvoření nové sessiony po změně profilu
 
 v2.3.2 (1.10.2026)
 - oprava překlepu
@@ -60,9 +63,6 @@ v2.3.1 (1.10.2026)
 
 v2.3.0 (24.9.2026)
 - vynucený reset profilu, pokud vybraný profil neexistuje
-
-v2.2.9 (20.9.2026)
-- oprava spouštění živého vysílání
     </news>
     <assets>
         <icon>icon.jpg</icon>
