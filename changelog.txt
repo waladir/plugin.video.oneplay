@@ -1,3 +1,6 @@
+v2.3.5 (10.11.2026)
+- nová verze API
+
 v2.3.4 (1.11.2026)
 - úprava zobrazení kontextového menu v PVR
 
@@ -14,9 +17,3 @@ v2.3.2 (1.10.2026)
 v2.3.1 (1.10.2026)
 - úprava volání API
 - změny v API Oneplay
-
-v2.3.0 (24.9.2026)
-- vynucený reset profilu, pokud vybraný profil neexistuje
-
-v2.2.9 (20.9.2026)
-- oprava spouštění živého vysílání

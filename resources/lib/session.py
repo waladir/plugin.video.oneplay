@@ -24,7 +24,7 @@ class Session:
             password=get_config_value('password'),
         ) or {}
         step = data.get('step') or {}
-        self.token = step.get('bearerToken')
+        self.token = step.get('bearerToken') or step.get('user', {}).get('bearerToken')
         current_user = step.get('currentUser') or step.get('user', {}).get('loggedUser', {})
         current_device = current_user.get('currentDevice') or {}
         device_id = current_device.get('id')

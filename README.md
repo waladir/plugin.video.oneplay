@@ -6,6 +6,9 @@ VOD, živé vysílání, archiv, nahrávky, vytváření playlistu a EPG pro IPT
 <a href="https://www.xbmc-kodi.cz/prispevek-oneplay">Vlákno na fóru XBMC-Kodi.cz</a><br><br>
 </p>
 <p>
+v2.3.5 (10.11.2026)<br>
+- nová verze API<br><br>
+
 v2.3.4 (1.11.2026)<br>
 - úprava zobrazení kontextového menu v PVR<br><br>
 
@@ -22,7 +25,4 @@ v2.3.2 (1.10.2026)<br>
 v2.3.1 (1.10.2026)<br>
 - úprava volání API<br>
 - změny v API Oneplay<br><br>
-
-v2.3.0 (24.9.2026)<br>
-- vynucený reset profilu, pokud vybraný profil neexistuje<br><br>
 </p>
